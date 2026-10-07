@@ -1,0 +1,2708 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PlantLight API",
+    "description": "JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Register"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Swagger login: use email as username",
+        "operationId": "form_login_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_form_login_api_v1_auth_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_v1_users_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Create Room",
+        "operationId": "create_room_api_v1_rooms_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Rooms",
+        "operationId": "rooms_api_v1_rooms_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoomOut"
+                  },
+                  "title": "Response Rooms Api V1 Rooms Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/import-ar": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Import the Android schema_version 3 room export atomically",
+        "operationId": "import_ar_api_v1_rooms_import_ar_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "default": "AR 측정 방",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "x_axis_azimuth_deg",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMaximum": 360
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X Axis Azimuth Deg"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ARMeasurement"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}/ar-measurement": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Export Ar",
+        "operationId": "export_ar_api_v1_rooms__room_id__ar_measurement_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ARMeasurement"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Get Room",
+        "operationId": "get_room_api_v1_rooms__room_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Update Room",
+        "operationId": "update_room_api_v1_rooms__room_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Delete Room",
+        "operationId": "delete_room_api_v1_rooms__room_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}/grid": {
+      "get": {
+        "tags": [
+          "Geometry"
+        ],
+        "summary": "Get Grid",
+        "operationId": "get_grid_api_v1_rooms__room_id__grid_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "cell_size_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 5,
+              "minimum": 0.05,
+              "default": 0.25,
+              "title": "Cell Size M"
+            }
+          },
+          {
+            "name": "sample_height_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 10,
+              "minimum": 0,
+              "default": 0,
+              "title": "Sample Height M"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GridSpec"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}/dli-map/validate": {
+      "post": {
+        "tags": [
+          "Geometry"
+        ],
+        "summary": "Validate a proposed DLI JSON payload; does not calculate or persist light",
+        "operationId": "validate_dli_api_v1_rooms__room_id__dli_map_validate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DliMap"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DliMap"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}/windows": {
+      "post": {
+        "tags": [
+          "Windows"
+        ],
+        "summary": "Create Window",
+        "operationId": "create_window_api_v1_rooms__room_id__windows_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindowInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Windows"
+        ],
+        "summary": "Windows",
+        "operationId": "windows_api_v1_rooms__room_id__windows_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WindowOut"
+                  },
+                  "title": "Response Windows Api V1 Rooms  Room Id  Windows Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/windows/{window_id}": {
+      "get": {
+        "tags": [
+          "Windows"
+        ],
+        "summary": "Get Window",
+        "operationId": "get_window_api_v1_windows__window_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Window Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Windows"
+        ],
+        "summary": "Update Window",
+        "operationId": "update_window_api_v1_windows__window_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Window Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindowInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WindowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Windows"
+        ],
+        "summary": "Delete Window",
+        "operationId": "delete_window_api_v1_windows__window_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Window Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plant-species": {
+      "get": {
+        "tags": [
+          "Plant species"
+        ],
+        "summary": "Species",
+        "operationId": "species_api_v1_plant_species_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpeciesOut"
+                  },
+                  "title": "Response Species Api V1 Plant Species Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plant-species/{species_id}": {
+      "get": {
+        "tags": [
+          "Plant species"
+        ],
+        "summary": "Get Species",
+        "operationId": "get_species_api_v1_plant_species__species_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "species_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Species Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeciesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants": {
+      "post": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Create Plant",
+        "operationId": "create_plant_api_v1_plants_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Plants",
+        "operationId": "plants_api_v1_plants_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlantOut"
+                  },
+                  "title": "Response Plants Api V1 Plants Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}": {
+      "get": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Get Plant",
+        "operationId": "get_plant_api_v1_plants__plant_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Update Plant",
+        "operationId": "update_plant_api_v1_plants__plant_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlantInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Delete Plant",
+        "operationId": "delete_plant_api_v1_plants__plant_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/weather/irradiance": {
+      "get": {
+        "tags": [
+          "Weather"
+        ],
+        "summary": "Irradiance",
+        "operationId": "irradiance_api_v1_weather_irradiance_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Date"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "title": "Latitude"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "title": "Longitude"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IrradianceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{room_id}/irradiance": {
+      "get": {
+        "tags": [
+          "Weather"
+        ],
+        "summary": "Room Irradiance",
+        "operationId": "room_irradiance_api_v1_rooms__room_id__irradiance_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IrradianceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ARMeasurement": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 3,
+            "title": "Schema Version"
+          },
+          "unit": {
+            "type": "string",
+            "const": "m",
+            "title": "Unit"
+          },
+          "coordinate_system": {
+            "type": "string",
+            "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+            "title": "Coordinate System"
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Saved At"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "maxItems": 256,
+            "minItems": 4,
+            "title": "Corners"
+          },
+          "area_square_meters": {
+            "type": "number",
+            "title": "Area Square Meters"
+          },
+          "perimeter_meters": {
+            "type": "number",
+            "title": "Perimeter Meters"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/WindowMeasurement"
+            },
+            "type": "array",
+            "maxItems": 256,
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "unit",
+          "coordinate_system",
+          "saved_at",
+          "corners",
+          "area_square_meters",
+          "perimeter_meters",
+          "windows"
+        ],
+        "title": "ARMeasurement"
+      },
+      "Body_form_login_api_v1_auth_token_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_form_login_api_v1_auth_token_post"
+      },
+      "Corner": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Y"
+          },
+          "z": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Z"
+          },
+          "order_index": {
+            "type": "integer",
+            "maximum": 255.0,
+            "minimum": 0.0,
+            "title": "Order Index"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "z",
+          "order_index"
+        ],
+        "title": "Corner"
+      },
+      "DliMap": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "dli_map_v2",
+            "title": "Schema Version",
+            "default": "dli_map_v2"
+          },
+          "room_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Room Id"
+          },
+          "geometry_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Geometry Version"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "unit": {
+            "type": "string",
+            "const": "mol/m2/day",
+            "title": "Unit",
+            "default": "mol/m2/day"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/GridSpec"
+          },
+          "direct_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Direct Dli"
+          },
+          "diffuse_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Diffuse Dli"
+          },
+          "total_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Total Dli"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room_id",
+          "geometry_version",
+          "date",
+          "timezone",
+          "grid",
+          "direct_dli",
+          "diffuse_dli",
+          "total_dli"
+        ],
+        "title": "DliMap"
+      },
+      "GridSpec": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "grid_v2",
+            "title": "Schema Version",
+            "default": "grid_v2"
+          },
+          "room_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Room Id"
+          },
+          "geometry_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Geometry Version"
+          },
+          "coordinate_system": {
+            "type": "string",
+            "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+            "title": "Coordinate System",
+            "default": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL"
+          },
+          "unit": {
+            "type": "string",
+            "const": "m",
+            "title": "Unit",
+            "default": "m"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "cell_size_m": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.05,
+            "title": "Cell Size M"
+          },
+          "sample_height_m": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Sample Height M",
+            "default": 0
+          },
+          "rows": {
+            "type": "integer",
+            "maximum": 40000.0,
+            "minimum": 1.0,
+            "title": "Rows"
+          },
+          "cols": {
+            "type": "integer",
+            "maximum": 40000.0,
+            "minimum": 1.0,
+            "title": "Cols"
+          },
+          "array_order": {
+            "type": "string",
+            "const": "[row_z][col_x]",
+            "title": "Array Order",
+            "default": "[row_z][col_x]"
+          },
+          "inside_mask": {
+            "items": {
+              "items": {
+                "type": "boolean"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Inside Mask"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room_id",
+          "geometry_version",
+          "origin",
+          "cell_size_m",
+          "rows",
+          "cols",
+          "inside_mask"
+        ],
+        "title": "GridSpec"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IrradianceOut": {
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "title": "Interval Minutes"
+          },
+          "time_basis": {
+            "type": "string",
+            "title": "Time Basis"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "cache_hit": {
+            "type": "boolean",
+            "title": "Cache Hit"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/IrradiancePoint"
+            },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "date",
+          "timezone",
+          "source",
+          "dataset",
+          "unit",
+          "interval_minutes",
+          "time_basis",
+          "fetched_at",
+          "expires_at",
+          "cache_hit",
+          "values"
+        ],
+        "title": "IrradianceOut"
+      },
+      "IrradiancePoint": {
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "dni": {
+            "type": "number",
+            "title": "Dni"
+          },
+          "dhi": {
+            "type": "number",
+            "title": "Dhi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "time",
+          "dni",
+          "dhi"
+        ],
+        "title": "IrradiancePoint"
+      },
+      "Login": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "Login"
+      },
+      "MeasurementPoint": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Y"
+          },
+          "z": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "MeasurementPoint"
+      },
+      "PlantInput": {
+        "properties": {
+          "species_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Species Id"
+          },
+          "nickname": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Nickname"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Position"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "species_id",
+          "nickname"
+        ],
+        "title": "PlantInput"
+      },
+      "PlantOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "species_id": {
+            "type": "integer",
+            "title": "Species Id"
+          },
+          "nickname": {
+            "type": "string",
+            "title": "Nickname"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Position"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "room_id",
+          "species_id",
+          "nickname",
+          "x",
+          "y",
+          "z",
+          "position"
+        ],
+        "title": "PlantOut"
+      },
+      "Position": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Y",
+            "default": 0
+          },
+          "z": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "z"
+        ],
+        "title": "Position"
+      },
+      "Register": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "nickname": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Nickname"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "nickname"
+        ],
+        "title": "Register"
+      },
+      "RoomInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "coordinate_system": {
+            "type": "string",
+            "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+            "title": "Coordinate System",
+            "default": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL"
+          },
+          "x_axis_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 360.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Axis Azimuth Deg"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90.0,
+                "minimum": -90.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "timezone": {
+            "type": "string",
+            "const": "Asia/Seoul",
+            "title": "Timezone",
+            "default": "Asia/Seoul"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "maxItems": 256,
+            "minItems": 4,
+            "title": "Corners"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "corners"
+        ],
+        "title": "RoomInput"
+      },
+      "RoomOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "coordinate_frame": {
+            "type": "string",
+            "title": "Coordinate Frame"
+          },
+          "saved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved At"
+          },
+          "x_axis_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Axis Azimuth Deg"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "geometry_version": {
+            "type": "integer",
+            "title": "Geometry Version"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "title": "Corners"
+          },
+          "floor_area_m2": {
+            "type": "number",
+            "title": "Floor Area M2",
+            "readOnly": true
+          },
+          "coordinate_system": {
+            "type": "string",
+            "title": "Coordinate System",
+            "readOnly": true
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "readOnly": true
+          },
+          "area_square_meters": {
+            "type": "number",
+            "title": "Area Square Meters",
+            "readOnly": true
+          },
+          "perimeter_meters": {
+            "type": "number",
+            "title": "Perimeter Meters",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "coordinate_frame",
+          "saved_at",
+          "x_axis_azimuth_deg",
+          "latitude",
+          "longitude",
+          "timezone",
+          "geometry_version",
+          "corners",
+          "floor_area_m2",
+          "coordinate_system",
+          "unit",
+          "area_square_meters",
+          "perimeter_meters"
+        ],
+        "title": "RoomOut"
+      },
+      "SpeciesOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "scientific_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scientific Name"
+          },
+          "min_dli": {
+            "type": "number",
+            "title": "Min Dli"
+          },
+          "max_dli": {
+            "type": "number",
+            "title": "Max Dli"
+          },
+          "source_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "scientific_name",
+          "min_dli",
+          "max_dli",
+          "source_note"
+        ],
+        "title": "SpeciesOut"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "Token"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "nickname": {
+            "type": "string",
+            "title": "Nickname"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "nickname",
+          "created_at"
+        ],
+        "title": "UserOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WindowInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Corners"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "corners"
+        ],
+        "title": "WindowInput"
+      },
+      "WindowMeasurement": {
+        "properties": {
+          "window_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Window Id"
+          },
+          "wall_index": {
+            "type": "integer",
+            "maximum": 255.0,
+            "minimum": 0.0,
+            "title": "Wall Index"
+          },
+          "status": {
+            "type": "string",
+            "const": "COMPLETE",
+            "title": "Status"
+          },
+          "floor_reference": {
+            "$ref": "#/components/schemas/MeasurementPoint"
+          },
+          "sill_height_m": {
+            "type": "number",
+            "title": "Sill Height M"
+          },
+          "width_m": {
+            "type": "number",
+            "title": "Width M"
+          },
+          "height_m": {
+            "type": "number",
+            "title": "Height M"
+          },
+          "top_height_m": {
+            "type": "number",
+            "title": "Top Height M"
+          },
+          "area_square_meters": {
+            "type": "number",
+            "title": "Area Square Meters"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Corners"
+          },
+          "measured_corners": {
+            "items": {
+              "$ref": "#/components/schemas/MeasurementPoint"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Measured Corners"
+          },
+          "floor_measurement_method": {
+            "type": "string",
+            "const": "ARCORE_SURFACE_HIT",
+            "title": "Floor Measurement Method"
+          },
+          "window_measurement_method": {
+            "type": "string",
+            "const": "MEASURED_WALL_RAY_INTERSECTION",
+            "title": "Window Measurement Method"
+          },
+          "max_plane_residual_m": {
+            "type": "number",
+            "maximum": 0.352,
+            "minimum": 0.0,
+            "title": "Max Plane Residual M"
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Saved At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "window_id",
+          "wall_index",
+          "status",
+          "floor_reference",
+          "sill_height_m",
+          "width_m",
+          "height_m",
+          "top_height_m",
+          "area_square_meters",
+          "corners",
+          "measured_corners",
+          "floor_measurement_method",
+          "window_measurement_method",
+          "max_plane_residual_m",
+          "saved_at"
+        ],
+        "title": "WindowMeasurement"
+      },
+      "WindowOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "room_id": {
+            "type": "integer",
+            "title": "Room Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "corners": {
+            "items": {
+              "$ref": "#/components/schemas/Corner"
+            },
+            "type": "array",
+            "title": "Corners"
+          },
+          "measurement": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measurement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "room_id",
+          "name",
+          "corners",
+          "measurement"
+        ],
+        "title": "WindowOut"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/token"
+          }
+        }
+      }
+    }
+  }
+}

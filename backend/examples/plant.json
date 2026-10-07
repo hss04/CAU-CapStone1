@@ -1,0 +1,6 @@
+{
+  "species_id": 1,
+  "nickname": "테스트 화분",
+  "room_id": 1,
+  "position": {"x": 1.0, "y": 0.5, "z": 1.0}
+}

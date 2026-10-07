@@ -1,0 +1,225 @@
+{
+  "$defs": {
+    "GridSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "grid_v2",
+          "default": "grid_v2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "room_id": {
+          "exclusiveMinimum": 0,
+          "title": "Room Id",
+          "type": "integer"
+        },
+        "geometry_version": {
+          "exclusiveMinimum": 0,
+          "title": "Geometry Version",
+          "type": "integer"
+        },
+        "coordinate_system": {
+          "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+          "default": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+          "title": "Coordinate System",
+          "type": "string"
+        },
+        "unit": {
+          "const": "m",
+          "default": "m",
+          "title": "Unit",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/Position"
+        },
+        "cell_size_m": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Cell Size M",
+          "type": "number"
+        },
+        "sample_height_m": {
+          "default": 0,
+          "maximum": 10,
+          "minimum": 0,
+          "title": "Sample Height M",
+          "type": "number"
+        },
+        "rows": {
+          "maximum": 40000,
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "maximum": 40000,
+          "minimum": 1,
+          "title": "Cols",
+          "type": "integer"
+        },
+        "array_order": {
+          "const": "[row_z][col_x]",
+          "default": "[row_z][col_x]",
+          "title": "Array Order",
+          "type": "string"
+        },
+        "inside_mask": {
+          "items": {
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array"
+          },
+          "title": "Inside Mask",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id",
+        "geometry_version",
+        "origin",
+        "cell_size_m",
+        "rows",
+        "cols",
+        "inside_mask"
+      ],
+      "title": "GridSpec",
+      "type": "object"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "default": 0,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "z"
+      ],
+      "title": "Position",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "dli_map_v2",
+      "default": "dli_map_v2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "room_id": {
+      "exclusiveMinimum": 0,
+      "title": "Room Id",
+      "type": "integer"
+    },
+    "geometry_version": {
+      "exclusiveMinimum": 0,
+      "title": "Geometry Version",
+      "type": "integer"
+    },
+    "date": {
+      "format": "date",
+      "title": "Date",
+      "type": "string"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "type": "string"
+    },
+    "unit": {
+      "const": "mol/m2/day",
+      "default": "mol/m2/day",
+      "title": "Unit",
+      "type": "string"
+    },
+    "grid": {
+      "$ref": "#/$defs/GridSpec"
+    },
+    "direct_dli": {
+      "items": {
+        "items": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "title": "Direct Dli",
+      "type": "array"
+    },
+    "diffuse_dli": {
+      "items": {
+        "items": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "title": "Diffuse Dli",
+      "type": "array"
+    },
+    "total_dli": {
+      "items": {
+        "items": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "title": "Total Dli",
+      "type": "array"
+    }
+  },
+  "required": [
+    "room_id",
+    "geometry_version",
+    "date",
+    "timezone",
+    "grid",
+    "direct_dli",
+    "diffuse_dli",
+    "total_dli"
+  ],
+  "title": "DliMap",
+  "type": "object"
+}

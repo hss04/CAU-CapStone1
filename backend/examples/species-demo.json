@@ -1,0 +1,9 @@
+[
+  {
+    "name": "연동 테스트용 가상 식물",
+    "scientific_name": null,
+    "min_dli": 2.0,
+    "max_dli": 6.0,
+    "source_note": "API 연동 테스트용 임의 수치. 실제 식물의 광 요구량으로 사용하지 말 것."
+  }
+]

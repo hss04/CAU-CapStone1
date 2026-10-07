@@ -1,0 +1,9 @@
+{
+  "name": "북쪽 창문",
+  "corners": [
+    {"x": 1.0, "y": 0.8, "z": 0, "order_index": 0},
+    {"x": 2.5, "y": 0.8, "z": 0, "order_index": 1},
+    {"x": 2.5, "y": 2.0, "z": 0, "order_index": 2},
+    {"x": 1.0, "y": 2.0, "z": 0, "order_index": 3}
+  ]
+}

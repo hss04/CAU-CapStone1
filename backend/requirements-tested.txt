@@ -1,0 +1,14 @@
+# Reference only: direct and key dependency versions verified on Python 3.12/Linux.
+# Install requirements.txt or requirements-dev.txt normally.
+fastapi==0.142.2
+uvicorn==0.54.0
+SQLAlchemy==2.0.54
+pydantic-settings==2.15.0
+pydantic==2.13.5
+PyJWT==2.15.1
+pwdlib==0.3.1
+python-multipart==0.0.32
+tzdata==2026.5
+pytest==9.1.1
+httpx==0.28.1
+starlette==1.7.0

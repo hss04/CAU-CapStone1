@@ -1,0 +1,14 @@
+{
+  "name": "내 방",
+  "coordinate_system": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+  "x_axis_azimuth_deg": 90,
+  "latitude": 37.5665,
+  "longitude": 126.978,
+  "timezone": "Asia/Seoul",
+  "corners": [
+    {"x": 0, "y": 0, "z": 0, "order_index": 0},
+    {"x": 4, "y": 0, "z": 0, "order_index": 1},
+    {"x": 4, "y": 0, "z": 3, "order_index": 2},
+    {"x": 0, "y": 0, "z": 3, "order_index": 3}
+  ]
+}

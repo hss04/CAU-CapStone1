@@ -1,0 +1,10 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+SQLAlchemy>=2.0,<2.1
+pydantic-settings>=2.6,<3
+pydantic[email]>=2.10,<3
+PyJWT>=2.9,<3
+pwdlib[argon2]>=0.2,<1
+python-multipart>=0.0.20,<1
+tzdata>=2025.1
+httpx>=0.27,<1

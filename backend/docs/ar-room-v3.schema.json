@@ -1,0 +1,234 @@
+{
+  "$defs": {
+    "Corner": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Z",
+          "type": "number"
+        },
+        "order_index": {
+          "maximum": 255,
+          "minimum": 0,
+          "title": "Order Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z",
+        "order_index"
+      ],
+      "title": "Corner",
+      "type": "object"
+    },
+    "MeasurementPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "title": "MeasurementPoint",
+      "type": "object"
+    },
+    "WindowMeasurement": {
+      "additionalProperties": false,
+      "properties": {
+        "window_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Window Id",
+          "type": "string"
+        },
+        "wall_index": {
+          "maximum": 255,
+          "minimum": 0,
+          "title": "Wall Index",
+          "type": "integer"
+        },
+        "status": {
+          "const": "COMPLETE",
+          "title": "Status",
+          "type": "string"
+        },
+        "floor_reference": {
+          "$ref": "#/$defs/MeasurementPoint"
+        },
+        "sill_height_m": {
+          "title": "Sill Height M",
+          "type": "number"
+        },
+        "width_m": {
+          "title": "Width M",
+          "type": "number"
+        },
+        "height_m": {
+          "title": "Height M",
+          "type": "number"
+        },
+        "top_height_m": {
+          "title": "Top Height M",
+          "type": "number"
+        },
+        "area_square_meters": {
+          "title": "Area Square Meters",
+          "type": "number"
+        },
+        "corners": {
+          "items": {
+            "$ref": "#/$defs/Corner"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Corners",
+          "type": "array"
+        },
+        "measured_corners": {
+          "items": {
+            "$ref": "#/$defs/MeasurementPoint"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Measured Corners",
+          "type": "array"
+        },
+        "floor_measurement_method": {
+          "const": "ARCORE_SURFACE_HIT",
+          "title": "Floor Measurement Method",
+          "type": "string"
+        },
+        "window_measurement_method": {
+          "const": "MEASURED_WALL_RAY_INTERSECTION",
+          "title": "Window Measurement Method",
+          "type": "string"
+        },
+        "max_plane_residual_m": {
+          "maximum": 0.352,
+          "minimum": 0,
+          "title": "Max Plane Residual M",
+          "type": "number"
+        },
+        "saved_at": {
+          "format": "date-time",
+          "title": "Saved At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "window_id",
+        "wall_index",
+        "status",
+        "floor_reference",
+        "sill_height_m",
+        "width_m",
+        "height_m",
+        "top_height_m",
+        "area_square_meters",
+        "corners",
+        "measured_corners",
+        "floor_measurement_method",
+        "window_measurement_method",
+        "max_plane_residual_m",
+        "saved_at"
+      ],
+      "title": "WindowMeasurement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 3,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "unit": {
+      "const": "m",
+      "title": "Unit",
+      "type": "string"
+    },
+    "coordinate_system": {
+      "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+      "title": "Coordinate System",
+      "type": "string"
+    },
+    "saved_at": {
+      "format": "date-time",
+      "title": "Saved At",
+      "type": "string"
+    },
+    "corners": {
+      "items": {
+        "$ref": "#/$defs/Corner"
+      },
+      "maxItems": 256,
+      "minItems": 4,
+      "title": "Corners",
+      "type": "array"
+    },
+    "area_square_meters": {
+      "title": "Area Square Meters",
+      "type": "number"
+    },
+    "perimeter_meters": {
+      "title": "Perimeter Meters",
+      "type": "number"
+    },
+    "windows": {
+      "items": {
+        "$ref": "#/$defs/WindowMeasurement"
+      },
+      "maxItems": 256,
+      "title": "Windows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "unit",
+    "coordinate_system",
+    "saved_at",
+    "corners",
+    "area_square_meters",
+    "perimeter_meters",
+    "windows"
+  ],
+  "title": "ARMeasurement",
+  "type": "object"
+}
