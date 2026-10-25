@@ -1,0 +1,354 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import {
+  ArrowRight,
+  CircleCheck,
+  Droplet,
+  Gauge,
+  Heart,
+  MapPin,
+  Sparkles,
+  Sun,
+  Thermometer,
+  Waves,
+} from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Polygon, Stop } from 'react-native-svg';
+
+import { AppText } from '@/components/common/AppText';
+import { Card } from '@/components/common/Card';
+import { EmptyState } from '@/components/common/EmptyState';
+import { InfoCard } from '@/components/common/InfoCard';
+import { PrimaryButton } from '@/components/common/PrimaryButton';
+import { ScoreRing } from '@/components/common/ScoreRing';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { SecondaryButton } from '@/components/common/SecondaryButton';
+import { SectionHeader } from '@/components/common/SectionHeader';
+import { StatusChip } from '@/components/common/StatusChip';
+import { useToast } from '@/components/common/Toast';
+import { TopBar, goBackOrHome } from '@/components/common/TopBar';
+import { PlantIllustration } from '@/components/plants/PlantIllustration';
+import { WaterCycle } from '@/components/plants/WaterCycle';
+import { FloorPlanGrid } from '@/components/space/FloorPlanGrid';
+import { LIGHT_LEVEL_LABEL, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
+import { Colors, Radius, Spacing } from '@/constants/theme';
+import { getSpecies } from '@/data/plantSpecies';
+import { useGarden, usePlant } from '@/store/GardenProvider';
+import { getHealthLabel, getPlantStatus, getWateringInfo } from '@/store/selectors';
+import { withEge } from '@/utils/korean';
+
+export default function PlantDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const plant = usePlant(id);
+  const { state, today, actions } = useGarden();
+  const toast = useToast();
+
+  if (!plant) {
+    return (
+      <ScreenContainer header={<TopBar />}>
+        <EmptyState title="식물을 찾을 수 없어요" description="삭제되었거나 잘못된 경로예요." actionLabel="돌아가기" onAction={goBackOrHome} />
+      </ScreenContainer>
+    );
+  }
+
+  const species = getSpecies(plant.speciesId);
+  const status = getPlantStatus(plant, today);
+  const water = getWateringInfo(plant, today);
+  const health = getHealthLabel(plant, today);
+  const { current, recommended } = plant.analysis;
+
+  const handleWater = () => {
+    actions.waterPlants([plant.id]);
+    toast.show(`${withEge(plant.name)} 물을 줬어요 💧`, 'water');
+  };
+
+  const openRecommendation = () => router.push({ pathname: '/recommendation/[id]', params: { id: plant.id } });
+
+  return (
+    <ScreenContainer header={<TopBar title={plant.name} />}>
+      {/* Hero */}
+      <View style={styles.hero}>
+        <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+          <Defs>
+            <LinearGradient id="hero-beam" x1="1" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.8} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Polygon points="64,0 80,0 34,100 14,100" fill="url(#hero-beam)" />
+          <Polygon points="88,0 95,0 60,100 50,100" fill="url(#hero-beam)" opacity={0.7} />
+        </Svg>
+        <StatusChip label={status.label} tone={status.tone} dot style={styles.heroChip} />
+        <PlantIllustration speciesId={plant.speciesId} size={176} />
+      </View>
+
+      {/* Title */}
+      <View style={styles.titleBlock}>
+        <AppText variant="display">{species.englishName}</AppText>
+        <AppText variant="body" color={Colors.textSecondary} style={styles.scientific}>
+          {species.scientificName}
+        </AppText>
+        <View style={styles.tags}>
+          <StatusChip label={plant.name} tone="deep" size="sm" />
+          <StatusChip label={LIGHT_PREFERENCE_LABEL[plant.preferredLight]} tone="sun" size="sm" icon={Sun} />
+          <StatusChip label={`난이도 ${species.difficulty}`} tone="neutral" size="sm" />
+        </View>
+      </View>
+
+      {/* Current status */}
+      <View style={styles.section}>
+        <SectionHeader eyebrow="Status" title="현재 상태" />
+        <View style={styles.grid}>
+          <View style={styles.gridRow}>
+            <InfoCard compact label="Light" value={LIGHT_LEVEL_LABEL[current.lightLevel]} caption={`예상 일조 ${current.expectedSunHours}h`} icon={Sun} tone="sun" />
+            <InfoCard compact label="Water" value={water.label} caption={`${plant.wateringIntervalDays}일마다`} icon={Droplet} tone="water" />
+          </View>
+          <View style={styles.gridRow}>
+            <InfoCard compact label="Location" value={plant.location.label} caption={state.room.name} icon={MapPin} tone="green" />
+            <InfoCard compact label="Health" value={health.label} caption={health.caption} icon={Heart} tone="clay" />
+          </View>
+        </View>
+      </View>
+
+      {/* Watering */}
+      <View style={styles.section}>
+        <Card tone="surface" padding={Spacing.xl} radius={Radius.xl}>
+          <View style={styles.cardHeader}>
+            <View style={styles.flex}>
+              <AppText variant="label" color={Colors.waterDeep}>
+                Watering
+              </AppText>
+              <AppText variant="h2" style={styles.cardTitle}>
+                다음 물주기
+              </AppText>
+            </View>
+            <AppText variant="valueLarge" color={water.isDue ? Colors.waterDeep : Colors.text}>
+              {water.labelKo}
+            </AppText>
+          </View>
+          <AppText variant="caption" color={Colors.textSecondary} style={styles.cardCaption}>
+            {plant.wateringIntervalDays}일마다 · 마지막 물주기 {water.daysSinceWatered === 0 ? '오늘' : `${water.daysSinceWatered}일 전`}
+          </AppText>
+          <View style={styles.cycle}>
+            <WaterCycle intervalDays={plant.wateringIntervalDays} daysSinceWatered={water.daysSinceWatered} />
+          </View>
+          {water.wateredToday ? (
+            <View style={styles.watered}>
+              <CircleCheck size={18} color={Colors.primary} strokeWidth={2} />
+              <AppText variant="bodyStrong" color={Colors.deepGreen}>
+                오늘 물을 줬어요
+              </AppText>
+            </View>
+          ) : (
+            <PrimaryButton title="물 줬어요" icon={Droplet} tone="water" onPress={handleWater} />
+          )}
+        </Card>
+      </View>
+
+      {/* Placement */}
+      <View style={styles.section}>
+        <Card padding={Spacing.xl} radius={Radius.xl}>
+          <AppText variant="label" color={Colors.primary}>
+            Placement
+          </AppText>
+          <AppText variant="h2" style={styles.cardTitle}>
+            배치 분석
+          </AppText>
+
+          <View style={styles.miniPlan}>
+            <FloorPlanGrid
+              room={state.room}
+              showFurnitureLabels={false}
+              showWindowLabels={false}
+              surfaceColor={Colors.surfaceMuted}
+              markers={[
+                { id: 'cur', position: current.position, variant: recommended ? 'current' : 'plant' },
+                ...(recommended ? [{ id: 'rec', position: recommended.position, variant: 'recommended' as const }] : []),
+              ]}
+              path={recommended ? { from: current.position, to: recommended.position } : null}
+            />
+          </View>
+
+          <View style={styles.rings}>
+            <View style={styles.ringItem}>
+              <ScoreRing value={current.score} color={recommended ? Colors.sunlight : Colors.primary} trackColor="#F1F1EA" />
+              <AppText variant="captionStrong" style={styles.ringLabel}>
+                현재 위치 적합도
+              </AppText>
+              <AppText variant="small" color={Colors.textSecondary}>
+                {current.label} · {LIGHT_LEVEL_LABEL[current.lightLevel]}
+              </AppText>
+            </View>
+            {recommended ? (
+              <>
+                <ArrowRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
+                <View style={styles.ringItem}>
+                  <ScoreRing value={recommended.score} />
+                  <AppText variant="captionStrong" style={styles.ringLabel}>
+                    추천 위치 적합도
+                  </AppText>
+                  <AppText variant="small" color={Colors.textSecondary}>
+                    {recommended.label} · {recommended.lightLabel}
+                  </AppText>
+                </View>
+              </>
+            ) : null}
+          </View>
+
+          <View style={[styles.note, !recommended && styles.noteOk]}>
+            <Sparkles size={16} color={recommended ? Colors.sunlightDeep : Colors.primary} strokeWidth={1.9} />
+            <AppText variant="bodyStrong" style={styles.flex}>
+              {recommended ? '현재 위치보다 더 잘 맞는 장소가 있어요.' : '지금 위치가 가장 잘 맞아요.'}
+            </AppText>
+          </View>
+
+          {recommended ? (
+            <PrimaryButton title="더 좋은 위치 찾아보기" icon={ArrowRight} iconPosition="right" onPress={openRecommendation} />
+          ) : (
+            <SecondaryButton title="공간에서 보기" onPress={() => router.navigate('/space')} />
+          )}
+        </Card>
+      </View>
+
+      {/* Care guide */}
+      <View style={styles.section}>
+        <SectionHeader eyebrow="Care guide" title={`${species.name} 돌보기`} />
+        <Card padding={Spacing.xl} radius={Radius.xl}>
+          <AppText variant="body" color={Colors.text} style={styles.summary}>
+            {species.summary}
+          </AppText>
+          <View style={styles.guideRows}>
+            <GuideRow icon={Sun} label="선호 광량" value={LIGHT_PREFERENCE_LABEL[species.preferredLight]} />
+            <GuideRow icon={Thermometer} label="적정 온도" value={species.temperature} />
+            <GuideRow icon={Waves} label="습도" value={species.humidity} />
+            <GuideRow icon={Gauge} label="난이도" value={species.difficulty} last />
+          </View>
+        </Card>
+      </View>
+    </ScreenContainer>
+  );
+}
+
+function GuideRow({ icon: Icon, label, value, last }: { icon: typeof Sun; label: string; value: string; last?: boolean }) {
+  return (
+    <View style={[styles.guideRow, !last && styles.guideDivider]}>
+      <Icon size={16} color={Colors.primary} strokeWidth={1.8} />
+      <AppText variant="caption" color={Colors.textSecondary} style={styles.flex}>
+        {label}
+      </AppText>
+      <AppText variant="captionStrong">{value}</AppText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  hero: {
+    height: 250,
+    borderRadius: Radius.xl + 4,
+    backgroundColor: Colors.lightGreen,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: Spacing.md,
+    overflow: 'hidden',
+    marginTop: Spacing.xs,
+  },
+  heroChip: {
+    position: 'absolute',
+    top: Spacing.lg,
+    left: Spacing.lg,
+    backgroundColor: Colors.surface,
+  },
+  titleBlock: {
+    marginTop: Spacing.xl,
+  },
+  scientific: {
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: Spacing.md,
+  },
+  section: {
+    marginTop: Spacing.xxl,
+  },
+  grid: {
+    gap: Spacing.md,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  cardTitle: {
+    marginTop: 4,
+  },
+  cardCaption: {
+    marginTop: 4,
+  },
+  cycle: {
+    marginVertical: Spacing.xl,
+  },
+  watered: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    height: 52,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.lightGreen,
+  },
+  miniPlan: {
+    marginTop: Spacing.lg,
+    padding: Spacing.xs,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceMuted,
+  },
+  rings: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: Spacing.xl,
+  },
+  ringItem: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  ringLabel: {
+    marginTop: Spacing.sm,
+  },
+  note: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
+    padding: Spacing.md,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.sunlightSoft,
+  },
+  noteOk: {
+    backgroundColor: Colors.lightGreen,
+  },
+  summary: {
+    lineHeight: 23,
+  },
+  guideRows: {
+    marginTop: Spacing.lg,
+  },
+  guideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 12,
+  },
+  guideDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+});
