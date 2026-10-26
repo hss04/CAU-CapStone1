@@ -179,7 +179,7 @@ def delete_room(room_id:int,db:Db,user:CurrentUser):
 
 @router.get('/rooms/{room_id}/grid',response_model=s.GridSpec,tags=['Geometry'])
 def get_grid(room_id:int,db:Db,user:CurrentUser,
-             cell_size_m:Annotated[float,Query(ge=0.05,le=5,allow_inf_nan=False)]=0.25,
+             cell_size_m:Annotated[float,Query(ge=0.05,le=5,allow_inf_nan=False)]=0.2,
              sample_height_m:Annotated[float,Query(ge=0,le=10,allow_inf_nan=False)]=0):
     room=owned_room(db,user,room_id)
     if room.coordinate_frame != s.COORDINATE_SYSTEM:

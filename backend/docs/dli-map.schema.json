@@ -121,6 +121,36 @@
   },
   "additionalProperties": false,
   "properties": {
+    "period": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Period"
+    },
+    "mock_sky": {
+      "default": false,
+      "title": "Mock Sky",
+      "type": "boolean"
+    },
+    "temporary_direction": {
+      "default": false,
+      "title": "Temporary Direction",
+      "type": "boolean"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
     "schema_version": {
       "const": "dli_map_v2",
       "default": "dli_map_v2",

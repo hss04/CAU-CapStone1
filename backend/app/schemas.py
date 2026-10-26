@@ -258,6 +258,10 @@ DliValue = Annotated[float, Field(ge=0, allow_inf_nan=False)] | None
 
 
 class DliMap(Input):
+    period: dict | None = None
+    mock_sky: bool = False
+    temporary_direction: bool = False
+    warnings: list[str] = Field(default_factory=list)
     schema_version: Literal['dli_map_v2'] = 'dli_map_v2'
     room_id: int = Field(gt=0)
     geometry_version: int = Field(gt=0)

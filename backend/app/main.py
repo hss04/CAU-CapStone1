@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, update
+from app.integration_models import IntegrationJob
+from app.database import SessionLocal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import router
 from app.weather import router as weather_router
+from app.integration import router as integration_router
 from app.config import get_settings
 from app.database import Base, engine
 
@@ -18,6 +21,11 @@ async def lifespan(app:FastAPI):
     for table,column in [('rooms','saved_at'),('windows','measurement')]:
         if column not in {c['name'] for c in inspector.get_columns(table)}:
             raise RuntimeError('Existing DB needs migration: stop server and run python scripts/migrate_v3.py')
+    # This MVP uses one server worker. A restart interrupts in-process jobs.
+    with SessionLocal() as db:
+        db.execute(update(IntegrationJob).where(IntegrationJob.status.in_(['PENDING','RUNNING']))
+                   .values(status='FAILED',error='Server restarted during processing; submit again'))
+        db.commit()
     yield
 
 
@@ -29,6 +37,7 @@ if get_settings().cors_origins:
                        allow_headers=['Authorization','Content-Type'])
 app.include_router(router)
 app.include_router(weather_router)
+app.include_router(integration_router)
 
 
 @app.get('/health',tags=['Health'])

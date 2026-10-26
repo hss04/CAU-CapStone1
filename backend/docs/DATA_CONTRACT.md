@@ -1,3 +1,5 @@
+> 연동 추가 구현과 현재 제한은 [INTEGRATION.md](../INTEGRATION.md)를 먼저 확인하세요.
+
 # Android 프로젝트 저장 규격과 백엔드 계약 v2
 
 기준 파일은 제공된 Android 프로젝트의 `RoomCoordinates.kt`, `RoomMeasurementStore.kt`, `WindowMeasurementCalculator.kt`, `RoomAreaCalculator.kt`, `docs/window-data.md`입니다. 앱의 실제 저장 규격을 우선 적용했습니다. DLI 격자는 Android 파일에 정의되어 있지 않아 이 문서의 별도 확장 규격으로 제공합니다.

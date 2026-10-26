@@ -1,3 +1,5 @@
+> 연동 추가 구현과 현재 제한은 [INTEGRATION.md](INTEGRATION.md)를 먼저 확인하세요.
+
 # PlantLight FastAPI 백엔드
 
 로그인, 방/창문 좌표, 식물 종류와 사용자 식물 위치를 관리하는 백엔드입니다. 제공된 AR 방·창문 앱의 저장 규격 v3에 맞춘 보정 버전(0.2.0)입니다. Python 3.11 이상이 필요하며 Python 3.12에서 테스트했습니다. Android 프로젝트와 별도로 PC에서 실행합니다.
