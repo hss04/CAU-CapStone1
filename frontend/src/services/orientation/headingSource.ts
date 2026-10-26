@@ -15,6 +15,8 @@ export interface HeadingSample {
   azimuth: number;
   /** 카메라 상하 기울기 (°) */
   pitch: number;
+  /** 카메라 좌우 기울기 (°, 시계 방향 +) */
+  roll: number;
   /** 자기장 세기 (μT) */
   fieldStrength: number;
   timestamp: number;
@@ -79,6 +81,7 @@ export class SensorHeadingSource implements HeadingSource {
         listener({
           azimuth: this.smoother.push(o.azimuth),
           pitch: o.pitch,
+          roll: o.roll,
           fieldStrength: length(this.mag),
           timestamp: Date.now(),
         });
@@ -114,7 +117,13 @@ export class SimulatedHeadingSource implements HeadingSource {
       last = now;
       azimuth = normalizeDeg(azimuth + this.degPerSecond * dt + (Math.random() - 0.5) * 0.6);
       // 창밖 스캔 목표 자세(약 30° 위로 든 상태)를 흉내 낸다
-      listener({ azimuth, pitch: 30 + (Math.random() - 0.5) * 2, fieldStrength: 48, timestamp: now });
+      listener({
+        azimuth,
+        pitch: 30 + (Math.random() - 0.5) * 2,
+        roll: (Math.random() - 0.5) * 2,
+        fieldStrength: 48,
+        timestamp: now,
+      });
     }, SENSOR_INTERVAL_MS);
   }
 

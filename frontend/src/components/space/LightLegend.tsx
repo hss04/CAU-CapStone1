@@ -2,21 +2,31 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
 import { Colors, Spacing } from '@/constants/theme';
-import { LIGHT_LEGEND } from '@/services/space/lightAnalysis';
+import { DLI_LEGEND, LIGHT_LEGEND } from '@/services/space/lightAnalysis';
 
 export interface LightLegendProps {
   showPlant?: boolean;
   showWindow?: boolean;
   showRecommendation?: boolean;
+  /** DLI 지도 범례 (mol/m²/day 구간) */
+  dli?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
 /** 평면도 하단 범례: 빛 단계 + 마커 */
-export function LightLegend({ showPlant = true, showWindow = true, showRecommendation = false, style }: LightLegendProps) {
+export function LightLegend({ showPlant = true, showWindow = true, showRecommendation = false, dli = false, style }: LightLegendProps) {
+  const levels = dli
+    ? DLI_LEGEND.map((l) => ({ key: l.label, label: l.label, color: l.color }))
+    : LIGHT_LEGEND.map((l) => ({ key: l.level, label: l.label, color: l.color }));
   return (
     <View style={[styles.row, style]}>
-      {LIGHT_LEGEND.map((l) => (
-        <View key={l.level} style={styles.item}>
+      {dli ? (
+        <AppText variant="small" color={Colors.textTertiary}>
+          DLI (mol/m²/day)
+        </AppText>
+      ) : null}
+      {levels.map((l) => (
+        <View key={l.key} style={styles.item}>
           <View style={[styles.swatch, { backgroundColor: l.color }]} />
           <AppText variant="small" color={Colors.textSecondary}>
             {l.label}

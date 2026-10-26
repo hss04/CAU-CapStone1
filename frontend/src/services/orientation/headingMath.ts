@@ -70,6 +70,11 @@ export interface Orientation {
   azimuth: number;
   /** 카메라 방향의 상하 각도 (수평 0°, 하늘 쪽 +) */
   pitch: number;
+  /**
+   * 카메라 광축 둘레의 좌우 기울기 (수평 0°).
+   * 화면을 보는 사용자 기준으로 휴대폰을 시계 방향으로 기울이면(화면 오른쪽이 내려가면) +.
+   */
+  roll: number;
   /** 어느 축을 기준으로 방위각을 계산했는지 (휴대폰을 눕히면 top) */
   axis: 'camera' | 'top';
 }
@@ -94,14 +99,16 @@ export function computeOrientation(up: Vec3, mag: Vec3): Orientation | null {
 
   const camUp = dot(CAMERA, u);
   const pitch = Math.asin(Math.max(-1, Math.min(1, camUp))) * RAD;
+  // 시계 방향으로 기울면 화면 오른쪽(x)이 아래로 내려가 위쪽 벡터의 x 성분이 음수가 된다
+  const roll = Math.atan2(-u.x, u.y) * RAD;
 
   // 휴대폰을 거의 눕힌 경우 카메라 축의 수평 성분이 사라지므로 화면 위쪽(y) 축을 사용
   if (Math.abs(camUp) < 0.85) {
     const azimuth = normalizeDeg(Math.atan2(dot(CAMERA, east), dot(CAMERA, north)) * RAD);
-    return { azimuth, pitch, axis: 'camera' };
+    return { azimuth, pitch, roll, axis: 'camera' };
   }
   const azimuth = normalizeDeg(Math.atan2(east.y, north.y) * RAD);
-  return { azimuth, pitch, axis: 'top' };
+  return { azimuth, pitch, roll, axis: 'top' };
 }
 
 /**
@@ -131,4 +138,23 @@ export class CircularSmoother {
   reset() {
     this.initialized = false;
   }
+}
+
+/**
+ * 원형 평균 + 원형 표준편차 (°).
+ * 359°와 1°의 평균이 180°가 아니라 0°가 되도록 각도를 단위 벡터로 평균낸다.
+ */
+export function circularStats(degs: number[]): { mean: number; spread: number } | null {
+  if (!degs.length) return null;
+  let c = 0;
+  let s = 0;
+  for (const d of degs) {
+    c += Math.cos(d / RAD);
+    s += Math.sin(d / RAD);
+  }
+  c /= degs.length;
+  s /= degs.length;
+  const r = Math.min(1, Math.hypot(c, s));
+  const spread = r > 0 ? Math.sqrt(-2 * Math.log(r)) * RAD : 180;
+  return { mean: normalizeDeg(Math.atan2(s, c) * RAD), spread };
 }

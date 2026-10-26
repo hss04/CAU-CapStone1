@@ -19,6 +19,7 @@ import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 import { findWindow, windowFacingAzimuth, windowName } from '@/services/space/windows';
 import { analyzeWindowScan, formatDeg, formatSigned, type CaptureStat } from '@/services/windowScan/scanAnalysis';
 import { DEFAULT_SCAN_CONFIG } from '@/services/windowScan/scanTracker';
+import { toScanUpload } from '@/services/windowScan/uploadPayload';
 import { useGarden } from '@/store/GardenProvider';
 
 /**
@@ -47,8 +48,17 @@ export default function WindowScanResultScreen() {
   const analysis = analyzeWindowScan(scan, step, target);
   const allOk = analysis.checks.every((c) => c.ok);
 
+  const facing = scan.facing;
+  const camera = scan.camera;
+
   const logLines = [
     `windowId: ${scan.windowId}`,
+    facing
+      ? `facing: ${formatDeg(facing.azimuth)} (mag ${formatDeg(facing.magneticAzimuth)}, spread ±${facing.spreadDeg}°, ${facing.sampleCount} samples, ${facing.avgFieldStrength} μT)`
+      : 'facing: - (기록 안 됨)',
+    camera
+      ? `camera: hfov ${formatDeg(camera.hfovDeg, 2)} · vfov ${formatDeg(camera.vfovDeg, 2)} · ${camera.width}×${camera.height} (${camera.fovSource})`
+      : 'camera: -',
     `startAzimuth: ${formatDeg(scan.startAzimuth)}`,
     `endAzimuth: ${formatDeg(scan.endAzimuth)}`,
     `northReference: ${scan.northReference} (declination ${formatSigned(scan.declinationDeg)}, ${scan.declinationSource})`,
@@ -68,13 +78,21 @@ export default function WindowScanResultScreen() {
     '────────────────────────',
     ...analysis.stats.map(
       (s) =>
-        `Capture #${s.index + 1} → ${formatDeg(s.capture.azimuth)} (mag ${formatDeg(s.capture.magneticAzimuth)})${s.diff === null ? '' : ` (${formatSigned(s.diff)})`}`,
+        `Capture #${s.index + 1} → ${formatDeg(s.capture.azimuth)} (mag ${formatDeg(s.capture.magneticAzimuth)})${s.diff === null ? '' : ` (${formatSigned(s.diff)})`}` +
+        ` · roll ${s.capture.roll === undefined ? '-' : formatSigned(s.capture.roll)}` +
+        (s.capture.width ? ` · ${s.capture.width}×${s.capture.height}` : ''),
     ),
   ];
 
   const printJson = () => {
     console.log('[WindowScan]', JSON.stringify(scan, null, 2));
     toast.show('WindowScan JSON을 콘솔에 출력했어요', 'leaf');
+  };
+
+  const printUploadJson = () => {
+    // 백엔드 창문 ID는 API 연동 전이라 0으로 둔다
+    console.log('[ScanUpload]', JSON.stringify(toScanUpload(scan, 0).meta, null, 2));
+    toast.show('업로드 JSON을 콘솔에 출력했어요', 'leaf');
   };
 
   return (
@@ -96,6 +114,11 @@ export default function WindowScanResultScreen() {
             {roomWindow ? windowName(roomWindow) : scan.windowId} · {scan.debug?.headingSource === 'simulated' ? '시뮬레이션 방향' : '실제 센서'}
           </AppText>
           <View style={styles.kv}>
+            <KV k="Window Facing" v={facing ? `${formatDeg(facing.azimuth)} · ±${facing.spreadDeg}°` : '-'} />
+            <KV
+              k="Camera FOV"
+              v={camera ? `${camera.hfovDeg.toFixed(1)}° × ${camera.vfovDeg.toFixed(1)}° (${camera.fovSource})` : '-'}
+            />
             <KV k="Start Azimuth" v={formatDeg(scan.startAzimuth)} />
             <KV k="End Azimuth" v={formatDeg(scan.endAzimuth)} />
             <KV k="North Ref" v={`${scan.northReference === 'true' ? '진북' : '자북'} · 편각 ${formatSigned(scan.declinationDeg)}`} />
@@ -143,13 +166,13 @@ export default function WindowScanResultScreen() {
               startAzimuth={scan.startAzimuth}
               scannedAngle={scan.scannedAngle}
               captures={scan.captures}
-              facingAzimuth={roomWindow ? windowFacingAzimuth(roomWindow) : undefined}
+              facingAzimuth={(roomWindow && windowFacingAzimuth(roomWindow)) ?? undefined}
             />
             <View style={styles.compassInfo}>
               <AppText variant="small" color={Colors.textSecondary}>
                 초록 호 = 스캔 범위{'\n'}선 = 촬영 방향{'\n'}○ 시작 · ● 끝
               </AppText>
-              {roomWindow ? (
+              {roomWindow && !roomWindow.facingUnknown ? (
                 <AppText variant="small" color={Colors.waterDeep}>
                   파란 점선 = 창문 정면{'\n'}({roomWindow.facing} {windowFacingAzimuth(roomWindow)}°, 평면도 기준)
                 </AppText>
@@ -180,6 +203,7 @@ export default function WindowScanResultScreen() {
           </View>
           <View style={styles.actions}>
             <SecondaryButton title="JSON 콘솔 출력" icon={Code} variant="outline" size="md" onPress={printJson} />
+            <SecondaryButton title="업로드 JSON 콘솔 출력" icon={Code} variant="outline" size="md" onPress={printUploadJson} />
             <SecondaryButton
               title="창밖 다시 스캔"
               icon={RotateCcw}
@@ -210,7 +234,7 @@ export default function WindowScanResultScreen() {
               <AppText variant="small" color={Colors.white} style={[styles.mono, styles.previewText]}>
                 {`#${preview.index + 1} · Azimuth ${formatDeg(preview.capture.azimuth)} · Relative ${formatDeg(preview.relative)} · Pitch ${
                   preview.capture.pitch === undefined ? '-' : formatSigned(preview.capture.pitch)
-                }`}
+                } · Roll ${preview.capture.roll === undefined ? '-' : formatSigned(preview.capture.roll)}`}
               </AppText>
             </>
           ) : null}

@@ -1,7 +1,7 @@
-import type { CameraView } from 'expo-camera';
+import type { CameraCapturedPicture, CameraView } from 'expo-camera';
 import { useCallback, useRef, useState } from 'react';
 
-import type { PhotoShot } from '@/services/windowScan/scanController';
+import type { CapturedPhoto, PhotoShot } from '@/services/windowScan/scanController';
 
 const SAVE_TIMEOUT_MS = 10000;
 
@@ -20,27 +20,34 @@ export function useScanCamera() {
     const camera = cameraRef.current;
     if (!camera || !isReady) return null;
 
-    let settle: ((uri: string) => void) | null = null;
+    let settle: ((photo: CapturedPhoto) => void) | null = null;
     let fail: ((e: unknown) => void) | null = null;
-    const uri = new Promise<string>((resolve, reject) => {
+    const photo = new Promise<CapturedPhoto>((resolve, reject) => {
       settle = resolve;
       fail = reject;
     });
     const timeout = setTimeout(() => fail?.(new Error('picture save timeout')), SAVE_TIMEOUT_MS);
-    const done = (value: string) => {
+    const done = (picture: CameraCapturedPicture) => {
       clearTimeout(timeout);
-      settle?.(value);
+      settle?.({
+        uri: picture.uri,
+        width: picture.width,
+        height: picture.height,
+        // 화각 계산에 쓸 초점거리(35mm 환산)를 얻기 위해 EXIF를 함께 받는다
+        exif: picture.exif && typeof picture.exif === 'object' ? picture.exif : undefined,
+      });
     };
 
     const captured = camera
       .takePictureAsync({
         quality: 0.5,
+        exif: true,
         shutterSound: false,
-        onPictureSaved: (picture) => done(picture.uri),
+        onPictureSaved: done,
       })
       .then((picture) => {
         // onPictureSaved를 지원하지 않는 환경에서는 결과가 바로 온다
-        if (picture?.uri) done(picture.uri);
+        if (picture?.uri) done(picture);
       })
       .catch((e) => {
         clearTimeout(timeout);
@@ -48,7 +55,7 @@ export function useScanCamera() {
         throw e;
       });
 
-    return { captured, uri };
+    return { captured, photo };
   }, [isReady]);
 
   return { cameraRef, isReady, onCameraReady, shoot };
@@ -57,5 +64,5 @@ export function useScanCamera() {
 /** 카메라 없이 흐름만 확인하는 개발용 셔터 (이미지 URI는 비어 있음) */
 export const mockShooter = (): PhotoShot => ({
   captured: new Promise((resolve) => setTimeout(resolve, 60)),
-  uri: Promise.resolve(''),
+  photo: Promise.resolve({ uri: '', width: 0, height: 0 }),
 });

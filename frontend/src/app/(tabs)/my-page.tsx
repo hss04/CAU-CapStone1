@@ -7,8 +7,11 @@ import {
   Droplets,
   Leaf,
   ListRestart,
+  LogIn,
+  LogOut,
   Map as MapIcon,
   PlayCircle,
+  RefreshCw,
   ScanLine,
   Settings,
   Smile,
@@ -25,10 +28,11 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { SettingRow } from '@/components/common/SettingRow';
 import { useToast } from '@/components/common/Toast';
-import { APP_NAME, APP_NAME_EN, APP_VERSION } from '@/constants/app';
+import { APP_NAME, APP_VERSION } from '@/constants/app';
 import { CHARACTER_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { useGarden } from '@/store/GardenProvider';
+import { useAuth } from '@/store/AuthProvider';
+import { useGarden, type SyncState } from '@/store/GardenProvider';
 import { diffInDays, parseISODate } from '@/utils/date';
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -44,8 +48,16 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+function syncSubtitle(sync: SyncState, plantCount: number): string {
+  if (sync.status === 'loading') return '서버에서 받는 중…';
+  if (sync.status === 'error') return `받지 못했어요 · ${sync.message ?? ''} · 눌러서 다시 시도`;
+  const skipped = sync.skipped ? ` · 앱에 없는 종 ${sync.skipped}개 제외` : '';
+  return `서버 식물 ${plantCount}개${skipped}`;
+}
+
 export default function MyPageScreen() {
   const { state, today, actions } = useGarden();
+  const auth = useAuth();
   const toast = useToast();
   const { user, plants, room, notifications } = state;
 
@@ -83,6 +95,34 @@ export default function MyPageScreen() {
           <Stat label="Days" value={`${days}`} />
         </View>
       </Card>
+
+      <Group title="Account">
+        {auth.status === 'signedIn' && auth.user ? (
+          <>
+            <SettingRow icon={RefreshCw} title="서버 동기화" subtitle={syncSubtitle(state.sync, plants.length)} tone="green" onPress={actions.reloadFromServer} />
+            <SettingRow
+              icon={LogOut}
+              title="로그아웃"
+              subtitle="데모 데이터로 돌아가요"
+              tone="neutral"
+              onPress={async () => {
+                await auth.signOut();
+                toast.show('로그아웃했어요', 'leaf');
+              }}
+              showDivider={false}
+            />
+          </>
+        ) : (
+          <SettingRow
+            icon={LogIn}
+            title="로그인 / 회원가입"
+            subtitle={auth.status === 'restoring' ? '로그인 정보를 확인하고 있어요' : '지금은 데모 데이터예요. 로그인하면 서버에 저장돼요'}
+            tone="green"
+            onPress={() => router.push('/login')}
+            showDivider={false}
+          />
+        )}
+      </Group>
 
       <Group title="Space & Plants">
         <SettingRow icon={MapIcon} title="내 공간 관리" subtitle={`${room.name} · ${room.orientationLabel} · 창문 ${room.windows.length}개`} onPress={() => router.navigate('/space')} />
@@ -153,7 +193,7 @@ export default function MyPageScreen() {
       <View style={styles.footer}>
         <BellRing size={14} color={Colors.textTertiary} strokeWidth={1.6} />
         <AppText variant="small" color={Colors.textTertiary}>
-          {APP_NAME} · {APP_NAME_EN} · v{APP_VERSION}
+          {APP_NAME} · v{APP_VERSION}
         </AppText>
       </View>
     </ScreenContainer>

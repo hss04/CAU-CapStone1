@@ -12,10 +12,12 @@ import { PlantIllustration } from './PlantIllustration';
 export interface SpeciesPickerProps {
   value: PlantSpeciesId | null;
   onChange: (id: PlantSpeciesId) => void;
+  /** 고를 수 없는 종과 그 이유 (예: 서버 카탈로그에 없음) */
+  unavailable?: Partial<Record<PlantSpeciesId, string>>;
 }
 
 /** 식물 종류 선택 — 가로 스크롤 카드 */
-export function SpeciesPicker({ value, onChange }: SpeciesPickerProps) {
+export function SpeciesPicker({ value, onChange, unavailable }: SpeciesPickerProps) {
   return (
     <ScrollView
       horizontal
@@ -24,11 +26,13 @@ export function SpeciesPicker({ value, onChange }: SpeciesPickerProps) {
       style={styles.scroll}>
       {PLANT_SPECIES.map((s) => {
         const selected = s.id === value;
+        const disabledReason = unavailable?.[s.id];
         return (
           <Pressable
             key={s.id}
             accessibilityRole="radio"
-            accessibilityState={{ selected }}
+            accessibilityState={{ selected, disabled: !!disabledReason }}
+            disabled={!!disabledReason}
             onPress={() => {
               haptic.selection();
               onChange(s.id);
@@ -36,6 +40,7 @@ export function SpeciesPicker({ value, onChange }: SpeciesPickerProps) {
             style={({ pressed }) => [
               styles.card,
               selected ? styles.cardSelected : Shadows.soft,
+              disabledReason ? styles.cardDisabled : null,
               pressed && { transform: [{ scale: 0.97 }] },
             ]}>
             <View style={[styles.art, selected && styles.artSelected]}>
@@ -49,7 +54,7 @@ export function SpeciesPicker({ value, onChange }: SpeciesPickerProps) {
               {s.name}
             </AppText>
             <AppText variant="small" color={Colors.textTertiary} numberOfLines={1}>
-              {s.englishName}
+              {disabledReason ?? s.englishName}
             </AppText>
             {selected ? (
               <View style={styles.badge}>
@@ -85,6 +90,9 @@ const styles = StyleSheet.create({
   cardSelected: {
     borderColor: Colors.primary,
     backgroundColor: Colors.surface,
+  },
+  cardDisabled: {
+    opacity: 0.45,
   },
   art: {
     width: '100%',

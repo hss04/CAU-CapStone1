@@ -17,11 +17,50 @@ export type ScanCapture = {
   magneticAzimuth: number;
   /** 카메라의 상하 기울기 (수평 0°, 위쪽 +) */
   pitch?: number;
+  /** 카메라의 좌우 기울기 (수평 0°, 화면을 보는 사용자 기준 시계 방향 +) */
+  roll?: number;
+  /** 저장된 이미지 크기 (px, 긴 변 최대 1280으로 축소한 뒤) */
+  width?: number;
+  height?: number;
   timestamp: number;
+};
+
+/**
+ * 창문 정면 방위각 — 스캔 전에 휴대폰을 창문과 평행하게(뒷면을 유리에 대고) 들고 기록한다.
+ * 계산 쪽에서 창문 바깥 법선(방 좌표)과 비교해 방 방향(x_axis_azimuth_deg)을 구하는 데 쓴다.
+ */
+export type WindowFacing = {
+  /** 진북 기준 (0~360) */
+  azimuth: number;
+  /** 보정 전 센서 원본 (자북 기준) */
+  magneticAzimuth: number;
+  /** 기록 구간 방위각의 원형 표준편차 (°) — 손떨림·자기 간섭 정도 */
+  spreadDeg: number;
+  /** 평균에 쓴 센서 샘플 수 */
+  sampleCount: number;
+  /** 기록 구간 평균 자기장 세기 (μT) */
+  avgFieldStrength: number;
+  timestamp: number;
+};
+
+/** 화각 출처 — exif35mm: EXIF 35mm 환산 초점거리로 계산 / default: EXIF가 없어 기본값 사용 */
+export type FovSource = 'exif35mm' | 'default';
+
+export type ScanCamera = {
+  hfovDeg: number;
+  vfovDeg: number;
+  /** 화각 계산 기준 이미지 크기 (px, 저장된 이미지와 같음) */
+  width: number;
+  height: number;
+  fovSource: FovSource;
 };
 
 export type WindowScan = {
   windowId: string;
+  /** 창문 정면 방위각 (스캔 시작 전 기록) */
+  facing?: WindowFacing;
+  /** 카메라 화각·해상도 (첫 사진 EXIF 기준) */
+  camera?: ScanCamera;
   /** 진북 기준 */
   startAzimuth: number;
   /** 진북 기준 */

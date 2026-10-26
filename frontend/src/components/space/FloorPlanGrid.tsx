@@ -4,9 +4,10 @@ import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Rect, Stop, 
 
 import { FACING_KO } from '@/constants/labels';
 import { Colors } from '@/constants/theme';
-import { getLightMap, lightOverlayColor } from '@/services/space/lightAnalysis';
+import { dliOverlayColor, getLightMap, lightOverlayColor } from '@/services/space/lightAnalysis';
 import { windowName } from '@/services/space/windows';
 import type { Furniture, GridPosition, LightMap, Room, RoomDoor, RoomWindow, TimeOfDay, WallOpening } from '@/types';
+import type { DliGrid } from '@/types/api';
 
 import { PlantMarker, type MarkerStatus, type MarkerVariant } from './PlantMarker';
 
@@ -28,6 +29,8 @@ export interface FloorPlanGridProps {
   timeOfDay?: TimeOfDay;
   /** 백엔드 분석 광량 맵을 직접 넘길 때 사용 (없으면 room 기반 추정값) */
   lightMap?: LightMap;
+  /** 격자별 DLI (mol/m²/day, dli_map_v2 [row][col]) — 있으면 광량 지수 대신 DLI로 칠한다. null 칸은 방 밖 */
+  dli?: DliGrid | null;
   showLight?: boolean;
   showFurnitureLabels?: boolean;
   showWindowLabels?: boolean;
@@ -111,6 +114,29 @@ function openingCoords(o: WallOpening, g: Geo) {
       return { a: [ox + floorW, oy + o.offset * cell], b: [ox + floorW, oy + (o.offset + o.length) * cell], n: [-1, 0] };
   }
 }
+
+/**
+ * 다각형 방(기울어진 벽) 창문의 화면 좌표.
+ * a→b = 창문 선분, u = 선분 방향, n = 방 안쪽 법선, quad = 벽 두께를 덮는 사각형.
+ */
+function segmentCoords(w: RoomWindow, g: Geo) {
+  const s = w.segment!;
+  const a = [g.ox + s.x1 * g.cell, g.oy + s.y1 * g.cell];
+  const b = [g.ox + s.x2 * g.cell, g.oy + s.y2 * g.cell];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const u = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  const n = w.inward ? [w.inward.x, w.inward.y] : [-u[1], u[0]];
+  const h = g.wallT / 2 + 1;
+  const quad = [
+    [a[0] - n[0] * h, a[1] - n[1] * h],
+    [b[0] - n[0] * h, b[1] - n[1] * h],
+    [b[0] + n[0] * h, b[1] + n[1] * h],
+    [a[0] + n[0] * h, a[1] + n[1] * h],
+  ];
+  return { a, b, u, n, quad, mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] };
+}
+
+const toPoints = (pts: number[][]) => pts.map((p) => `${p[0]},${p[1]}`).join(' ');
 
 /** 개구부 위치의 벽을 지우는 사각형 (벽 두께만큼 바깥쪽) */
 function wallCutRect(o: WallOpening, g: Geo) {
@@ -222,6 +248,27 @@ function FurnitureShape({ f, g, room, showLabel }: { f: Furniture; g: Geo; room:
 /* ------------------------------------------------------------------ */
 
 function WindowShape({ w, g, surface }: { w: RoomWindow; g: Geo; surface: string }) {
+  if (w.segment) {
+    const { a, b, n, quad } = segmentCoords(w, g);
+    const t = g.wallT;
+    return (
+      <G>
+        <Polygon points={toPoints(quad)} fill={surface} />
+        <Polygon points={toPoints(quad)} fill={Colors.waterSoft} opacity={0.9} />
+        {[-0.18, 0.18].map((p) => (
+          <Line
+            key={p}
+            x1={a[0] + n[0] * t * p}
+            y1={a[1] + n[1] * t * p}
+            x2={b[0] + n[0] * t * p}
+            y2={b[1] + n[1] * t * p}
+            stroke={Colors.water}
+            strokeWidth={1.4}
+          />
+        ))}
+      </G>
+    );
+  }
   const cut = wallCutRect(w, g);
   const { a, b, n } = openingCoords(w, g);
   const horizontal = n[0] === 0;
@@ -274,9 +321,19 @@ function DoorShape({ d, g, surface }: { d: RoomDoor; g: Geo; surface: string }) 
 
 /** 창문으로 들어오는 빛 줄기 */
 function LightBeam({ w, g }: { w: RoomWindow; g: Geo }) {
-  const { a, b, n } = openingCoords(w, g);
   const depth = g.cell * 4.6;
   const skew = g.cell * 0.9;
+  if (w.segment) {
+    const { a, b, u, n } = segmentCoords(w, g);
+    const pts = [
+      a,
+      b,
+      [b[0] + n[0] * depth + u[0] * skew, b[1] + n[1] * depth + u[1] * skew],
+      [a[0] + n[0] * depth + u[0] * skew * 0.35, a[1] + n[1] * depth + u[1] * skew * 0.35],
+    ];
+    return <Polygon points={toPoints(pts)} fill={`url(#beam-${w.id})`} />;
+  }
+  const { a, b, n } = openingCoords(w, g);
   const horizontal = n[0] === 0;
   const pts = horizontal
     ? [a, b, [b[0] + skew, b[1] + n[1] * depth], [a[0] + skew * 0.35, a[1] + n[1] * depth]]
@@ -301,6 +358,7 @@ export function FloorPlanGrid({
   room,
   timeOfDay = 'average',
   lightMap,
+  dli,
   showLight = true,
   showFurnitureLabels = true,
   showWindowLabels = true,
@@ -324,6 +382,7 @@ export function FloorPlanGrid({
   const map = lightMap ?? getLightMap(room, timeOfDay);
 
   const g = width > 0 ? makeGeo(room, width, compact) : null;
+  const outlinePoints = g && room.outline ? toPoints(room.outline.map((p) => [g.ox + p.x * g.cell, g.oy + p.y * g.cell])) : null;
 
   const handleCellPress = (e: GestureResponderEvent) => {
     if (!g || !onCellPress) return;
@@ -332,7 +391,9 @@ export function FloorPlanGrid({
     const ly = Platform.OS === 'web' && ne.offsetY !== undefined ? ne.offsetY : ne.locationY;
     const x = Math.floor(lx / g.cell);
     const y = Math.floor(ly / g.cell);
-    if (x >= 0 && y >= 0 && x < room.cols && y < room.rows) onCellPress({ x, y });
+    const inBounds = x >= 0 && y >= 0 && x < room.cols && y < room.rows;
+    // 다각형 방의 방 밖 칸은 고를 수 없다
+    if (inBounds && (!room.insideMask || room.insideMask[y]?.[x])) onCellPress({ x, y });
   };
 
   const markerSize =
@@ -364,15 +425,44 @@ export function FloorPlanGrid({
                 <Stop offset="0" stopColor="#FFF6D8" stopOpacity={0.5} />
                 <Stop offset="1" stopColor="#FFF6D8" stopOpacity={0} />
               </LinearGradient>
+              {/* 기울어진 벽 창문: 창문마다 안쪽 방향으로 그라데이션 */}
+              {room.windows
+                .filter((w) => w.segment)
+                .map((w) => {
+                  const { mid, n } = segmentCoords(w, g);
+                  const depth = g.cell * 4.6;
+                  return (
+                    <LinearGradient
+                      key={`grad-${w.id}`}
+                      id={`beam-${w.id}`}
+                      gradientUnits="userSpaceOnUse"
+                      x1={mid[0]}
+                      y1={mid[1]}
+                      x2={mid[0] + n[0] * depth}
+                      y2={mid[1] + n[1] * depth}>
+                      <Stop offset="0" stopColor="#FFF6D8" stopOpacity={0.5} />
+                      <Stop offset="1" stopColor="#FFF6D8" stopOpacity={0} />
+                    </LinearGradient>
+                  );
+                })}
             </Defs>
 
-            {/* 바닥 */}
-            <Rect x={g.ox} y={g.oy} width={g.floorW} height={g.floorH} fill={FLOOR} />
+            {/* 바닥 (다각형 방은 외곽선 모양 그대로) */}
+            {outlinePoints ? (
+              <Polygon points={outlinePoints} fill={FLOOR} />
+            ) : (
+              <Rect x={g.ox} y={g.oy} width={g.floorW} height={g.floorH} fill={FLOOR} />
+            )}
 
-            {/* 빛 환경 grid tiles */}
+            {/* 빛 환경 grid tiles — DLI 지도가 있으면 DLI 값, 없으면 추정 광량 지수 */}
             {map.map((row, y) =>
               row.map((v, x) => {
+                // 다각형 방: 셀 중심이 방 밖인 칸은 그리지 않는다 (DLI 지도에서는 null)
+                if (room.insideMask && !room.insideMask[y]?.[x]) return null;
+                const dliValue = dli ? dli[y]?.[x] : undefined;
+                if (dli && (dliValue === null || dliValue === undefined)) return null;
                 const gap = compact ? 0.8 : 1.4;
+                const fill = !showLight ? TILE_NEUTRAL : dliValue !== undefined && dliValue !== null ? dliOverlayColor(dliValue) : lightOverlayColor(v);
                 return (
                   <Rect
                     key={`${x}-${y}`}
@@ -381,7 +471,7 @@ export function FloorPlanGrid({
                     width={g.cell - gap}
                     height={g.cell - gap}
                     rx={g.cell * (compact ? 0.12 : 0.16)}
-                    fill={showLight ? lightOverlayColor(v) : TILE_NEUTRAL}
+                    fill={fill}
                   />
                 );
               }),
@@ -412,16 +502,20 @@ export function FloorPlanGrid({
             ) : null}
 
             {/* 벽 */}
-            <Rect
-              x={g.ox - g.wallT / 2}
-              y={g.oy - g.wallT / 2}
-              width={g.floorW + g.wallT}
-              height={g.floorH + g.wallT}
-              rx={g.wallT * 0.8}
-              fill="none"
-              stroke={WALL}
-              strokeWidth={g.wallT}
-            />
+            {outlinePoints ? (
+              <Polygon points={outlinePoints} fill="none" stroke={WALL} strokeWidth={g.wallT} strokeLinejoin="round" />
+            ) : (
+              <Rect
+                x={g.ox - g.wallT / 2}
+                y={g.oy - g.wallT / 2}
+                width={g.floorW + g.wallT}
+                height={g.floorH + g.wallT}
+                rx={g.wallT * 0.8}
+                fill="none"
+                stroke={WALL}
+                strokeWidth={g.wallT}
+              />
+            )}
             {room.windows.map((w) => (
               <WindowShape key={w.id} w={w} g={g} surface={surfaceColor} />
             ))}
@@ -443,11 +537,34 @@ export function FloorPlanGrid({
             {/* 창문 라벨 */}
             {showWindowLabels && !compact
               ? room.windows.map((w) => {
+                  const label = w.facingUnknown ? (w.label ?? '창문') : `창문 · ${FACING_KO[w.facing]}`;
+                  if (w.segment) {
+                    // 벽 바깥쪽에, 벽 방향을 따라 (글자가 뒤집히지 않게 -90°~90°로)
+                    const { mid, u, n } = segmentCoords(w, g);
+                    const off = g.wallT + 9;
+                    const tx = mid[0] - n[0] * off;
+                    const ty = mid[1] - n[1] * off + 3.5;
+                    let angle = (Math.atan2(u[1], u[0]) * 180) / Math.PI;
+                    if (angle > 90) angle -= 180;
+                    if (angle < -90) angle += 180;
+                    return (
+                      <SvgText
+                        key={`l-${w.id}`}
+                        x={tx}
+                        y={ty}
+                        fontSize={10}
+                        fontWeight="700"
+                        fill={Colors.waterDeep}
+                        textAnchor="middle"
+                        transform={`rotate(${angle} ${tx} ${ty})`}>
+                        {label}
+                      </SvgText>
+                    );
+                  }
                   const { a, b, n } = openingCoords(w, g);
                   const mx = (a[0] + b[0]) / 2;
                   const my = (a[1] + b[1]) / 2;
                   const off = g.wallT + 7;
-                  const label = `창문 · ${FACING_KO[w.facing]}`;
                   if (n[0] === 0) {
                     const ty = n[1] === 1 ? my - off : my + off + 8;
                     return (
@@ -534,6 +651,15 @@ export function FloorPlanGrid({
 
 /** 창문 터치 영역 — 벽 두께보다 넉넉하게 */
 function windowHitRect(w: RoomWindow, g: Geo) {
+  if (w.segment) {
+    const { quad } = segmentCoords(w, g);
+    const xs = quad.map((p) => p[0]);
+    const ys = quad.map((p) => p[1]);
+    const extra = 12;
+    const x = Math.min(...xs) - extra;
+    const y = Math.min(...ys) - extra;
+    return { x, y, w: Math.max(...xs) + extra - x, h: Math.max(...ys) + extra - y };
+  }
   const cut = wallCutRect(w, g);
   const extra = 14;
   const horizontal = w.wall === 'top' || w.wall === 'bottom';
@@ -544,15 +670,32 @@ function windowHitRect(w: RoomWindow, g: Geo) {
 
 function WindowOverlay({ w, g, selected, scanned }: { w: RoomWindow; g: Geo; selected: boolean; scanned: boolean }) {
   if (!selected && !scanned) return null;
+  const seg = w.segment ? segmentCoords(w, g) : null;
   const cut = wallCutRect(w, g);
-  const { a, b, n } = openingCoords(w, g);
+  const { a, b, n } = seg ?? openingCoords(w, g);
   // 배지는 창문 가운데, 방 안쪽으로 살짝
   const bx = (a[0] + b[0]) / 2 + n[0] * g.cell * 0.55;
   const by = (a[1] + b[1]) / 2 + n[1] * g.cell * 0.55;
   const r = Math.max(7, g.cell * 0.28);
   return (
     <G>
-      {selected ? (
+      {selected && seg ? (
+        <Polygon
+          points={toPoints(
+            seg.quad.map(([x, y], i) => {
+              // 사각형을 바깥쪽으로 3px 넓힌다
+              const along = i === 0 || i === 3 ? -3 : 3;
+              const across = i < 2 ? -3 : 3;
+              return [x + seg.u[0] * along + seg.n[0] * across, y + seg.u[1] * along + seg.n[1] * across];
+            }),
+          )}
+          fill="none"
+          stroke={Colors.sunlight}
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {selected && !seg ? (
         <Rect
           x={cut.x - 3}
           y={cut.y - 3}

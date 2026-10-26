@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { createHeadingSource } from '@/services/orientation/headingSource';
+import { resizeForUpload } from '@/services/windowScan/photoProcessing';
 import {
   WindowScanController,
+  type FacingResult,
   type PhotoShooter,
   type ScanControllerState,
 } from '@/services/windowScan/scanController';
@@ -16,6 +18,7 @@ const INITIAL: ScanControllerState = {
   marks: [],
   captureCount: 0,
   lastCaptureAt: null,
+  facing: null,
 };
 
 /**
@@ -53,6 +56,7 @@ export function useWindowScanController({
       windowId,
       source: createHeadingSource(sourceKind),
       shooter: (...args) => shooterRef.current(...args),
+      processPhoto: resizeForUpload,
       onChange: setState,
       onComplete: (scan) => onCompleteRef.current(scan),
     });
@@ -66,6 +70,7 @@ export function useWindowScanController({
 
   return {
     state,
+    recordFacing: (): FacingResult => controllerRef.current?.recordFacing() ?? 'notReady',
     startScan: () => controllerRef.current?.startScan(),
   };
 }

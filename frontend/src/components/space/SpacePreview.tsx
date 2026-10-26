@@ -5,6 +5,7 @@ import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
 import { SecondaryButton } from '@/components/common/SecondaryButton';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { roomSizeLabel } from '@/services/space/geometry';
 import type { Plant, Room } from '@/types';
 
 import { FloorPlanGrid } from './FloorPlanGrid';
@@ -19,8 +20,7 @@ export interface SpacePreviewProps {
 
 /** HOME / 스캔 완료 화면에서 쓰는 공간 요약 카드 */
 export function SpacePreview({ room, plants = [], onPress, actionLabel, onAction }: SpacePreviewProps) {
-  const widthM = (room.cols * room.cellSizeM).toFixed(1);
-  const heightM = (room.rows * room.cellSizeM).toFixed(1);
+  const sizeLabel = roomSizeLabel(room);
 
   return (
     <Card onPress={onPress} padding={Spacing.lg} radius={Radius.xl}>
@@ -37,7 +37,7 @@ export function SpacePreview({ room, plants = [], onPress, actionLabel, onAction
           <View style={styles.metaList}>
             <Meta icon={Compass} text={room.orientationLabel} />
             <Meta icon={PanelsTopLeft} text={`창문 ${room.windows.length}개`} />
-            <Meta icon={Maximize2} text={`${widthM} × ${heightM}m`} />
+            <Meta icon={Maximize2} text={sizeLabel} />
           </View>
           <View style={styles.plantsPill}>
             <View style={styles.greenDot} />

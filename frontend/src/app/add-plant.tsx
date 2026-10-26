@@ -14,7 +14,7 @@ import { LocationPicker, type LocationValue } from '@/components/plants/Location
 import { PlacementPreview } from '@/components/plants/PlacementPreview';
 import { SpeciesPicker } from '@/components/plants/SpeciesPicker';
 import { Colors, Spacing } from '@/constants/theme';
-import { getSpecies } from '@/data/plantSpecies';
+import { getSpecies, PLANT_SPECIES } from '@/data/plantSpecies';
 import { analyzePlacement } from '@/services/placement/placementEngine';
 import { useGarden } from '@/store/GardenProvider';
 import type { LightPreference, PlantSpeciesId } from '@/types';
@@ -30,6 +30,16 @@ export default function AddPlantScreen() {
   const [light, setLight] = useState<LightPreference>('brightIndirect');
   const [wateringDays, setWateringDays] = useState(7);
   const [location, setLocation] = useState<LocationValue | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 서버 데이터를 쓰는 중이면 서버 카탈로그에 있는 종만 등록할 수 있다
+  const { status: syncStatus } = state.sync;
+  const unavailableReason = syncStatus === 'loading' ? '불러오는 중' : syncStatus === 'error' ? '서버 연결 안 됨' : '서버에 없음';
+  const unavailable =
+    syncStatus === 'demo'
+      ? undefined
+      : Object.fromEntries(PLANT_SPECIES.filter((s) => !state.serverSpecies[s.id]).map((s) => [s.id, unavailableReason]));
+  const serverSpecies = speciesId ? state.serverSpecies[speciesId] : undefined;
 
   const selectSpecies = (id: PlantSpeciesId) => {
     const s = getSpecies(id);
@@ -44,21 +54,27 @@ export default function AddPlantScreen() {
     ? analyzePlacement(state.room, { position: location.position, preferredLight: light, label: location.label }, occupied)
     : null;
 
-  const canSubmit = !!speciesId && name.trim().length > 0 && !!location;
+  const canSubmit = !!speciesId && name.trim().length > 0 && !!location && !submitting;
 
-  const submit = () => {
+  const submit = async () => {
     if (!speciesId || !location) return;
     const trimmed = name.trim();
-    actions.addPlant({
-      name: trimmed,
-      speciesId,
-      preferredLight: light,
-      wateringIntervalDays: wateringDays,
-      position: location.position,
-      locationLabel: location.label,
-    });
-    toast.show(`${withEulReul(trimmed)} 등록했어요 🌱`, 'leaf');
-    goBackOrHome();
+    setSubmitting(true);
+    try {
+      await actions.createPlant({
+        name: trimmed,
+        speciesId,
+        preferredLight: light,
+        wateringIntervalDays: wateringDays,
+        position: location.position,
+        locationLabel: location.label,
+      });
+      toast.show(`${withEulReul(trimmed)} 등록했어요 🌱`, 'leaf');
+      goBackOrHome();
+    } catch (e) {
+      toast.show(`등록하지 못했어요 · ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'leaf');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -70,6 +86,7 @@ export default function AddPlantScreen() {
             title="식물 등록하기"
             icon={Sprout}
             disabled={!canSubmit}
+            loading={submitting}
             onPress={submit}
           />
         }>
@@ -84,7 +101,12 @@ export default function AddPlantScreen() {
         </AppText>
 
         <FormField label="식물 종류" required hint="종류를 고르면 광량과 물주기가 자동으로 채워져요">
-          <SpeciesPicker value={speciesId} onChange={selectSpecies} />
+          <SpeciesPicker value={speciesId} onChange={selectSpecies} unavailable={unavailable} />
+          {serverSpecies ? (
+            <AppText variant="caption" color={Colors.textSecondary} style={styles.dli}>
+              {`필요 광량 ${serverSpecies.minDli}–${serverSpecies.maxDli} mol/m²/day (서버 기준)`}
+            </AppText>
+          ) : null}
         </FormField>
 
         <FormField label="식물 이름" required>
@@ -135,5 +157,8 @@ const styles = StyleSheet.create({
   },
   preview: {
     marginTop: Spacing.xl,
+  },
+  dli: {
+    marginTop: Spacing.sm,
   },
 });

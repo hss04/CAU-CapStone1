@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ChevronRight, Compass, Hand, MapPin, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
@@ -22,19 +22,31 @@ import { PlantInfoSheet } from '@/components/space/PlantInfoSheet';
 import { WindowDetailSheet } from '@/components/space/WindowDetailSheet';
 import { LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { describePosition, samePosition } from '@/services/space/geometry';
+import { buildMockDliMap, demoGrid, dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
+import { describePosition, roomSizeLabel, samePosition } from '@/services/space/geometry';
 import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/services/space/lightAnalysis';
-import { findWindow, windowName, windowWidthM } from '@/services/space/windows';
-import { useGarden } from '@/store/GardenProvider';
+import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
+import { useGarden, type DliCheck } from '@/store/GardenProvider';
 import { getPlantStatus } from '@/store/selectors';
 import type { GridPosition, Plant, TimeOfDay } from '@/types';
 
-const TIME_OPTIONS: { value: TimeOfDay; label: string }[] = [
+/** 'dli' = 격자별 DLI 지도 (dli_map_v2), 나머지는 창문 기반 시간대별 추정 광량 */
+type MapView = TimeOfDay | 'dli';
+
+const TIME_OPTIONS: { value: MapView; label: string }[] = [
+  { value: 'dli', label: 'DLI' },
   { value: 'average', label: '하루 평균' },
   { value: 'morning', label: '오전' },
   { value: 'noon', label: '정오' },
   { value: 'afternoon', label: '오후' },
 ];
+
+function dliCheckText(check: DliCheck): string | null {
+  if (check.status === 'checking') return '서버 규격 검증 중…';
+  if (check.status === 'ok') return '서버 규격(dli_map_v2) 검증 통과';
+  if (check.status === 'error') return `서버 규격 검증 실패 · ${check.message ?? ''}`;
+  return null;
+}
 
 function markerStatusOf(plant: Plant, today: Date): FloorPlanMarker['status'] {
   const s = getPlantStatus(plant, today).key;
@@ -46,7 +58,15 @@ function markerStatusOf(plant: Plant, today: Date): FloorPlanMarker['status'] {
 export default function SpaceScreen() {
   const { state, today } = useGarden();
   const { room, plants } = state;
-  const [time, setTime] = useState<TimeOfDay>('average');
+  const [view, setView] = useState<MapView>('dli');
+  const showDli = view === 'dli';
+  const time: TimeOfDay = showDli ? 'average' : view;
+  // 서버 방은 동기화 때 만든 지도, 데모 방은 같은 형식의 예시 지도
+  const dliMap = useMemo(
+    () => state.dliMap ?? buildMockDliMap(room, demoGrid(room), state.today),
+    [state.dliMap, room, state.today],
+  );
+  const checkText = state.dliMap ? dliCheckText(state.dliCheck) : null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
@@ -57,8 +77,7 @@ export default function SpaceScreen() {
   const selectedWindow = windowId ? findWindow(room, windowId) : undefined;
   const scannedWindowIds = Object.keys(state.windowScans);
   const summary = summarizeLight(room, time);
-  const widthM = (room.cols * room.cellSizeM).toFixed(1);
-  const heightM = (room.rows * room.cellSizeM).toFixed(1);
+  const sizeLabel = roomSizeLabel(room);
 
   const openPlant = (id: string) => {
     setSelectedCell(null);
@@ -98,6 +117,7 @@ export default function SpaceScreen() {
   }));
 
   const cellValue = selectedCell ? lightValueAt(room, selectedCell, time) : 0;
+  const cellDli = selectedCell ? dliAt(dliMap, selectedCell.x, selectedCell.y) : null;
 
   return (
     <>
@@ -131,18 +151,24 @@ export default function SpaceScreen() {
             <View style={styles.flex}>
               <AppText variant="heading">{room.name}</AppText>
               <AppText variant="caption" color={Colors.textSecondary}>
-                {widthM} × {heightM}m · 창문 {room.windows.length}개 · 식물 {plants.length}
+                {sizeLabel} · 창문 {room.windows.length}개 · 식물 {plants.length}
               </AppText>
             </View>
-            <StatusChip label={`${room.orientationLabel} · ${room.orientation}`} tone="sun" icon={Compass} size="sm" />
+            <StatusChip
+              label={room.orientationUnknown ? room.orientationLabel : `${room.orientationLabel} · ${room.orientation}`}
+              tone={room.orientationUnknown ? 'neutral' : 'sun'}
+              icon={Compass}
+              size="sm"
+            />
           </View>
 
-          <SegmentedControl options={TIME_OPTIONS} value={time} onChange={setTime} size="sm" style={styles.segment} />
+          <SegmentedControl options={TIME_OPTIONS} value={view} onChange={setView} size="sm" style={styles.segment} />
 
           <View style={styles.planWrap}>
             <FloorPlanGrid
               room={room}
               timeOfDay={time}
+              dli={showDli ? dliMap.totalDli : null}
               markers={markers}
               selectedMarkerId={selectedId}
               onMarkerPress={openPlant}
@@ -154,10 +180,15 @@ export default function SpaceScreen() {
             />
           </View>
 
-          <LightLegend style={styles.legend} />
+          <LightLegend style={styles.legend} dli={showDli} />
+          {showDli ? (
+            <AppText variant="small" color={Colors.textTertiary} style={styles.dliNote}>
+              {`${dliMap.date} · ${MOCK_DLI_NOTE}${checkText ? ` · ${checkText}` : ''}`}
+            </AppText>
+          ) : null}
 
           {selectedCell ? (
-            <FadeInView key={`${selectedCell.x}-${selectedCell.y}-${time}`}>
+            <FadeInView key={`${selectedCell.x}-${selectedCell.y}-${view}`}>
               <View style={styles.cellInfo}>
                 <View style={styles.cellIcon}>
                   <MapPin size={16} color={Colors.primary} strokeWidth={1.9} />
@@ -165,7 +196,9 @@ export default function SpaceScreen() {
                 <View style={styles.flex}>
                   <AppText variant="bodyStrong">{describePosition(room, selectedCell)}</AppText>
                   <AppText variant="caption" color={Colors.textSecondary}>
-                    빛 {LIGHT_LEVEL_LABEL[lightLevelOf(cellValue)]} · 예상 일조 {expectedSunHours(cellValue)}시간 · 광량 지수 {cellValue}
+                    {showDli && cellDli
+                      ? `DLI ${cellDli.total.toFixed(2)} mol/m²/day · 직사 ${cellDli.direct.toFixed(2)} · 산란 ${cellDli.diffuse.toFixed(2)}`
+                      : `빛 ${LIGHT_LEVEL_LABEL[lightLevelOf(cellValue)]} · 예상 일조 ${expectedSunHours(cellValue)}시간 · 광량 지수 ${cellValue}`}
                   </AppText>
                 </View>
                 <Pressable hitSlop={10} onPress={() => setSelectedCell(null)} accessibilityLabel="선택 해제">
@@ -203,7 +236,7 @@ export default function SpaceScreen() {
                   <View style={styles.flex}>
                     <AppText variant="bodyStrong">{windowName(w)}</AppText>
                     <AppText variant="caption" color={Colors.textSecondary}>
-                      {w.facing} · 폭 약 {windowWidthM(room, w)}m
+                      {windowFacingLabel(w)} · 폭 약 {windowWidthM(room, w)}m
                     </AppText>
                   </View>
                   <StatusChip
@@ -354,6 +387,10 @@ const styles = StyleSheet.create({
   legend: {
     marginTop: Spacing.md,
     justifyContent: 'center',
+  },
+  dliNote: {
+    marginTop: Spacing.xs,
+    textAlign: 'center',
   },
   hint: {
     flexDirection: 'row',

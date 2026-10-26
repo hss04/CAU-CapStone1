@@ -22,10 +22,10 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { mockShooter, useScanCamera } from '@/hooks/useScanCamera';
 import { useWindowScanController } from '@/hooks/useWindowScanController';
 import { magneticToTrue as trueAz } from '@/services/orientation/declination';
-import { compassLabel } from '@/services/orientation/headingMath';
+import { compassLabel, signedDelta } from '@/services/orientation/headingMath';
 import { isHeadingSensorAvailable } from '@/services/orientation/headingSource';
 import { findWindow, windowName } from '@/services/space/windows';
-import type { ScanHint } from '@/services/windowScan/scanController';
+import type { FacingResult, ScanHint } from '@/services/windowScan/scanController';
 import { DEFAULT_SCAN_CONFIG, isPitchOff } from '@/services/windowScan/scanTracker';
 import { useGarden } from '@/store/GardenProvider';
 import type { HeadingSourceKind, WindowScan } from '@/types';
@@ -37,6 +37,14 @@ const HINT_TEXT: Record<Exclude<ScanHint, null>, string> = {
   tilt: `휴대폰을 약 ${DEFAULT_SCAN_CONFIG.targetPitch}° 위로 들어주세요`,
   interference: '주변 금속·자석 때문에 방향이 흔들릴 수 있어요',
 };
+
+const FACING_FAIL_TEXT: Record<Exclude<FacingResult, 'ok'>, string> = {
+  notReady: '방향 센서를 준비하고 있어요. 잠시 뒤 다시 눌러 주세요',
+  unsteady: '휴대폰이 흔들렸어요. 잠시 멈춘 뒤 다시 눌러 주세요',
+};
+
+/** 스캔은 창문 정면에서 왼쪽으로 이만큼 돌린 방향에서 시작한다 (180° 스캔의 절반) */
+const START_OFFSET_DEG = -DEFAULT_SCAN_CONFIG.targetAngle / 2;
 
 /**
  * 창밖 180° 스캔 (카메라)
@@ -87,12 +95,23 @@ export default function WindowScanScreen() {
     }, 900);
   };
 
-  const { state: scan, startScan } = useWindowScanController({
+  const { state: scan, recordFacing, startScan } = useWindowScanController({
     windowId: windowId ?? '',
     sourceKind: canRun ? sourceKind : null,
     shooter: useRealCamera ? shoot : mockShooter,
     onComplete: handleComplete,
   });
+  const [facingNotice, setFacingNotice] = useState<string | null>(null);
+
+  const handleRecordFacing = () => {
+    const result = recordFacing();
+    if (result === 'ok') {
+      haptic.success();
+      setFacingNotice(null);
+    } else {
+      setFacingNotice(FACING_FAIL_TEXT[result]);
+    }
+  };
 
   useEffect(() => {
     if (scan.lastCaptureAt) haptic.light();
@@ -166,6 +185,10 @@ export default function WindowScanScreen() {
   const canStart = scan.phase === 'ready' && cameraReady;
   const targetPitch = DEFAULT_SCAN_CONFIG.targetPitch;
   const pitchOff = sample ? isPitchOff(sample.pitch) : false;
+  const facing = scan.facing;
+  const needsFacing = scan.phase === 'ready' && !facing;
+  /** 현재 방향이 정면에서 몇 도 떨어져 있는지 (왼쪽 −, 진북 기준) */
+  const fromFacing = facing && sample ? signedDelta(facing.azimuth, trueAz(sample.azimuth)) : null;
 
   return (
     <View style={styles.screen}>
@@ -209,7 +232,9 @@ export default function WindowScanScreen() {
             </AppText>
           </View>
           <AppText variant="bodyStrong" color={Colors.white} align="center" style={styles.guideText}>
-            휴대폰을 약 {targetPitch}° 위로 든 채로{'\n'}왼쪽에서 오른쪽으로 천천히 움직여 주세요.
+            {needsFacing
+              ? '먼저 창문 정면 방향을 기록해요.\n휴대폰 뒷면을 창문 유리에 대고 잠시 멈춰 주세요.'
+              : `휴대폰을 약 ${targetPitch}° 위로 든 채로\n왼쪽에서 오른쪽으로 천천히 움직여 주세요.`}
           </AppText>
         </View>
       </View>
@@ -280,11 +305,36 @@ export default function WindowScanScreen() {
           </AppText>
         ) : null}
 
-        {scan.phase === 'ready' ? (
+        {needsFacing ? (
           <View style={styles.actions}>
             <AppText variant="caption" color="rgba(255,255,255,0.75)" align="center">
-              창밖의 가장 왼쪽 방향을 바라보고{'\n'}휴대폰을 약 {targetPitch}° 위로 든 뒤 시작해 주세요
+              ① 휴대폰을 창문과 평행하게 세워{'\n'}카메라가 창밖 정면을 보게 한 뒤 눌러 주세요
             </AppText>
+            {facingNotice ? (
+              <AppText variant="captionStrong" color={Colors.sunlight} align="center">
+                {facingNotice}
+              </AppText>
+            ) : null}
+            <PrimaryButton title="창문 정면 기록" icon={Compass} onPress={handleRecordFacing} />
+          </View>
+        ) : null}
+
+        {scan.phase === 'ready' && facing ? (
+          <View style={styles.actions}>
+            <View style={styles.facingRow}>
+              <AppText variant="captionStrong" color={Colors.white}>
+                {`창문 정면 ${facing.azimuth.toFixed(0)}° ${compassLabel(facing.azimuth)} (진북)`}
+              </AppText>
+              <SecondaryButton title="다시 기록" variant="ghost" color={Colors.white} size="sm" onPress={handleRecordFacing} />
+            </View>
+            <AppText variant="caption" color="rgba(255,255,255,0.75)" align="center">
+              ② 정면에서 왼쪽으로 약 {-START_OFFSET_DEG}° 돌린 뒤{'\n'}휴대폰을 약 {targetPitch}° 위로 들고 시작해 주세요
+            </AppText>
+            {fromFacing !== null ? (
+              <AppText variant="small" color="rgba(255,255,255,0.65)" align="center">
+                {`지금 정면 기준 ${formatSignedDeg(fromFacing)} / 시작 위치 ${formatSignedDeg(START_OFFSET_DEG)}`}
+              </AppText>
+            ) : null}
             <PrimaryButton title={cameraReady ? '스캔 시작' : '카메라 준비 중…'} disabled={!canStart} onPress={startScan} />
           </View>
         ) : null}
@@ -315,6 +365,10 @@ export default function WindowScanScreen() {
 
 function formatPitch(pitch: number) {
   return `${pitch >= 0 ? '+' : ''}${pitch.toFixed(0)}°`;
+}
+
+function formatSignedDeg(deg: number) {
+  return `${deg > 0 ? '+' : ''}${deg.toFixed(0)}°`;
 }
 
 /** 목표 피치 기준 방향 안내 */
@@ -482,6 +536,11 @@ const styles = StyleSheet.create({
   actions: {
     gap: Spacing.sm,
     marginTop: Spacing.xs,
+  },
+  facingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   doneOverlay: {
     alignItems: 'center',

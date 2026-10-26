@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ToastProvider } from '@/components/common/Toast';
 import { Colors, Layout } from '@/constants/theme';
+import { AuthProvider } from '@/store/AuthProvider';
 import { GardenProvider, useGarden } from '@/store/GardenProvider';
 
 SplashScreen.preventAutoHideAsync();
@@ -29,14 +30,16 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <GardenProvider>
-        <AppFrame>
-          <ToastProvider>
-            <StatusBar style="dark" />
-            <RootNavigator />
-          </ToastProvider>
-        </AppFrame>
-      </GardenProvider>
+      <AuthProvider>
+        <GardenProvider>
+          <AppFrame>
+            <ToastProvider>
+              <StatusBar style="dark" />
+              <RootNavigator />
+            </ToastProvider>
+          </AppFrame>
+        </GardenProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
@@ -56,6 +59,7 @@ function RootNavigator() {
         <Stack.Screen name="plant/[id]" />
         <Stack.Screen name="recommendation/[id]" />
         <Stack.Screen name="add-plant" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen
           name="room-scan"
           options={{ animation: 'fade', contentStyle: { backgroundColor: '#111A14' } }}

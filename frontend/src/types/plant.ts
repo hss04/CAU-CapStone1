@@ -55,6 +55,8 @@ export interface PlacementAnalysis {
 
 export interface Plant {
   id: string;
+  /** 서버(백엔드) 식물 ID — 로그인 상태에서 서버에 저장된 식물만 있다 */
+  serverId?: number;
   /** 사용자가 붙인 이름 (예: 몬스테라, 초록이) */
   name: string;
   speciesId: PlantSpeciesId;

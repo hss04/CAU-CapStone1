@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "초록자리",
-    "slug": "chorok-jari",
+    "name": "LUMAP",
+    "slug": "lumap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "chorokjari",
+    "scheme": "lumap",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F7F7F1",
     "ios": {
@@ -41,7 +41,8 @@
           "cameraPermission": "창밖 환경을 스캔하기 위해 카메라를 사용해요.",
           "recordAudioAndroid": false
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

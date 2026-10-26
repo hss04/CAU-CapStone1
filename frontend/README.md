@@ -1,4 +1,4 @@
-# 초록자리 (Chorok Jari) — Frontend
+# LUMAP — Frontend
 
 > 내 방을 분석해서 식물에게 가장 좋은 위치를 찾아주는 앱
 

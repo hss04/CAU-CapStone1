@@ -1,6 +1,5 @@
-/** 앱 전역 상수 — 서비스명이 확정되면 여기만 바꾸면 된다. */
-export const APP_NAME = '초록자리';
-export const APP_NAME_EN = 'Chorok Jari';
+/** 앱 전역 상수 — 서비스명을 바꿀 때는 여기와 app.json의 name/slug/scheme을 바꾼다. */
+export const APP_NAME = 'LUMAP';
 export const APP_TAGLINE = '내 방을 분석해 식물에게 가장 좋은 자리를 찾아드려요';
 export const APP_VERSION = '1.0.0 (capstone demo)';
 

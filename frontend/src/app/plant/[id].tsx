@@ -9,8 +9,10 @@ import {
   Sparkles,
   Sun,
   Thermometer,
+  Trash2,
   Waves,
 } from 'lucide-react-native';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Polygon, Stop } from 'react-native-svg';
 
@@ -41,6 +43,8 @@ export default function PlantDetailScreen() {
   const plant = usePlant(id);
   const { state, today, actions } = useGarden();
   const toast = useToast();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (!plant) {
     return (
@@ -62,6 +66,25 @@ export default function PlantDetailScreen() {
   };
 
   const openRecommendation = () => router.push({ pathname: '/recommendation/[id]', params: { id: plant.id } });
+  const serverSpecies = state.serverSpecies[plant.speciesId];
+
+  // 실수로 지우지 않도록 두 번 눌러야 삭제 (웹에서는 Alert가 동작하지 않아 버튼으로 확인)
+  const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    try {
+      await actions.deletePlant(plant.id);
+      toast.show(`${plant.name}을(를) 삭제했어요`, 'leaf');
+      goBackOrHome();
+    } catch (e) {
+      toast.show(`삭제하지 못했어요 · ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'leaf');
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   return (
     <ScreenContainer header={<TopBar title={plant.name} />}>
@@ -220,9 +243,24 @@ export default function PlantDetailScreen() {
             <GuideRow icon={Sun} label="선호 광량" value={LIGHT_PREFERENCE_LABEL[species.preferredLight]} />
             <GuideRow icon={Thermometer} label="적정 온도" value={species.temperature} />
             <GuideRow icon={Waves} label="습도" value={species.humidity} />
-            <GuideRow icon={Gauge} label="난이도" value={species.difficulty} last />
+            <GuideRow icon={Gauge} label="난이도" value={species.difficulty} last={!serverSpecies} />
+            {serverSpecies ? (
+              <GuideRow icon={Sun} label="필요 광량 (DLI)" value={`${serverSpecies.minDli}–${serverSpecies.maxDli} mol/m²/day`} last />
+            ) : null}
           </View>
         </Card>
+      </View>
+
+      <View style={styles.section}>
+        <SecondaryButton
+          title={confirmDelete ? '한 번 더 누르면 삭제돼요' : '식물 삭제'}
+          icon={Trash2}
+          variant={confirmDelete ? 'outline' : 'ghost'}
+          color={Colors.clayDeep}
+          size="md"
+          disabled={deleting}
+          onPress={handleDelete}
+        />
       </View>
     </ScreenContainer>
   );

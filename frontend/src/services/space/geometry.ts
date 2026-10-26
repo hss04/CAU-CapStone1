@@ -1,7 +1,8 @@
-import type { Furniture, GridPosition, Room, RoomWindow, WallOpening } from '@/types';
+import type { Furniture, GridPosition, GridSegment, Room, RoomWindow, WallOpening } from '@/types';
 
-/** 벽 개구부를 grid 좌표계의 선분으로 변환 */
-export function openingSegment(room: Room, o: WallOpening) {
+/** 벽 개구부를 grid 좌표계의 선분으로 변환 (다각형 방 창문은 segment를 그대로 쓴다) */
+export function openingSegment(room: Room, o: WallOpening & { segment?: GridSegment }): GridSegment {
+  if (o.segment) return o.segment;
   switch (o.wall) {
     case 'top':
       return { x1: o.offset, y1: 0, x2: o.offset + o.length, y2: 0 };
@@ -75,12 +76,41 @@ function distanceToDoor(room: Room, pos: GridPosition): number {
 }
 
 export function touchesWallOrFurniture(room: Room, pos: GridPosition): boolean {
-  if (pos.x === 0 || pos.y === 0 || pos.x === room.cols - 1 || pos.y === room.rows - 1) return true;
+  if (room.insideMask) {
+    // 다각형 방: 벽은 격자 테두리가 아니라 방 밖 칸과 맞닿은 곳
+    const neighbors = [
+      { x: pos.x - 1, y: pos.y },
+      { x: pos.x + 1, y: pos.y },
+      { x: pos.x, y: pos.y - 1 },
+      { x: pos.x, y: pos.y + 1 },
+    ];
+    if (neighbors.some((n) => !isInsideRoom(room, n))) return true;
+  } else if (pos.x === 0 || pos.y === 0 || pos.x === room.cols - 1 || pos.y === room.rows - 1) {
+    return true;
+  }
   return room.furniture.some((f) => isAdjacentTo(f, pos));
 }
 
+/** 방 크기 표시 — 직사각형은 "4.0 × 5.0m", 다각형 방은 가로×세로가 의미 없어 면적 "12.0m²" */
+export function roomSizeLabel(room: Room): string {
+  if (room.outline && room.outline.length >= 3) {
+    const pts = room.outline;
+    let twice = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      twice += a.x * b.y - b.x * a.y;
+    }
+    const areaM2 = (Math.abs(twice) / 2) * room.cellSizeM * room.cellSizeM;
+    return `${areaM2.toFixed(1)}m²`;
+  }
+  return `${(room.cols * room.cellSizeM).toFixed(1)} × ${(room.rows * room.cellSizeM).toFixed(1)}m`;
+}
+
 export function isInsideRoom(room: Room, pos: GridPosition): boolean {
-  return pos.x >= 0 && pos.y >= 0 && pos.x < room.cols && pos.y < room.rows;
+  if (!(pos.x >= 0 && pos.y >= 0 && pos.x < room.cols && pos.y < room.rows)) return false;
+  // 다각형 방: 셀 중심이 방 밖인 칸(grid_v2 inside_mask = false)은 방 밖
+  return room.insideMask ? !!room.insideMask[pos.y]?.[pos.x] : true;
 }
 
 /** 식물을 둘 수 있는 셀인지 (바닥 또는 surface 가구 위) */
@@ -95,18 +125,18 @@ export function samePosition(a: GridPosition, b: GridPosition): boolean {
   return a.x === b.x && a.y === b.y;
 }
 
-/** 셀 위치를 사람이 이해하기 쉬운 이름으로 */
+/** 셀 위치를 사람이 이해하기 쉬운 이름으로. 거리 기준은 m (칸 크기가 방마다 달라서) */
 export function describePosition(room: Room, pos: GridPosition): string {
   const on = furnitureAt(room, pos);
   if (on) return on.surface ? `${on.label} 위` : `${on.label} 자리`;
 
-  const windowDist = nearestWindowDistance(room, pos);
-  if (windowDist <= 1) return '창가';
+  const windowDistM = nearestWindowDistance(room, pos) * room.cellSizeM;
+  if (windowDistM <= 0.45) return '창가';
 
   const adjacent = room.furniture.find((f) => f.type !== 'chair' && isAdjacentTo(f, pos));
   if (adjacent) return `${adjacent.label} 옆`;
 
-  if (windowDist <= 3.2) return '창문 근처';
-  if (distanceToDoor(room, pos) <= 2.6) return '방 입구';
+  if (windowDistM <= 1.44) return '창문 근처';
+  if (distanceToDoor(room, pos) * room.cellSizeM <= 1.17) return '방 입구';
   return '방 가운데';
 }

@@ -1,8 +1,9 @@
-import type { ScanCapture, WindowScan, WindowScanDebug } from '@/types';
+import type { ScanCamera, ScanCapture, WindowFacing, WindowScan, WindowScanDebug } from '@/types';
 
 import { DEFAULT_DECLINATION, magneticToTrue } from '../orientation/declination';
-import { normalizeDeg } from '../orientation/headingMath';
+import { circularStats, normalizeDeg } from '../orientation/headingMath';
 import type { HeadingSample, HeadingSource } from '../orientation/headingSource';
+import { estimateFov } from './cameraFov';
 import { DEFAULT_SCAN_CONFIG, isPitchOff, ScanTracker, type ScanTrackerConfig, type ScanTrackerSnapshot, type ScanWarning } from './scanTracker';
 
 /**
@@ -13,16 +14,30 @@ import { DEFAULT_SCAN_CONFIG, isPitchOff, ScanTracker, type ScanTrackerConfig, t
  *   - 카메라 로직: hooks/useScanCamera
  */
 
+/** 저장이 끝난 사진 (카메라 시뮬레이션이면 uri가 비어 있고 크기는 0) */
+export interface CapturedPhoto {
+  uri: string;
+  width: number;
+  height: number;
+  /** 화각 계산용 EXIF (초점거리 등) */
+  exif?: Record<string, unknown>;
+}
+
 /** 카메라 한 번 촬영 결과 */
 export interface PhotoShot {
   /** 셔터가 끝난 시점 (다음 촬영 가능) */
   captured: Promise<void>;
-  /** 파일 저장이 끝난 뒤의 이미지 URI */
-  uri: Promise<string>;
+  /** 파일 저장이 끝난 뒤의 사진 */
+  photo: Promise<CapturedPhoto>;
 }
 
 /** 촬영할 수 없으면 null */
 export type PhotoShooter = () => PhotoShot | null;
+
+/** 스캔이 끝난 뒤 사진 후처리 (예: 업로드 규격 크기로 축소) */
+export type PhotoProcessor = (photo: CapturedPhoto) => Promise<CapturedPhoto>;
+
+export type FacingResult = 'ok' | 'notReady' | 'unsteady';
 
 export type ScanPhase = 'waitingSensor' | 'ready' | 'scanning' | 'finishing' | 'done';
 
@@ -42,21 +57,26 @@ export interface ScanControllerState {
   marks: ScanMark[];
   captureCount: number;
   lastCaptureAt: number | null;
+  /** 기록한 창문 정면 방위각 (스캔 시작 전 필수) */
+  facing: WindowFacing | null;
 }
 
 interface PendingCapture {
   /** 자북 기준 (센서 원본) */
   azimuth: number;
   pitch: number;
+  roll: number;
   timestamp: number;
   relative: number;
-  uri: Promise<string>;
+  photo: Promise<CapturedPhoto>;
 }
 
 export interface ScanControllerOptions {
   windowId: string;
   source: HeadingSource;
   shooter: PhotoShooter;
+  /** 없으면 촬영한 사진을 그대로 쓴다 */
+  processPhoto?: PhotoProcessor;
   onChange: (state: ScanControllerState) => void;
   onComplete: (scan: WindowScan) => void;
   config?: ScanTrackerConfig;
@@ -64,6 +84,12 @@ export interface ScanControllerOptions {
 
 const FIELD_MIN = 20;
 const FIELD_MAX = 75;
+
+/** 정면 방위각은 버튼을 누르기 직전 이 시간 동안의 센서 값을 원형 평균한다 */
+const FACING_WINDOW_MS = 600;
+const FACING_MIN_SAMPLES = 8;
+/** 기록 구간 방위각의 원형 표준편차가 이보다 크면 휴대폰이 흔들린 것으로 보고 다시 기록하게 한다 */
+const FACING_MAX_SPREAD_DEG = 5;
 
 export class WindowScanController {
   private readonly tracker: ScanTracker;
@@ -75,8 +101,11 @@ export class WindowScanController {
     marks: [],
     captureCount: 0,
     lastCaptureAt: null,
+    facing: null,
   };
   private shooter: PhotoShooter;
+  /** 스캔 전(ready) 최근 센서 샘플 — 정면 방위각 기록용 */
+  private recent: HeadingSample[] = [];
   private pending: PendingCapture[] = [];
   private inFlight: Promise<void> | null = null;
   private startedAt = 0;
@@ -105,9 +134,37 @@ export class WindowScanController {
     this.shooter = shooter;
   }
 
+  /**
+   * 창문 정면 방위각 기록.
+   * 버튼을 누르기 직전 FACING_WINDOW_MS 동안의 방위각을 원형 평균하고, 흔들림이 크면 거절한다.
+   */
+  recordFacing(): FacingResult {
+    if (this.state.phase !== 'ready') return 'notReady';
+    const now = this.state.sample?.timestamp ?? Date.now();
+    const window = this.recent.filter((s) => now - s.timestamp <= FACING_WINDOW_MS);
+    if (window.length < FACING_MIN_SAMPLES) return 'notReady';
+
+    const stats = circularStats(window.map((s) => s.azimuth));
+    if (!stats) return 'notReady';
+    if (stats.spread > FACING_MAX_SPREAD_DEG) return 'unsteady';
+
+    const avgField = window.reduce((sum, s) => sum + s.fieldStrength, 0) / window.length;
+    this.set({
+      facing: {
+        azimuth: toTrue(stats.mean),
+        magneticAzimuth: roundAzimuth(stats.mean),
+        spreadDeg: round1(stats.spread),
+        sampleCount: window.length,
+        avgFieldStrength: round1(avgField),
+        timestamp: Date.now(),
+      },
+    });
+    return 'ok';
+  }
+
   startScan() {
     const s = this.state.sample;
-    if (!s || this.state.phase !== 'ready') return;
+    if (!s || this.state.phase !== 'ready' || !this.state.facing) return;
     this.tracker.start(s.azimuth, s.timestamp);
     this.startedAt = Date.now();
     this.pending = [];
@@ -132,6 +189,10 @@ export class WindowScanController {
   private handleSample = (sample: HeadingSample) => {
     if (this.disposed) return;
 
+    if (this.state.phase === 'waitingSensor' || this.state.phase === 'ready') {
+      this.recent.push(sample);
+      this.recent = this.recent.filter((s) => sample.timestamp - s.timestamp <= FACING_WINDOW_MS * 2);
+    }
     if (this.state.phase === 'waitingSensor') {
       this.set({ phase: 'ready', sample });
       return;
@@ -175,9 +236,10 @@ export class WindowScanController {
     this.pending.push({
       azimuth: sample.azimuth,
       pitch: sample.pitch,
+      roll: sample.roll,
       timestamp: Date.now(),
       relative,
-      uri: shot.uri,
+      photo: shot.photo,
     });
     this.set({
       marks: [...this.state.marks, { relative, azimuth: magneticToTrue(sample.azimuth, DEFAULT_DECLINATION.declinationDeg) }],
@@ -206,22 +268,37 @@ export class WindowScanController {
     if (this.tracker.needsFinalCapture()) await this.capture();
     this.opts.source.stop();
 
-    const results = await Promise.allSettled(this.pending.map((p) => p.uri));
+    const results = await Promise.allSettled(this.pending.map((p) => p.photo));
     const captures: ScanCapture[] = [];
-    results.forEach((r, i) => {
-      if (r.status === 'fulfilled') {
-        const p = this.pending[i];
-        captures.push({
-          imageUri: r.value,
-          azimuth: toTrue(p.azimuth),
-          magneticAzimuth: roundAzimuth(p.azimuth),
-          pitch: round1(p.pitch),
-          timestamp: p.timestamp,
-        });
-      } else {
+    let camera: ScanCamera | undefined;
+    // 후처리(축소)는 메모리를 아끼려고 한 장씩 순서대로 한다
+    for (const [i, r] of results.entries()) {
+      if (r.status !== 'fulfilled') {
         this.failed += 1;
+        continue;
       }
-    });
+      let photo = r.value;
+      try {
+        if (this.opts.processPhoto) photo = await this.opts.processPhoto(photo);
+      } catch {
+        // 축소에 실패하면 원본을 쓴다 (업로드 크기만 커지고 데이터는 유효)
+      }
+      // 화각은 기종에 따라 정해지므로 첫 사진 기준 (EXIF가 있는 사진을 우선)
+      if (!camera || (camera.fovSource === 'default' && photo.exif)) {
+        camera = estimateFov(photo.exif, photo.width, photo.height);
+      }
+      const p = this.pending[i];
+      captures.push({
+        imageUri: photo.uri,
+        azimuth: toTrue(p.azimuth),
+        magneticAzimuth: roundAzimuth(p.azimuth),
+        pitch: round1(p.pitch),
+        roll: round1(p.roll),
+        width: photo.width || undefined,
+        height: photo.height || undefined,
+        timestamp: p.timestamp,
+      });
+    }
 
     const debug: WindowScanDebug = {
       scannedAt: this.startedAt,
@@ -238,6 +315,8 @@ export class WindowScanController {
 
     const scan: WindowScan = {
       windowId: this.opts.windowId,
+      facing: this.state.facing ?? undefined,
+      camera,
       startAzimuth: toTrue(this.tracker.snapshot().startAzimuth),
       endAzimuth: toTrue(this.completion.endAzimuth),
       ...DEFAULT_DECLINATION,

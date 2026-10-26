@@ -68,10 +68,14 @@ export default function RecommendationScreen() {
         { id: 'rec', position: rec.position, variant: 'recommended', label: '추천 위치', showLabel: true },
       ];
 
-  const handleApply = () => {
-    actions.applyRecommendation(plant.id);
-    setApplied(true);
-    toast.show('추천 위치로 변경했어요 🌿', 'leaf');
+  const handleApply = async () => {
+    try {
+      await actions.applyRecommendation(plant.id);
+      setApplied(true);
+      toast.show('추천 위치로 변경했어요 🌿', 'leaf');
+    } catch (e) {
+      toast.show(`위치를 바꾸지 못했어요 · ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'leaf');
+    }
   };
 
   const metrics = [

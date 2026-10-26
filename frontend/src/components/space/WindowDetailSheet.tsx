@@ -7,7 +7,7 @@ import { SecondaryButton } from '@/components/common/SecondaryButton';
 import { StatusChip } from '@/components/common/StatusChip';
 import { DEV_TOOLS_ENABLED } from '@/constants/app';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { windowFacingAzimuth, windowName, windowWallLabel, windowWidthM } from '@/services/space/windows';
+import { windowFacingAzimuth, windowFacingLabel, windowName, windowWallLabel, windowWidthM } from '@/services/space/windows';
 import type { Room, RoomWindow, WindowScan } from '@/types';
 
 export interface WindowDetailSheetProps {
@@ -32,7 +32,12 @@ export function WindowDetailSheet({ room, roomWindow: w, scan, onScan, onViewRes
             {room.name} · {windowWallLabel(w)} · 폭 약 {windowWidthM(room, w)}m
           </AppText>
         </View>
-        <StatusChip label={`${w.facing} · ${windowFacingAzimuth(w)}°`} tone="sun" icon={Compass} size="sm" />
+        <StatusChip
+          label={w.facingUnknown ? windowFacingLabel(w) : `${w.facing} · ${windowFacingAzimuth(w)}°`}
+          tone={w.facingUnknown ? 'neutral' : 'sun'}
+          icon={Compass}
+          size="sm"
+        />
       </View>
 
       <AppText variant="label" color={Colors.textSecondary} style={styles.sectionLabel}>
