@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import { ChevronRight, Compass, Hand, MapPin, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Ban, Check, ChevronRight, Compass, Hand, MapPin, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
 import { BottomSheet } from '@/components/common/BottomSheet';
@@ -14,15 +14,17 @@ import { SecondaryButton } from '@/components/common/SecondaryButton';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import { SegmentedControl } from '@/components/common/SegmentedControl';
 import { StatusChip } from '@/components/common/StatusChip';
+import { useToast } from '@/components/common/Toast';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
 import { FloorPlanGrid, type FloorPlanMarker } from '@/components/space/FloorPlanGrid';
 import { LightLegend } from '@/components/space/LightLegend';
 import { LightSummaryCard } from '@/components/space/LightSummaryCard';
 import { PlantInfoSheet } from '@/components/space/PlantInfoSheet';
 import { isUploadStale, WindowDetailSheet } from '@/components/space/WindowDetailSheet';
-import { LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
+import { DLI_PERIOD, LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { buildMockDliMap, demoGrid, dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
+import { usePeriodDliMap, type PeriodDliMap } from '@/hooks/usePeriodDliMap';
+import { dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
 import { describePosition, roomSizeLabel, samePosition } from '@/services/space/geometry';
 import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/services/space/lightAnalysis';
 import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
@@ -30,7 +32,7 @@ import type { ScanUploadState } from '@/services/windowScan/uploadService';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type DliCheck } from '@/store/GardenProvider';
 import { getPlantStatus } from '@/store/selectors';
-import type { GridPosition, Plant, Room, RoomWindow, TimeOfDay, WindowScan } from '@/types';
+import type { DliPeriod, GridPosition, Plant, Room, RoomWindow, TimeOfDay, WindowScan } from '@/types';
 
 /** 'dli' = 격자별 DLI 지도 (dli_map_v2), 나머지는 창문 기반 시간대별 추정 광량 */
 type MapView = TimeOfDay | 'dli';
@@ -42,6 +44,17 @@ const TIME_OPTIONS: { value: MapView; label: string }[] = [
   { value: 'noon', label: '정오' },
   { value: 'afternoon', label: '오후' },
 ];
+
+const PERIOD_OPTIONS = (Object.keys(DLI_PERIOD) as DliPeriod[]).map((value) => ({ value, label: DLI_PERIOD[value].label }));
+
+/** DLI 지도 아래 출처·기간 안내 */
+function dliNoteText(m: PeriodDliMap, checkText: string | null): string {
+  if (m.source === 'calculated') {
+    return `${m.startDate} ~ ${m.endDate} 하루 평균 · LUMAP 계산${m.provisional ? ' (임시 설정)' : ''} · 예상치`;
+  }
+  const reason = m.note && m.status === 'ready' ? ` · ${m.note}` : '';
+  return `${MOCK_DLI_NOTE} · 예시 지도는 기간과 관계없이 같아요${reason}${checkText ? ` · ${checkText}` : ''}`;
+}
 
 function dliCheckText(check: DliCheck): string | null {
   if (check.status === 'checking') return '서버 규격 검증 중…';
@@ -77,16 +90,18 @@ function markerStatusOf(plant: Plant, today: Date): FloorPlanMarker['status'] {
 export default function SpaceScreen() {
   const { state, today, actions } = useGarden();
   const signedIn = useAuth().status === 'signedIn';
+  const toast = useToast();
   const { room, plants } = state;
   const [view, setView] = useState<MapView>('dli');
   const showDli = view === 'dli';
   const time: TimeOfDay = showDli ? 'average' : view;
-  // 서버 방은 동기화 때 만든 지도, 데모 방은 같은 형식의 예시 지도
-  const dliMap = useMemo(
-    () => state.dliMap ?? buildMockDliMap(room, demoGrid(room), state.today),
-    [state.dliMap, room, state.today],
-  );
-  const checkText = state.dliMap ? dliCheckText(state.dliCheck) : null;
+  // 선택한 기간의 DLI 지도 — 서버 계산이 되면 그 결과, 아니면 예시 지도
+  const period = usePeriodDliMap(state.dliPeriod);
+  const dliMap = period.map;
+  const checkText = state.dliMap && period.source === 'mock' ? dliCheckText(state.dliCheck) : null;
+  /** 배치 불가 칸 편집 모드 */
+  const [editBlocked, setEditBlocked] = useState(false);
+  const blockedCount = room.blockedCells?.length ?? 0;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
@@ -121,6 +136,11 @@ export default function SpaceScreen() {
   };
 
   const handleCellPress = (pos: GridPosition) => {
+    if (editBlocked) {
+      const result = actions.toggleBlockedCell(pos);
+      if (result === 'occupied') toast.show('식물이 있는 칸은 배치 불가로 지정할 수 없어요', 'leaf');
+      return;
+    }
     const plant = plants.find((p) => samePosition(p.location.position, pos));
     if (plant) return openPlant(plant.id);
     setSelectedId(null);
@@ -192,6 +212,15 @@ export default function SpaceScreen() {
           </View>
 
           <SegmentedControl options={TIME_OPTIONS} value={view} onChange={setView} size="sm" style={styles.segment} />
+          {showDli ? (
+            <SegmentedControl
+              options={PERIOD_OPTIONS}
+              value={state.dliPeriod}
+              onChange={actions.setDliPeriod}
+              size="sm"
+              style={styles.periodSegment}
+            />
+          ) : null}
 
           <View style={styles.planWrap}>
             <FloorPlanGrid
@@ -199,11 +228,11 @@ export default function SpaceScreen() {
               timeOfDay={time}
               dli={showDli ? dliMap.totalDli : null}
               markers={markers}
-              selectedMarkerId={selectedId}
-              onMarkerPress={openPlant}
+              selectedMarkerId={editBlocked ? null : selectedId}
+              onMarkerPress={editBlocked ? undefined : openPlant}
               onCellPress={handleCellPress}
-              selectedCell={selectedCell}
-              onWindowPress={openWindow}
+              selectedCell={editBlocked ? null : selectedCell}
+              onWindowPress={editBlocked ? undefined : openWindow}
               selectedWindowId={windowSheetOpen ? windowId : null}
               scannedWindowIds={scannedWindowIds}
             />
@@ -211,12 +240,43 @@ export default function SpaceScreen() {
 
           <LightLegend style={styles.legend} dli={showDli} />
           {showDli ? (
-            <AppText variant="small" color={Colors.textTertiary} style={styles.dliNote}>
-              {`${dliMap.date} · ${MOCK_DLI_NOTE}${checkText ? ` · ${checkText}` : ''}`}
-            </AppText>
+            period.status === 'loading' ? (
+              <View style={styles.calcRow}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <AppText variant="small" color={Colors.textSecondary}>
+                  {`${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중 · 지금은 예시 지도를 보여드려요`}
+                </AppText>
+              </View>
+            ) : (
+              <AppText variant="small" color={Colors.textTertiary} style={styles.dliNote}>
+                {dliNoteText(period, checkText)}
+              </AppText>
+            )
           ) : null}
 
-          {selectedCell ? (
+          {/* 배치 불가 칸 — 가구·통로 등 식물을 둘 수 없는 칸을 직접 지정 */}
+          <View style={[styles.blockedBar, editBlocked && styles.blockedBarActive]}>
+            <Ban size={15} color={editBlocked ? Colors.clayDeep : Colors.textSecondary} strokeWidth={1.9} />
+            <AppText variant="small" color={editBlocked ? Colors.clayDeep : Colors.textSecondary} style={styles.flex}>
+              {editBlocked
+                ? `칸을 눌러 배치 불가로 지정·해제해요 · ${blockedCount}칸`
+                : blockedCount > 0
+                  ? `배치 불가 칸 ${blockedCount}개 · 추천 위치에서 빠져요`
+                  : '식물을 둘 수 없는 칸을 지정할 수 있어요'}
+            </AppText>
+            <SecondaryButton
+              title={editBlocked ? '완료' : '편집'}
+              icon={editBlocked ? Check : undefined}
+              size="sm"
+              fullWidth={false}
+              onPress={() => {
+                setSelectedCell(null);
+                setEditBlocked((v) => !v);
+              }}
+            />
+          </View>
+
+          {editBlocked ? null : selectedCell ? (
             <FadeInView key={`${selectedCell.x}-${selectedCell.y}-${view}`}>
               <View style={styles.cellInfo}>
                 <View style={styles.cellIcon}>
@@ -423,6 +483,32 @@ const styles = StyleSheet.create({
   dliNote: {
     marginTop: Spacing.xs,
     textAlign: 'center',
+  },
+  periodSegment: {
+    marginTop: Spacing.sm,
+  },
+  calcRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  blockedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+  },
+  blockedBarActive: {
+    backgroundColor: Colors.claySoft,
+    borderColor: Colors.claySoft,
   },
   hint: {
     flexDirection: 'row',

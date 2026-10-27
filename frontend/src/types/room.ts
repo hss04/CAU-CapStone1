@@ -123,7 +123,12 @@ export interface Room {
   server?: ServerRoomRef;
   /** 위경도가 저장된 방만 있다 */
   location?: RoomLocation;
+  /** 사용자가 지정한 배치 불가 칸 (가구 등). 서버에는 추천 요청 때 blocked_cells로만 보낸다 */
+  blockedCells?: GridPosition[];
 }
+
+/** DLI 지도 계산 기간 — 오늘까지 최근 N일 평균 (백엔드 최대 93일) */
+export type DliPeriod = 'week' | 'month' | 'season';
 
 /** 서버 방 좌표(m) ↔ 앱 grid 셀 변환에 필요한 값 (grid_v2 기준) */
 export interface ServerRoomRef {

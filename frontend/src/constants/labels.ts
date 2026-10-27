@@ -1,6 +1,7 @@
 import type {
   CharacterState,
   CompassDirection,
+  DliPeriod,
   DliStatus,
   LightLevel,
   LightPreference,
@@ -104,6 +105,13 @@ export const DLI_STATUS_COPY: Record<
   low: { label: '부족', sentence: '빛이 부족해요', tone: 'dusk', color: Colors.dliLow },
   ok: { label: '적정', sentence: '빛이 알맞아요', tone: 'green', color: Colors.primary },
   high: { label: '과다', sentence: '빛이 강해요', tone: 'sun', color: Colors.dliHigh },
+};
+
+/** DLI 지도 계산 기간 — 오늘까지 최근 N일 평균 */
+export const DLI_PERIOD: Record<DliPeriod, { label: string; days: number }> = {
+  week: { label: '최근 7일', days: 7 },
+  month: { label: '최근 30일', days: 30 },
+  season: { label: '최근 90일', days: 90 },
 };
 
 export const WEATHER_LABEL: Record<WeatherCondition, string> = {

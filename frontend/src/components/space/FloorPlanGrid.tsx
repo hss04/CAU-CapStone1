@@ -63,6 +63,8 @@ const WALL = '#3F5244';
 const FLOOR = '#FAF9F3';
 const TILE_NEUTRAL = '#F1F2EB';
 const FURNITURE_TEXT = '#858B83';
+const BLOCKED = '#DADDD5';
+const BLOCKED_MARK = '#9AA29A';
 
 /* ------------------------------------------------------------------ */
 /* Geometry                                                            */
@@ -484,6 +486,20 @@ export function FloorPlanGrid({
             {room.furniture.map((f) => (
               <FurnitureShape key={f.id} f={f} g={g} room={room} showLabel={showFurnitureLabels && !compact} />
             ))}
+
+            {/* 배치 불가 칸 (사용자 지정) — 회색 칸 + X */}
+            {room.blockedCells?.map((c) => {
+              const x0 = g.ox + c.x * g.cell;
+              const y0 = g.oy + c.y * g.cell;
+              const pad = g.cell * 0.28;
+              return (
+                <G key={`blocked-${c.x}-${c.y}`}>
+                  <Rect x={x0 + 1} y={y0 + 1} width={g.cell - 2} height={g.cell - 2} rx={g.cell * 0.16} fill={BLOCKED} />
+                  <Line x1={x0 + pad} y1={y0 + pad} x2={x0 + g.cell - pad} y2={y0 + g.cell - pad} stroke={BLOCKED_MARK} strokeWidth={1.4} strokeLinecap="round" />
+                  <Line x1={x0 + g.cell - pad} y1={y0 + pad} x2={x0 + pad} y2={y0 + g.cell - pad} stroke={BLOCKED_MARK} strokeWidth={1.4} strokeLinecap="round" />
+                </G>
+              );
+            })}
 
             {/* 선택한 셀 (가구 위에도 보이도록 가구 다음에) */}
             {selectedCell ? (

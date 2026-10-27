@@ -60,8 +60,8 @@ export function describeServerError(e: unknown): string {
   return e instanceof Error ? e.message : '서버 계산을 쓸 수 없어요';
 }
 
-function requestBody(room: Room, date: string): ApiDliRequest {
-  const body: ApiDliRequest = { startDate: date, endDate: date, cellSizeM: room.cellSizeM, sampleHeightM: 0 };
+function requestBody(room: Room, startDate: string, endDate: string = startDate): ApiDliRequest {
+  const body: ApiDliRequest = { startDate, endDate, cellSizeM: room.cellSizeM, sampleHeightM: 0 };
   if (TEST_MODE) {
     body.mockSky = true;
     body.acceptProvisionalAlgorithm = true;
@@ -91,6 +91,31 @@ async function waitForJob(jobId: string, isCancelled: () => boolean): Promise<Jo
 
 function isProvisional(result: ApiDliJobResult): boolean {
   return result.mockSky || result.temporaryDirection || result.warnings.length > 0;
+}
+
+export type PeriodDliResult =
+  | { ok: true; jobId: string; result: ApiDliJobResult; provisional: boolean }
+  | { ok: false; error: string };
+
+/**
+ * 기간(start~end) 평균 DLI 지도 하나 — 공간 화면 지도, 추천 요청(dli_job_id)에 쓴다.
+ * 취소되면 null.
+ */
+export async function runPeriodDliJob(
+  room: Room,
+  startDate: string,
+  endDate: string,
+  isCancelled: () => boolean,
+): Promise<PeriodDliResult | null> {
+  if (!room.server) return { ok: false, error: '서버에 측정한 방이 없어요' };
+  try {
+    const { jobId } = await requestDliMap(room.server.roomId, requestBody(room, startDate, endDate));
+    const outcome = await waitForJob(jobId, isCancelled);
+    if (outcome === null) return null;
+    return outcome.ok ? { ok: true, jobId, result: outcome.result, provisional: isProvisional(outcome.result) } : outcome;
+  } catch (e) {
+    return { ok: false, error: describeServerError(e) };
+  }
 }
 
 export type ServerLightResult =

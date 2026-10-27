@@ -109,6 +109,14 @@ export function fetchJob<T>(jobId: string) {
   return apiRequest<ApiJob<T>>(`/jobs/${encodeURIComponent(jobId)}`);
 }
 
+/**
+ * 배치 추천 — 완료된 DLI 작업(기간 지도)과 배치 불가 칸으로 요청한다.
+ * 백엔드는 알고리즘 추천 함수가 연결되기 전까지 501을 돌려준다. 응답 형식은 아직 미정이라 unknown.
+ */
+export function requestRecommendations(roomId: number, input: { dliJobId: string; blockedCells: [number, number][] }) {
+  return apiRequest<unknown>(`/rooms/${roomId}/recommendations`, { method: 'POST', body: input });
+}
+
 /* ---------------- 창밖 스캔 업로드 ---------------- */
 
 /** 사진 13장 + metadata(JSON 문자열) multipart 업로드 → 202 + job_id (SKY 분석은 백그라운드) */

@@ -12,4 +12,10 @@ export { classifyDli, formatDli, meanDli, periodStatus } from './dliStatus';
 export { weekInsight } from './insights';
 export { buildMockLightDays } from './mockSource';
 export { buildPlantSeries, dliRangeFor, recentStatusOf, todayPointOf } from './series';
-export { describeServerError, loadServerLightDays, type ServerLightResult } from './serverSource';
+export {
+  describeServerError,
+  loadServerLightDays,
+  runPeriodDliJob,
+  type PeriodDliResult,
+  type ServerLightResult,
+} from './serverSource';

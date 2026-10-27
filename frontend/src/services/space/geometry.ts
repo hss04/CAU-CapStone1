@@ -113,9 +113,15 @@ export function isInsideRoom(room: Room, pos: GridPosition): boolean {
   return room.insideMask ? !!room.insideMask[pos.y]?.[pos.x] : true;
 }
 
-/** 식물을 둘 수 있는 셀인지 (바닥 또는 surface 가구 위) */
+/** 사용자가 배치 불가로 지정한 칸 */
+export function isBlocked(room: Room, pos: GridPosition): boolean {
+  return !!room.blockedCells?.some((c) => c.x === pos.x && c.y === pos.y);
+}
+
+/** 식물을 둘 수 있는 셀인지 (바닥 또는 surface 가구 위, 배치 불가 칸 제외) */
 export function isPlaceable(room: Room, pos: GridPosition): boolean {
   if (!isInsideRoom(room, pos)) return false;
+  if (isBlocked(room, pos)) return false;
   if (isInDoorSwing(room, pos)) return false;
   const f = furnitureAt(room, pos);
   return !f || !!f.surface;

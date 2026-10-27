@@ -114,6 +114,11 @@ export function realToCell(room: Room, pos: ApiPosition): GridPosition | null {
   };
 }
 
+/** 배치 불가 칸 → 추천 요청 형식 blocked_cells [[row, col], ...] (row = grid y, col = grid x) */
+export function blockedCellsForServer(room: Room): [number, number][] {
+  return (room.blockedCells ?? []).map((c) => [c.y, c.x]);
+}
+
 /** 셀 중심 → 서버 실좌표(m, 소수 3자리). 1차는 식물 높이를 고려하지 않아 y = 0 */
 export function cellToReal(room: Room, pos: GridPosition): ApiPosition | null {
   const ref = room.server;

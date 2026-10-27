@@ -9,6 +9,7 @@ import { linkSpecies, plantsFromServer, type SpeciesLinks } from '@/services/api
 import { cellToReal, roomFromServer } from '@/services/api/roomSync';
 import { analyzePlacement } from '@/services/placement/placementEngine';
 import { buildMockDliMap } from '@/services/space/dliMap';
+import { isBlocked, isInsideRoom, samePosition } from '@/services/space/geometry';
 import {
   describeUploadError,
   submitWindowScan,
@@ -19,6 +20,7 @@ import {
 import { useAuth } from '@/store/AuthProvider';
 import type {
   CharacterState,
+  DliPeriod,
   GridPosition,
   LightPreference,
   NotificationSettings,
@@ -64,6 +66,10 @@ export interface GardenState {
   scanUploads: Record<string, ScanUploadState>;
   /** 서버 방 ID → 사용자가 고른 지역 이름 (서버에 이름 필드가 없어 앱에만 둔다) */
   locationLabels: Record<number, string>;
+  /** 앱 방 ID → 사용자가 지정한 배치 불가 칸 (방을 다시 받아도 유지) */
+  blockedCells: Record<string, GridPosition[]>;
+  /** 공간 화면 DLI 지도의 계산 기간 */
+  dliPeriod: DliPeriod;
   /** 앱 종 ↔ 서버 종 연결 (로그인 상태에서만 채워짐) */
   serverSpecies: SpeciesLinks;
   sync: SyncState;
@@ -106,6 +112,8 @@ type Action =
   | { type: 'saveWindowScan'; scan: WindowScan }
   | { type: 'scanUpload'; windowId: string; upload: ScanUploadState }
   | { type: 'locationLabel'; roomId: number; label: string }
+  | { type: 'toggleBlockedCell'; pos: GridPosition }
+  | { type: 'setDliPeriod'; period: DliPeriod }
   | { type: 'syncStart' }
   | { type: 'syncSuccess'; links: SpeciesLinks; plants: Plant[]; skipped: number; room: Room; dliMap: ApiDliMap | null }
   | { type: 'syncError'; message: string }
@@ -138,6 +146,8 @@ function createInitialState(hasOnboarded = false): GardenState {
     windowScans: {},
     scanUploads: {},
     locationLabels: {},
+    blockedCells: {},
+    dliPeriod: 'month',
     serverSpecies: {},
     sync: DEMO_SYNC,
     dliMap: null,
@@ -145,11 +155,25 @@ function createInitialState(hasOnboarded = false): GardenState {
   };
 }
 
-/** 서버 방 위치에 앱에서 기억해 둔 지역 이름을 붙인다 */
-function withLocationLabel(room: Room, labels: Record<number, string>): Room {
-  const label = room.server ? labels[room.server.roomId] : undefined;
-  if (!room.location || !label) return room;
-  return { ...room, location: { ...room.location, label } };
+/** 앱에만 있는 방 정보(지역 이름, 배치 불가 칸)를 방에 붙인다 */
+function withRoomExtras(room: Room, state: Pick<GardenState, 'locationLabels' | 'blockedCells'>): Room {
+  const label = room.server ? state.locationLabels[room.server.roomId] : undefined;
+  const blockedCells = state.blockedCells[room.id] ?? [];
+  return {
+    ...room,
+    blockedCells,
+    location: room.location && label ? { ...room.location, label } : room.location,
+  };
+}
+
+/** 방이 바뀌었을 때(배치 불가 칸 등) 로컬 배치 추천을 다시 계산한다 */
+function reanalyzePlants(room: Room, plants: Plant[]): Plant[] {
+  return plants.map((p) => {
+    if (p.roomId !== room.id) return p;
+    const occupied = plants.filter((o) => o.id !== p.id).map((o) => o.location.position);
+    const input = { position: p.location.position, preferredLight: p.preferredLight, label: p.location.label };
+    return { ...p, analysis: analyzePlacement(room, input, occupied) };
+  });
 }
 
 function reducer(state: GardenState, action: Action): GardenState {
@@ -214,7 +238,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         }),
       };
     case 'setRoom':
-      return { ...state, room: action.room };
+      return { ...state, room: withRoomExtras(action.room, state) };
     case 'toggleNotification':
       return {
         ...state,
@@ -234,6 +258,21 @@ function reducer(state: GardenState, action: Action): GardenState {
       return { ...state, scanUploads: { ...state.scanUploads, [action.windowId]: action.upload } };
     case 'locationLabel':
       return { ...state, locationLabels: { ...state.locationLabels, [action.roomId]: action.label } };
+    case 'toggleBlockedCell': {
+      const current = state.blockedCells[state.room.id] ?? [];
+      const cells = current.some((c) => samePosition(c, action.pos))
+        ? current.filter((c) => !samePosition(c, action.pos))
+        : [...current, action.pos];
+      const room = { ...state.room, blockedCells: cells };
+      return {
+        ...state,
+        blockedCells: { ...state.blockedCells, [room.id]: cells },
+        room,
+        plants: reanalyzePlants(room, state.plants),
+      };
+    }
+    case 'setDliPeriod':
+      return { ...state, dliPeriod: action.period };
     case 'removePlant':
       return { ...state, plants: state.plants.filter((p) => p.id !== action.plantId) };
     case 'clearPlants':
@@ -247,7 +286,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         ...state,
         serverSpecies: action.links,
         plants: action.plants,
-        room: withLocationLabel(action.room, state.locationLabels),
+        room: withRoomExtras(action.room, state),
         dliMap: action.dliMap,
         dliCheck: IDLE_CHECK,
         sync: { status: 'synced', message: null, skipped: action.skipped },
@@ -259,7 +298,7 @@ function reducer(state: GardenState, action: Action): GardenState {
     case 'enterDemo':
       return {
         ...state,
-        room: MOCK_ROOM,
+        room: withRoomExtras(MOCK_ROOM, state),
         plants: createMockPlants(parseISODate(state.today)),
         serverSpecies: {},
         scanUploads: {},
@@ -294,6 +333,9 @@ interface GardenActions {
   uploadWindowScan: (windowId: string) => Promise<void>;
   /** 서버 방 위치 저장 후 방을 다시 받는다 (서버가 방 구조 버전을 올린다) */
   saveRoomLocation: (location: { latitude: number; longitude: number; label: string }) => Promise<void>;
+  /** 배치 불가 칸 지정/해제. 식물이 있는 칸·방 밖은 바꾸지 않는다 */
+  toggleBlockedCell: (pos: GridPosition) => 'blocked' | 'unblocked' | 'occupied' | 'outside';
+  setDliPeriod: (period: DliPeriod) => void;
 }
 
 interface GardenContextValue {
@@ -341,6 +383,8 @@ export function GardenProvider({ children }: { children: ReactNode }) {
           dliMap = buildMockDliMap(room, grid, today);
         }
 
+        // 배치 불가 칸을 붙인 방으로 식물 배치를 분석한다
+        room = withRoomExtras(room, stateRef.current);
         const result = plantsFromServer(serverPlants, links, room, plants, today);
         dispatch({ type: 'syncSuccess', links, plants: result.plants, skipped: result.skipped, room, dliMap });
       } catch (e) {
@@ -446,6 +490,15 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'locationLabel', roomId: room.server.roomId, label });
         await reloadFromServer();
       },
+      toggleBlockedCell: (pos) => {
+        const { room, plants } = stateRef.current;
+        if (!isInsideRoom(room, pos)) return 'outside';
+        if (plants.some((p) => samePosition(p.location.position, pos))) return 'occupied';
+        const wasBlocked = isBlocked(room, pos);
+        dispatch({ type: 'toggleBlockedCell', pos });
+        return wasBlocked ? 'unblocked' : 'blocked';
+      },
+      setDliPeriod: (period) => dispatch({ type: 'setDliPeriod', period }),
     };
   }, []);
 
