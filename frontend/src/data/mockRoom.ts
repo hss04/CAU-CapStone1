@@ -47,4 +47,6 @@ export const MOCK_ROOM: Room = {
     { id: 'spot-wardrobe-side', label: '옷장 옆', position: { x: 2, y: 9 } },
     { id: 'spot-center', label: '방 가운데', position: { x: 4, y: 5 } },
   ],
+  // 예시 위치 — 날씨는 이 위치의 실제 예보를 보여주고, 화면에 '예시 방'으로 표시한다
+  location: { latitude: 37.5663, longitude: 126.9019, label: '서울 마포구', demo: true },
 };

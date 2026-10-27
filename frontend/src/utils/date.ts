@@ -35,6 +35,16 @@ export function formatMonthDayKo(date: Date): string {
   return `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAYS_KO[date.getDay()]}요일`;
 }
 
+/** '월', '화' … */
+export function weekdayKo(date: Date): string {
+  return WEEKDAYS_KO[date.getDay()];
+}
+
+/** '10/27' */
+export function formatMonthDaySlash(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
 export function formatShortDateEn(date: Date): string {
   return `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, '0')} ${WEEKDAYS_EN[date.getDay()]}`;
 }

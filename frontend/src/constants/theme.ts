@@ -30,6 +30,11 @@ export const Colors = {
   claySoft: '#F6E8DD',
   clayDeep: '#9E6641',
   markerGray: '#9AA29A',
+  /** 예상 광량 상태 — 부족(흐린 하늘 톤) / 과다(강한 햇빛 톤). 적정은 primary */
+  dliLow: '#8A9BAE',
+  dliLowSoft: '#EDF0F4',
+  dliLowDeep: '#5B6A7B',
+  dliHigh: '#DDA33C',
   overlay: 'rgba(30, 42, 33, 0.28)',
   white: '#FFFFFF',
   black: '#000000',

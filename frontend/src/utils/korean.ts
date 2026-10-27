@@ -16,6 +16,11 @@ export function withIga(word: string): string {
   return `${word}${hasBatchim(word).has ? '이' : '가'}`;
 }
 
+/** '몬스테라' → '몬스테라는', '책상 옆' → '책상 옆은' */
+export function withEunNeun(word: string): string {
+  return `${word}${hasBatchim(word).has ? '은' : '는'}`;
+}
+
 /** '몬스테라' → '몬스테라를' */
 export function withEulReul(word: string): string {
   return `${word}${hasBatchim(word).has ? '을' : '를'}`;

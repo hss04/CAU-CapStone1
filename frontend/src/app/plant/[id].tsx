@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowRight,
+  ChevronRight,
   CircleCheck,
   Droplet,
   Gauge,
@@ -31,17 +32,21 @@ import { TopBar, goBackOrHome } from '@/components/common/TopBar';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
 import { WaterCycle } from '@/components/plants/WaterCycle';
 import { FloorPlanGrid } from '@/components/space/FloorPlanGrid';
-import { LIGHT_LEVEL_LABEL, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
+import { DLI_STATUS_COPY, LIGHT_LEVEL_LABEL, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
+import { recentStatusOf } from '@/services/lightForecast';
 import { useGarden, usePlant } from '@/store/GardenProvider';
+import { useLightForecast } from '@/store/LightForecastProvider';
 import { getHealthLabel, getPlantStatus, getWateringInfo } from '@/store/selectors';
+import type { DliStatus } from '@/types';
 import { withEge } from '@/utils/korean';
 
 export default function PlantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const plant = usePlant(id);
   const { state, today, actions } = useGarden();
+  const forecast = useLightForecast();
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -131,6 +136,13 @@ export default function PlantDetailScreen() {
           </View>
         </View>
       </View>
+
+      {/* Weekly light — 날짜별 예상 광량 */}
+      <WeeklyLightLink
+        status={forecast.series[plant.id] ? recentStatusOf(forecast.series[plant.id]) : null}
+        mock={forecast.source === 'mock'}
+        onPress={() => router.push({ pathname: '/light/[plantId]', params: { plantId: plant.id } })}
+      />
 
       {/* Watering */}
       <View style={styles.section}>
@@ -277,6 +289,46 @@ function GuideRow({ icon: Icon, label, value, last }: { icon: typeof Sun; label:
     </View>
   );
 }
+
+function WeeklyLightLink({ status, mock, onPress }: { status: DliStatus | null; mock: boolean; onPress: () => void }) {
+  const copy = status ? DLI_STATUS_COPY[status] : null;
+  return (
+    <Card padding={Spacing.lg} radius={Radius.xl} onPress={onPress} accessibilityLabel="주간 광환경 보기" style={weeklyStyles.card}>
+      <View style={weeklyStyles.icon}>
+        <Sun size={18} color={Colors.sunlightDeep} strokeWidth={1.9} />
+      </View>
+      <View style={weeklyStyles.texts}>
+        <AppText variant="bodyStrong">주간 광환경</AppText>
+        <AppText variant="caption" color={Colors.textSecondary}>
+          {copy ? `최근 7일 예상 광량 · ${copy.sentence}` : '날짜별 예상 광량을 확인해요'}
+          {mock ? ' (예시)' : ''}
+        </AppText>
+      </View>
+      {copy ? <StatusChip label={copy.label} tone={copy.tone} size="sm" dot /> : null}
+      <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
+    </Card>
+  );
+}
+
+const weeklyStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.sunlightSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  texts: {
+    flex: 1,
+  },
+});
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },

@@ -21,6 +21,11 @@ export interface PlantSpecies {
   humidity: string;
   difficulty: '쉬움' | '보통' | '까다로움';
   summary: string;
+  /**
+   * 요구 DLI 예시 범위 (mol/m²/day) — 로그인 전 데모 화면용.
+   * 로그인하면 서버 식물 종 카탈로그의 min_dli/max_dli를 쓴다.
+   */
+  exampleDliRange: { min: number; max: number };
 }
 
 export interface PlantLocation {

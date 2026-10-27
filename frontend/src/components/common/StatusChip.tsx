@@ -5,13 +5,14 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 
 import { AppText } from './AppText';
 
-export type ChipTone = 'green' | 'water' | 'sun' | 'clay' | 'neutral' | 'white' | 'deep';
+export type ChipTone = 'green' | 'water' | 'sun' | 'clay' | 'dusk' | 'neutral' | 'white' | 'deep';
 
 export const CHIP_TONES: Record<ChipTone, { bg: string; fg: string; dot: string }> = {
   green: { bg: Colors.lightGreen, fg: Colors.deepGreen, dot: Colors.primary },
   water: { bg: Colors.waterSoft, fg: Colors.waterDeep, dot: Colors.water },
   sun: { bg: Colors.sunlightSoft, fg: Colors.sunlightDeep, dot: Colors.sunlight },
   clay: { bg: Colors.claySoft, fg: Colors.clayDeep, dot: Colors.clay },
+  dusk: { bg: Colors.dliLowSoft, fg: Colors.dliLowDeep, dot: Colors.dliLow },
   neutral: { bg: '#F0F1EA', fg: Colors.textSecondary, dot: Colors.markerGray },
   white: { bg: Colors.surface, fg: Colors.text, dot: Colors.primary },
   deep: { bg: Colors.deepGreen, fg: Colors.white, dot: '#BFD4B8' },

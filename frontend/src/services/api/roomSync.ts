@@ -96,6 +96,8 @@ export function roomFromServer(api: ApiRoom, windows: ApiWindow[], grid: ApiGrid
       originZ: grid.origin.z,
       xAxisAzimuthDeg: api.xAxisAzimuthDeg,
     },
+    location:
+      api.latitude !== null && api.longitude !== null ? { latitude: api.latitude, longitude: api.longitude } : undefined,
   };
 }
 

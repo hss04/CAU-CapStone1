@@ -119,3 +119,45 @@ export interface ApiDliMap {
   diffuseDli: DliGrid;
   totalDli: DliGrid;
 }
+
+/* ---------------- DLI 계산 작업 (POST /rooms/{id}/dli-map → GET /jobs/{id}) ---------------- */
+
+/** POST /rooms/{id}/dli-map — 기간(start~end)의 날짜별 계산을 평균한다. 하루만 원하면 start = end */
+export interface ApiDliRequest {
+  startDate: string;
+  endDate: string;
+  cellSizeM: number;
+  sampleHeightM: number;
+  /** 연동 테스트 전용: 창밖 스캔 없이 계산 */
+  mockSky?: boolean;
+  /** 연동 테스트 전용: 방 방향을 모를 때 임시 방향 */
+  temporaryXAxisAzimuthDeg?: number;
+  /** 연동 테스트 전용: 1차 알고리즘의 시간 범위·보간 제한을 알고 실행 */
+  acceptProvisionalAlgorithm?: boolean;
+}
+
+export interface ApiJobCreated {
+  jobId: string;
+  status: ApiJobStatus;
+  statusUrl: string;
+}
+
+export type ApiJobStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'STALE';
+
+/** dli-map 작업 결과 = dli_map_v2 + 기간·임시 입력 표시 */
+export interface ApiDliJobResult extends ApiDliMap {
+  period: { startDate: string; endDate: string; dayCount: number; aggregation: 'DAILY_MEAN' };
+  mockSky: boolean;
+  temporaryDirection: boolean;
+  warnings: string[];
+}
+
+export interface ApiJob<T> {
+  jobId: string;
+  kind: 'DLI' | 'SCAN';
+  status: ApiJobStatus;
+  error: string | null;
+  /** 방 구조가 바뀌어 결과가 더 이상 맞지 않음 */
+  stale: boolean;
+  result: T | null;
+}

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useS
 
 import { createMockPlants } from '@/data/mockPlants';
 import { MOCK_ROOM } from '@/data/mockRoom';
-import { createMockUser, MOCK_WEATHER } from '@/data/mockUser';
+import { createMockUser } from '@/data/mockUser';
 import { ApiError } from '@/services/api/client';
 import * as api from '@/services/api/endpoints';
 import { linkSpecies, plantsFromServer, type SpeciesLinks } from '@/services/api/plantSync';
@@ -19,7 +19,6 @@ import type {
   PlantSpeciesId,
   Room,
   UserProfile,
-  WeatherSnapshot,
   WindowScan,
 } from '@/types';
 import type { ApiDliMap } from '@/types/api';
@@ -47,7 +46,6 @@ export interface GardenState {
   user: UserProfile;
   room: Room;
   plants: Plant[];
-  weather: WeatherSnapshot;
   notifications: NotificationSettings;
   /** 마지막으로 [물 줬어요]를 누른 시각 (캐릭터 감사 메시지용) */
   lastWateredEventAt: number | null;
@@ -103,7 +101,15 @@ type Action =
 
 const DEMO_SYNC: SyncState = { status: 'demo', message: null, skipped: 0 };
 
-const CHARACTER_CYCLE: (CharacterState | null)[] = ['happy', 'healthy', 'thirsty', 'veryThirsty', null];
+const CHARACTER_CYCLE: (CharacterState | null)[] = [
+  'happy',
+  'healthy',
+  'lowLight',
+  'tooBright',
+  'thirsty',
+  'veryThirsty',
+  null,
+];
 
 function createInitialState(hasOnboarded = false): GardenState {
   const today = new Date();
@@ -113,7 +119,6 @@ function createInitialState(hasOnboarded = false): GardenState {
     user: createMockUser(today),
     room: MOCK_ROOM,
     plants: createMockPlants(today),
-    weather: MOCK_WEATHER,
     notifications: { watering: true, environment: true },
     lastWateredEventAt: null,
     characterOverride: null,

@@ -79,6 +79,28 @@ const POSES: Record<CharacterState, Pose> = {
     stem: '#878A5B',
     cheek: 0.12,
   },
+  // 빛이 부족 — 잎이 빛을 찾아 한쪽(창가)으로 기울고 색이 옅어진다
+  lowLight: {
+    left: { ctrl: [92, 86], tip: [78, 68], scale: 0.92 },
+    right: { ctrl: [119, 84], tip: [147, 72], scale: 0.96 },
+    center: { ctrl: [104, 92], tip: [115, 66], scale: 0.54 },
+    leafLeft: '#7E9C7C',
+    leafRight: '#97B293',
+    leafCenter: '#B4C8AE',
+    stem: '#6A8C69',
+    cheek: 0.2,
+  },
+  // 빛이 과다 — 잎이 옆으로 늘어지고 노랗게, 볼이 달아오른다
+  tooBright: {
+    left: { ctrl: [84, 80], tip: [58, 74], scale: 0.98 },
+    right: { ctrl: [117, 78], tip: [143, 72], scale: 0.98 },
+    center: { ctrl: [100, 90], tip: [99, 60], scale: 0.6 },
+    leafLeft: '#8EA35C',
+    leafRight: '#A5B56C',
+    leafCenter: '#C3CA86',
+    stem: '#788B52',
+    cheek: 0.85,
+  },
 };
 
 /* ------------------------------------------------------------------ */
@@ -225,6 +247,47 @@ function Drop({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   );
 }
 
+/** 빛 부족 상태 장식 — 작은 구름 */
+function SmallCloud({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
+  return (
+    <G transform={`translate(${x} ${y}) scale(${s})`}>
+      <Path
+        d="M -14 6 A 7 7 0 0 1 -9 -6 A 9 9 0 0 1 8 -8 A 7 7 0 0 1 15 6 Z"
+        fill="#D5DDE5"
+      />
+      <Path d="M -9 1.5 L 9 1.5" stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" opacity={0.7} />
+    </G>
+  );
+}
+
+/** 빛 과다 상태 장식 — 해 */
+function HotSun({ x, y }: { x: number; y: number }) {
+  const rays = Array.from({ length: 8 }, (_, i) => (i * Math.PI) / 4);
+  return (
+    <G>
+      {rays.map((a) => (
+        <Path
+          key={a}
+          d={`M ${x + Math.cos(a) * 13} ${y + Math.sin(a) * 13} L ${x + Math.cos(a) * 18} ${y + Math.sin(a) * 18}`}
+          stroke="#F2B84B"
+          strokeWidth={2.4}
+          strokeLinecap="round"
+        />
+      ))}
+      <Circle cx={x} cy={y} r={9.5} fill="#F6C65E" />
+    </G>
+  );
+}
+
+/** 빛 과다 상태 장식 — 땀방울 */
+function Sweat({ x, y }: { x: number; y: number }) {
+  return (
+    <G transform={`translate(${x} ${y}) scale(0.62) rotate(14)`}>
+      <Path d="M 0 -12 C -3.5 -6.5 -5.5 -3 -5.5 0 A 5.5 5.5 0 0 0 5.5 0 C 5.5 -3 3.5 -6.5 0 -12 Z" fill="#A9D2E2" />
+    </G>
+  );
+}
+
 function Face({ state, cheek }: { state: CharacterState; cheek: number }) {
   const eyes = (() => {
     switch (state) {
@@ -242,6 +305,26 @@ function Face({ state, cheek }: { state: CharacterState; cheek: number }) {
             <Path d="M 109.5 158.5 Q 115 163 120.5 158.5" strokeWidth={2.8} />
             <Path d="M 80 151.5 L 89 148.5" strokeWidth={2} opacity={0.75} />
             <Path d="M 111 148.5 L 120 151.5" strokeWidth={2} opacity={0.75} />
+          </G>
+        );
+      case 'lowLight':
+        // 반쯤 감긴 졸린 눈 + 처진 눈썹
+        return (
+          <G>
+            <Path d="M 80.5 157 A 4.5 4.5 0 0 0 89.5 157 Z" fill={INK} />
+            <Path d="M 110.5 157 A 4.5 4.5 0 0 0 119.5 157 Z" fill={INK} />
+            <G stroke={INK} strokeWidth={1.8} strokeLinecap="round" opacity={0.6}>
+              <Path d="M 80.5 149 L 89 151" />
+              <Path d="M 111 151 L 119.5 149" />
+            </G>
+          </G>
+        );
+      case 'tooBright':
+        // 눈부셔서 찡그린 눈 (> <)
+        return (
+          <G stroke={INK} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <Path d="M 81 153.5 L 89 158 L 81 162.5" />
+            <Path d="M 119 153.5 L 111 158 L 119 162.5" />
           </G>
         );
       case 'thirsty':
@@ -280,6 +363,21 @@ function Face({ state, cheek }: { state: CharacterState; cheek: number }) {
         );
       case 'thirsty':
         return <Ellipse cx={100} cy={171} rx={3.6} ry={3} fill={INK} />;
+      case 'lowLight':
+        return (
+          <Path d="M 94 172.5 Q 100 167.5 106 172.5" stroke={INK} strokeWidth={2.6} strokeLinecap="round" fill="none" />
+        );
+      case 'tooBright':
+        // 더워서 헥헥 — 물결 입
+        return (
+          <Path
+            d="M 91.5 170.5 Q 94.3 167.5 97.2 170.5 Q 100 173.5 102.8 170.5 Q 105.7 167.5 108.5 170.5"
+            stroke={INK}
+            strokeWidth={2.4}
+            strokeLinecap="round"
+            fill="none"
+          />
+        );
       case 'veryThirsty':
         return (
           <Path
@@ -373,6 +471,18 @@ export function PlantCharacter({ state, size = 200, animated = true, showDecorat
             </G>
           ) : null}
           {showDecorations && state === 'thirsty' ? <Drop x={152} y={120} /> : null}
+          {showDecorations && state === 'lowLight' ? (
+            <G>
+              <SmallCloud x={30} y={26} s={0.9} />
+              <SmallCloud x={178} y={22} s={0.7} />
+            </G>
+          ) : null}
+          {showDecorations && state === 'tooBright' ? (
+            <G>
+              <HotSun x={166} y={34} />
+              <Sweat x={136} y={150} />
+            </G>
+          ) : null}
           {showDecorations && state === 'veryThirsty' ? (
             <G>
               <Drop x={154} y={116} s={1.15} />

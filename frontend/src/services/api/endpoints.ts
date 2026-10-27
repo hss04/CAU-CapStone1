@@ -1,6 +1,10 @@
 import type {
+  ApiDliJobResult,
   ApiDliMap,
+  ApiDliRequest,
   ApiGrid,
+  ApiJob,
+  ApiJobCreated,
   ApiPlant,
   ApiPlantInput,
   ApiRoom,
@@ -86,4 +90,15 @@ export function fetchGrid(roomId: number, cellSizeM = GRID_CELL_SIZE_M) {
 /** DLI 지도 JSON이 서버 규격(dli_map_v2)·현재 격자와 맞는지 검증만 한다 (계산·저장 안 함) */
 export function validateDliMap(map: ApiDliMap) {
   return apiRequest<ApiDliMap>(`/rooms/${map.roomId}/dli-map/validate`, { method: 'POST', body: map });
+}
+
+/* ---------------- DLI 계산 (비동기 작업) ---------------- */
+
+/** 격자별 DLI 계산 요청 — 202와 job_id를 받고, 결과는 fetchDliJob으로 조회한다 */
+export function requestDliMap(roomId: number, body: ApiDliRequest) {
+  return apiRequest<ApiJobCreated>(`/rooms/${roomId}/dli-map`, { method: 'POST', body });
+}
+
+export function fetchDliJob(jobId: string) {
+  return apiRequest<ApiJob<ApiDliJobResult>>(`/jobs/${encodeURIComponent(jobId)}`);
 }

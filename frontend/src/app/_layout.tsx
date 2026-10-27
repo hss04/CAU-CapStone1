@@ -13,6 +13,8 @@ import { ToastProvider } from '@/components/common/Toast';
 import { Colors, Layout } from '@/constants/theme';
 import { AuthProvider } from '@/store/AuthProvider';
 import { GardenProvider, useGarden } from '@/store/GardenProvider';
+import { LightForecastProvider } from '@/store/LightForecastProvider';
+import { WeatherProvider } from '@/store/WeatherProvider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,12 +34,17 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <GardenProvider>
-          <AppFrame>
-            <ToastProvider>
-              <StatusBar style="dark" />
-              <RootNavigator />
-            </ToastProvider>
-          </AppFrame>
+          {/* 날씨와 주간 광환경(DLI)은 서로 다른 데이터라 Provider를 나눈다 */}
+          <WeatherProvider>
+            <LightForecastProvider>
+              <AppFrame>
+                <ToastProvider>
+                  <StatusBar style="dark" />
+                  <RootNavigator />
+                </ToastProvider>
+              </AppFrame>
+            </LightForecastProvider>
+          </WeatherProvider>
         </GardenProvider>
       </AuthProvider>
     </SafeAreaProvider>
@@ -58,6 +65,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
         <Stack.Screen name="plant/[id]" />
         <Stack.Screen name="recommendation/[id]" />
+        <Stack.Screen name="light/[plantId]" />
         <Stack.Screen name="add-plant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen

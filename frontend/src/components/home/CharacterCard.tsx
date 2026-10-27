@@ -5,6 +5,7 @@ import { PlantCharacter } from '@/components/character/PlantCharacter';
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
 import { FadeInView } from '@/components/common/FadeInView';
+import { StatusChip } from '@/components/common/StatusChip';
 import { CHARACTER_COPY } from '@/constants/labels';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import type { CharacterMood } from '@/store/selectors';
@@ -14,12 +15,26 @@ export interface CharacterCardProps {
   dateLabel: string;
   /** 시연용: 길게 누르면 캐릭터 상태 순환 */
   onLongPress?: () => void;
+  /** 상태 판단 근거 안내 (예: 예상 광량·물주기 기록 기반 · 예시 데이터) */
+  basisNote?: string;
 }
 
+/** 배경 빛 분위기 — 따뜻함(햇빛) / 서늘함(흐림·목마름) */
+const GLOW: Record<CharacterMood['state'], { color: string; beam: number }> = {
+  happy: { color: '#FBE3A6', beam: 0.9 },
+  healthy: { color: '#FBE3A6', beam: 0.9 },
+  tooBright: { color: '#F9D27E', beam: 1 },
+  thirsty: { color: '#CFE3EC', beam: 0.45 },
+  veryThirsty: { color: '#CFE3EC', beam: 0.45 },
+  lowLight: { color: '#D9E0E8', beam: 0.25 },
+};
+
 /** HOME 메인 — 식물 캐릭터와 상태 메시지 */
-export function CharacterCard({ mood, dateLabel, onLongPress }: CharacterCardProps) {
+export function CharacterCard({ mood, dateLabel, onLongPress, basisNote }: CharacterCardProps) {
   const copy = CHARACTER_COPY[mood.state];
-  const warm = mood.state === 'happy' || mood.state === 'healthy';
+  const glow = GLOW[mood.state];
+  const warm = glow.beam >= 0.9;
+  const secondary = mood.secondary ? CHARACTER_COPY[mood.secondary] : null;
 
   return (
     <Card tone="green" padding={0} radius={Radius.xl} onLongPress={onLongPress} style={styles.card}>
@@ -31,25 +46,28 @@ export function CharacterCard({ mood, dateLabel, onLongPress }: CharacterCardPro
             <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
           </LinearGradient>
         </Defs>
-        <Polygon points="70,0 84,0 36,100 16,100" fill="url(#cc-beam)" opacity={warm ? 0.9 : 0.45} />
-        <Polygon points="90,0 96,0 62,100 52,100" fill="url(#cc-beam)" opacity={warm ? 0.7 : 0.3} />
+        <Polygon points="70,0 84,0 36,100 16,100" fill="url(#cc-beam)" opacity={glow.beam} />
+        <Polygon points="90,0 96,0 62,100 52,100" fill="url(#cc-beam)" opacity={glow.beam * 0.75} />
       </Svg>
       <Svg style={styles.glow} viewBox="0 0 100 100">
         <Defs>
           <RadialGradient id="cc-glow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={warm ? '#FBE3A6' : '#CFE3EC'} stopOpacity={warm ? 0.95 : 0.8} />
-            <Stop offset="1" stopColor={warm ? '#FBE3A6' : '#CFE3EC'} stopOpacity={0} />
+            <Stop offset="0" stopColor={glow.color} stopOpacity={warm ? 0.95 : 0.8} />
+            <Stop offset="1" stopColor={glow.color} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Circle cx={50} cy={50} r={50} fill="url(#cc-glow)" />
       </Svg>
 
       <View style={styles.topRow}>
-        <View style={[styles.stateChip, { backgroundColor: Colors.surface }]}>
-          <View style={[styles.stateDot, { backgroundColor: copy.color }]} />
-          <AppText variant="small" color={copy.color} style={styles.stateText}>
-            {copy.label}
-          </AppText>
+        <View style={styles.chips}>
+          <View style={[styles.stateChip, { backgroundColor: Colors.surface }]}>
+            <View style={[styles.stateDot, { backgroundColor: copy.color }]} />
+            <AppText variant="small" color={copy.color} style={styles.stateText}>
+              {copy.label}
+            </AppText>
+          </View>
+          {secondary ? <StatusChip label={`+ ${secondary.labelKo}`} tone="white" size="sm" style={styles.secondary} /> : null}
         </View>
         <AppText variant="label" color={Colors.textSecondary} style={styles.date}>
           {dateLabel}
@@ -67,6 +85,12 @@ export function CharacterCard({ mood, dateLabel, onLongPress }: CharacterCardPro
           </AppText>
         </View>
       </FadeInView>
+
+      {basisNote ? (
+        <AppText variant="small" color={Colors.textSecondary} align="center" style={styles.basis}>
+          {basisNote}
+        </AppText>
+      ) : null}
     </Card>
   );
 }
@@ -89,6 +113,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
+  },
+  chips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
+  secondary: {
+    height: 27,
   },
   stateChip: {
     flexDirection: 'row',
@@ -128,5 +161,9 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: 15.5,
     fontWeight: '500',
+  },
+  basis: {
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.xl,
   },
 });

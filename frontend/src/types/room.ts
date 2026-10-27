@@ -82,6 +82,16 @@ export interface RoomSpot {
   position: GridPosition;
 }
 
+/** 방이 있는 지역 (날씨·일사량 조회용). 서버 Room.latitude/longitude */
+export interface RoomLocation {
+  latitude: number;
+  longitude: number;
+  /** 지역 이름 (예: 서울 마포구). 서버 방에는 아직 이름이 없어 비어 있을 수 있다 */
+  label?: string;
+  /** 데모 방의 예시 위치 */
+  demo?: boolean;
+}
+
 /** rows x cols 크기의 2차원 배열. 값은 0~100의 상대 광량 지수. */
 export type LightMap = number[][];
 
@@ -109,6 +119,8 @@ export interface Room {
   insideMask?: boolean[][];
   /** 서버(백엔드) 방과 연결된 경우 좌표 변환 정보 */
   server?: ServerRoomRef;
+  /** 위경도가 저장된 방만 있다 */
+  location?: RoomLocation;
 }
 
 /** 서버 방 좌표(m) ↔ 앱 grid 셀 변환에 필요한 값 (grid_v2 기준) */

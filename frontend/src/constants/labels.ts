@@ -1,4 +1,12 @@
-import type { CharacterState, CompassDirection, LightLevel, LightPreference, TimeOfDay } from '@/types';
+import type {
+  CharacterState,
+  CompassDirection,
+  DliStatus,
+  LightLevel,
+  LightPreference,
+  TimeOfDay,
+  WeatherCondition,
+} from '@/types';
 
 import { Colors } from './theme';
 
@@ -48,15 +56,15 @@ export const CHARACTER_COPY: Record<
   },
   happy: {
     label: 'Happy',
-    labelKo: '기분 좋아요',
-    message: '오늘 햇빛이 정말 좋아요 ☀️',
+    labelKo: '잘 지내요',
+    message: '오늘도 잘 지내고 있어요!',
     color: Colors.sunlightDeep,
     soft: Colors.sunlightSoft,
   },
   thirsty: {
     label: 'Thirsty',
     labelKo: '목말라요',
-    message: '슬슬 목이 말라요 💧',
+    message: '물을 줄 시간이 되었어요!',
     color: Colors.waterDeep,
     soft: Colors.waterSoft,
   },
@@ -67,9 +75,47 @@ export const CHARACTER_COPY: Record<
     color: Colors.clayDeep,
     soft: Colors.claySoft,
   },
+  lowLight: {
+    label: 'Low light',
+    labelKo: '햇빛이 아쉬워요',
+    message: '요즘 햇빛이 조금 부족한 것 같아요.',
+    color: Colors.dliLowDeep,
+    soft: Colors.dliLowSoft,
+  },
+  tooBright: {
+    label: 'Too bright',
+    labelKo: '눈부셔요',
+    message: '햇빛이 너무 강할 수 있어요!',
+    color: Colors.sunlightDeep,
+    soft: Colors.sunlightSoft,
+  },
 };
 
 export const WATERED_MESSAGE = '물을 마셨더니 개운해요 🌿';
+
+/**
+ * 예상 광량 상태 (식물 요구 DLI 범위와 비교).
+ * 실제 측정이 아니라 계산된 예상치 기준이라 문장은 '~것 같아요/예상돼요'로 쓴다.
+ */
+export const DLI_STATUS_COPY: Record<
+  DliStatus,
+  { label: string; sentence: string; tone: 'green' | 'dusk' | 'sun'; color: string }
+> = {
+  low: { label: '부족', sentence: '빛이 부족해요', tone: 'dusk', color: Colors.dliLow },
+  ok: { label: '적정', sentence: '빛이 알맞아요', tone: 'green', color: Colors.primary },
+  high: { label: '과다', sentence: '빛이 강해요', tone: 'sun', color: Colors.dliHigh },
+};
+
+export const WEATHER_LABEL: Record<WeatherCondition, string> = {
+  sunny: '맑음',
+  partlyCloudy: '구름 조금',
+  cloudy: '흐림',
+  foggy: '안개',
+  drizzle: '이슬비',
+  rainy: '비',
+  snowy: '눈',
+  stormy: '뇌우',
+};
 
 export const FACING_KO: Record<CompassDirection, string> = {
   N: '북',
@@ -93,3 +139,16 @@ export const FACING_AZIMUTH: Record<CompassDirection, number> = {
   W: 270,
   NW: 315,
 };
+
+/**
+ * 계산 대기 화면의 처리 단계 이름 — 실제로 진행 중인 단계만 화면에 보여준다.
+ * sky(창밖 스캔 분석)·recommend(추천 API)는 프론트 연동 후 같은 컴포넌트로 표시한다.
+ */
+export const ANALYSIS_STEP_LABEL = {
+  sync: '방·식물 정보 불러오는 중',
+  request: '계산 요청 보내는 중',
+  sky: '창밖 환경 분석 중',
+  dli: '일조 환경 계산 중',
+  plants: '식물별 광환경 정리 중',
+  recommend: '식물별 추천 위치 분석 중',
+} as const;
