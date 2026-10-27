@@ -69,11 +69,7 @@ function RootNavigator() {
         <Stack.Screen name="room-location" />
         <Stack.Screen name="add-plant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen
-          name="room-scan"
-          options={{ animation: 'fade', contentStyle: { backgroundColor: '#111A14' } }}
-        />
-        <Stack.Screen name="scan-complete" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="room-scan" />
         <Stack.Screen
           name="window-scan/[windowId]/index"
           options={{ animation: 'fade', gestureEnabled: false, contentStyle: { backgroundColor: '#0E1511' } }}

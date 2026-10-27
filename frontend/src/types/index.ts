@@ -1,7 +1,6 @@
 export * from './lightForecast';
 export * from './plant';
 export * from './room';
-export * from './scan';
 export * from './weather';
 export * from './windowScan';
 

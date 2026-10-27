@@ -127,7 +127,7 @@ export default function MyPageScreen() {
       <Group title="Space & Plants">
         <SettingRow icon={MapIcon} title="내 공간 관리" subtitle={`${room.name} · ${room.orientationLabel} · 창문 ${room.windows.length}개`} onPress={() => router.navigate('/space')} />
         <SettingRow icon={Sprout} title="내 식물 관리" value={`${plants.length}개`} onPress={() => router.navigate('/plants')} />
-        <SettingRow icon={ScanLine} title="공간 다시 스캔" tone="sun" onPress={() => router.push('/room-scan')} showDivider={false} />
+        <SettingRow icon={ScanLine} title="공간 측정·불러오기" tone="sun" onPress={() => router.push('/room-scan')} showDivider={false} />
       </Group>
 
       <Group title="Notifications">

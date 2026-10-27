@@ -146,7 +146,7 @@ export default function SpaceScreen() {
           eyebrow="Light map"
           title="My Space"
           subtitle="내 공간의 빛 환경을 확인해보세요."
-          right={<IconButton icon={ScanLine} accessibilityLabel="공간 다시 스캔" onPress={() => router.push('/room-scan')} />}
+          right={<IconButton icon={ScanLine} accessibilityLabel="공간 측정·불러오기" onPress={() => router.push('/room-scan')} />}
         />
 
         <View style={styles.roomChips}>
@@ -321,7 +321,7 @@ export default function SpaceScreen() {
         </View>
 
         <SecondaryButton
-          title="공간 다시 스캔하기"
+          title="공간 측정·불러오기"
           icon={ScanLine}
           variant="outline"
           onPress={() => router.push('/room-scan')}

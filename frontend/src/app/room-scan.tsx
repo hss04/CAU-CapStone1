@@ -1,137 +1,193 @@
 import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { CircleHelp, Smartphone } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
+import { CloudDownload, LogIn, Map as MapIcon, Ruler, Send, Smartphone, TriangleAlert, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/common/AppText';
-import { IconButton } from '@/components/common/IconButton';
-import { useToast } from '@/components/common/Toast';
-import { TopBar, goBackOrHome } from '@/components/common/TopBar';
-import { ScanPanel } from '@/components/scan/ScanPanel';
-import { ScanViewfinder } from '@/components/scan/ScanViewfinder';
-import { Colors, Spacing } from '@/constants/theme';
-import { useRoomScan } from '@/hooks/useRoomScan';
-import { setLastScanResult } from '@/services/scan';
+import { Card } from '@/components/common/Card';
+import { PrimaryButton } from '@/components/common/PrimaryButton';
+import { ScreenContainer } from '@/components/common/ScreenContainer';
+import { SecondaryButton } from '@/components/common/SecondaryButton';
+import { StatusChip } from '@/components/common/StatusChip';
+import { TopBar } from '@/components/common/TopBar';
+import { Colors, Radius, Spacing } from '@/constants/theme';
+import { roomSizeLabel } from '@/services/space/geometry';
+import { useAuth } from '@/store/AuthProvider';
 import { useGarden } from '@/store/GardenProvider';
 
+interface Step {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+const STEPS: Step[] = [
+  {
+    icon: Smartphone,
+    title: 'ARCore 측정 앱 열기',
+    description: '안드로이드 폰에서 방 측정 앱을 열어요.',
+  },
+  {
+    icon: Ruler,
+    title: '방 모서리와 창문 측정',
+    description: '바닥 모서리를 차례로 찍고, 창문은 네 꼭짓점을 찍어요.',
+  },
+  {
+    icon: Send,
+    title: "'저장한 방 서버 전송'",
+    description: '서버 주소와 LUMAP 계정(이메일·비밀번호)을 넣고 보내요.',
+  },
+  {
+    icon: CloudDownload,
+    title: '여기서 방 불러오기',
+    description: '같은 계정으로 로그인한 뒤 아래 버튼을 눌러요.',
+  },
+];
+
 /**
- * ROOM SCAN (Mock)
- * - 화면은 useRoomScan 훅의 상태만 그린다.
- * - 실제 스캔 로직은 services/scan 의 RoomScanner 구현체가 담당한다.
+ * 공간 측정 안내.
+ * 방 측정은 별도 ARCore 앱(안드로이드)이 하고 서버에 올린다(POST /rooms/import-ar).
+ * 이 화면은 그 순서를 안내하고, 서버에 올라간 방을 불러온다(GET /rooms).
  */
 export default function RoomScanScreen() {
-  const insets = useSafeAreaInsets();
-  const { actions } = useGarden();
-  const toast = useToast();
+  const { state, actions } = useGarden();
+  const auth = useAuth();
+  const { room, sync } = state;
+  const signedIn = auth.status === 'signedIn';
+  const loading = sync.status === 'loading';
 
-  const navTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (navTimer.current) clearTimeout(navTimer.current);
-  }, []);
-
-  const scan = useRoomScan({
-    onComplete: (result) => {
-      setLastScanResult(result);
-      actions.setRoom(result.room);
-      // 100% 상태를 잠깐 보여준 뒤 완료 화면으로 (그 사이 닫으면 취소)
-      navTimer.current = setTimeout(() => router.replace('/scan-complete'), 650);
-    },
-  });
-
-  const sway = useSharedValue(0);
-  useEffect(() => {
-    sway.set(withRepeat(withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [sway]);
-  const phoneStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: (sway.get() - 0.5) * 22 }, { rotate: `${(sway.get() - 0.5) * 16}deg` }],
-  }));
+  const footer = signedIn ? (
+    <>
+      <PrimaryButton
+        title={loading ? '불러오는 중…' : '서버에서 방 불러오기'}
+        icon={CloudDownload}
+        disabled={loading}
+        onPress={actions.reloadFromServer}
+      />
+      {room.server ? (
+        <SecondaryButton title="내 공간 보기" icon={MapIcon} variant="ghost" size="md" onPress={() => router.navigate('/space')} />
+      ) : null}
+    </>
+  ) : (
+    <PrimaryButton title="로그인하고 방 불러오기" icon={LogIn} onPress={() => router.push('/login')} />
+  );
 
   return (
-    <View style={styles.screen}>
-      <StatusBar style="light" />
-      <ScanViewfinder progress={scan.progress} detected={scan.detected} paused={scan.status === 'paused'} />
+    <ScreenContainer header={<TopBar title="공간 측정" />} footer={footer}>
+      <AppText variant="label" color={Colors.primary} style={styles.eyebrow}>
+        Room measurement
+      </AppText>
+      <AppText variant="title" style={styles.title}>
+        방 측정은 ARCore 앱에서 해요
+      </AppText>
+      <AppText variant="body" color={Colors.textSecondary} style={styles.subtitle}>
+        측정한 방을 서버로 보내면, LUMAP이 그 방을 불러와 빛 지도를 만들어요.
+      </AppText>
 
-      <View style={{ paddingTop: insets.top }}>
-        <TopBar
-          title="공간 스캔"
-          tone="dark"
-          backIcon="close"
-          onBack={goBackOrHome}
-          right={
-            <IconButton
-              icon={CircleHelp}
-              accessibilityLabel="스캔 도움말"
-              size={42}
-              color={Colors.white}
-              background="rgba(255,255,255,0.14)"
-              shadow={false}
-              onPress={() => toast.show('벽 → 창문 → 가구 순서로 천천히 비춰주세요')}
-            />
-          }
-        />
-      </View>
+      <Card padding={Spacing.xl} radius={Radius.xl} style={styles.section}>
+        {STEPS.map((s, i) => (
+          <View key={s.title} style={[styles.step, i < STEPS.length - 1 && styles.stepGap]}>
+            <View style={styles.stepNo}>
+              <AppText variant="captionStrong" color={Colors.white}>
+                {`${i + 1}`}
+              </AppText>
+            </View>
+            <View style={styles.flex}>
+              <View style={styles.stepTitle}>
+                <s.icon size={15} color={Colors.primary} strokeWidth={1.9} />
+                <AppText variant="bodyStrong">{s.title}</AppText>
+              </View>
+              <AppText variant="caption" color={Colors.textSecondary}>
+                {s.description}
+              </AppText>
+            </View>
+          </View>
+        ))}
+      </Card>
 
-      <View style={styles.guide}>
-        <Animated.View style={[styles.phoneBadge, phoneStyle]}>
-          <Smartphone size={22} color={Colors.white} strokeWidth={1.6} />
-        </Animated.View>
-        <AppText variant="h1" color={Colors.white} align="center">
-          방을 천천히 둘러봐 주세요.
+      {/* 지금 앱에 있는 방 */}
+      <Card tone={room.server ? 'green' : 'muted'} bordered={!room.server} shadow={false} padding={Spacing.lg} radius={Radius.lg} style={styles.section}>
+        <View style={styles.roomRow}>
+          <View style={styles.flex}>
+            <AppText variant="captionStrong" color={Colors.textSecondary}>
+              지금 앱의 방
+            </AppText>
+            <AppText variant="h3">{room.name}</AppText>
+            <AppText variant="caption" color={Colors.textSecondary}>
+              {roomSizeLabel(room)} · 창문 {room.windows.length}개
+            </AppText>
+          </View>
+          <StatusChip label={room.server ? '서버 방' : '예시 방'} tone={room.server ? 'green' : 'neutral'} size="sm" />
+        </View>
+        <AppText variant="small" color={sync.status === 'error' ? Colors.clayDeep : Colors.textSecondary} style={styles.syncText}>
+          {syncText(signedIn, sync.status, sync.message, !!room.server)}
         </AppText>
-        <AppText variant="body" color="rgba(255,255,255,0.78)" align="center" style={styles.guideSub}>
-          벽과 창문이 화면에 잘 보이도록{'\n'}휴대폰을 천천히 움직여주세요.
+      </Card>
+
+      <View style={[styles.section, styles.note]}>
+        <TriangleAlert size={15} color={Colors.textTertiary} strokeWidth={1.9} />
+        <AppText variant="small" color={Colors.textTertiary} style={styles.flex}>
+          ARCore 측정은 안드로이드만 지원해요. 폰과 서버 PC가 같은 Wi‑Fi에 있어야 보낼 수 있어요.
         </AppText>
       </View>
-
-      <View style={styles.bottom}>
-        <ScanPanel
-          progress={scan.progress}
-          stage={scan.stage}
-          status={scan.status}
-          detected={scan.detected}
-          onPause={scan.pause}
-          onResume={scan.resume}
-          onMockComplete={scan.finishNow}
-          bottomInset={insets.bottom}
-        />
-      </View>
-    </View>
+    </ScreenContainer>
   );
 }
 
+function syncText(signedIn: boolean, status: string, message: string | null, hasServerRoom: boolean): string {
+  if (!signedIn) return '로그인 전이라 예시 방을 보여주고 있어요.';
+  if (status === 'loading') return '서버에서 방을 불러오는 중이에요…';
+  if (status === 'error') return `불러오지 못했어요 · ${message ?? '알 수 없는 오류'}`;
+  if (!hasServerRoom) return '서버에 측정한 방이 아직 없어요. ARCore 앱에서 먼저 보내 주세요.';
+  return '서버에서 가장 최근에 보낸 방을 쓰고 있어요.';
+}
+
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#111A14',
+  flex: { flex: 1 },
+  eyebrow: {
+    marginTop: Spacing.sm,
   },
-  guide: {
-    pointerEvents: 'none',
-    position: 'absolute',
-    top: '11%',
-    left: Spacing.xxl,
-    right: Spacing.xxl,
-    alignItems: 'center',
+  title: {
+    marginTop: Spacing.sm,
   },
-  phoneBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  subtitle: {
+    marginTop: Spacing.sm,
+  },
+  section: {
+    marginTop: Spacing.xl,
+  },
+  step: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  stepGap: {
     marginBottom: Spacing.lg,
   },
-  guideSub: {
-    marginTop: Spacing.sm,
-    lineHeight: 23,
+  stepNo: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  bottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+  stepTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  roomRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  syncText: {
+    marginTop: Spacing.sm,
+  },
+  note: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
   },
 });
