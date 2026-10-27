@@ -113,21 +113,17 @@ Room/Plant는 JWT 사용자 ID로 제한합니다. Window는 Room 소유권을 �
 
 범위 단위는 `mol/m2/day`입니다. 음수, min > max, 중복 이름은 거절합니다. 동일 이름은 기존 종류의 ID를 유지하며 갱신됩니다. 일괄 입력 전체가 성공할 때만 DB에 반영됩니다.
 
-## 6. 후속 기능
+## 6. 연동 API와 현재 제한
 
-요청한 초기 범위에 맞춰 `OutdoorScan`, `ScanFrame`, `SkyVisibility`, `LightResult`, `Recommendation` 테이블과 이미지 업로드·일조 계산·추천 알고리즘은 아직 추가하지 않았습니다. 확장 시 사용할 JSON 초안은 `docs/DATA_CONTRACT.md`에 있습니다.
+연동 API의 요청·응답 예시와 실행 절차는 [INTEGRATION.md](INTEGRATION.md)를 기준으로 확인하세요. 현재 구현에는 DLI 작업 요청/상태 조회, 위치 검색·저장, 창문 스캔 업로드 API가 포함되어 있습니다. 단일 프로세스 개발/연동용이며 서버 재시작 시 진행 중 작업은 실패 처리됩니다.
 
-`POST /rooms/{room_id}/dli-map/validate`는 외부 계산기가 만든 JSON을 **검증해서 돌려주는 API**입니다. 계산하거나 저장하지 않습니다. `examples/dli-map-demo.json`도 임의 수치이며 실제 일조 결과가 아닙니다. 이 형식은 프론트엔드와 맞출 수 있도록 정한 확장 v2 계약이며 원본 Android 파일에는 DLI 규격이 없습니다.
+- `POST /api/v1/rooms/{room_id}/dli-map/validate`는 payload 검증만 하며 계산하거나 저장하지 않습니다.
+- 실제 계산 요청은 `POST /api/v1/rooms/{room_id}/dli-map`이며 BackgroundTasks 작업으로 처리합니다. 알고리즘 입력 제한과 임시 계산 조건은 [INTEGRATION.md](INTEGRATION.md)의 제한 항목을 확인하세요.
+- 스캔 업로드 API가 있지만 Android의 13장 촬영 UI와 payload 연결은 별도 작업입니다. 프론트 payload 계약을 바꾸기 전 담당자와 맞춰야 합니다.
+- 추천·방향 API는 연결점만 있고 함수가 설정되지 않으면 501을 반환합니다.
+- `GET /health`는 프로세스 생존 확인입니다. `GET /ready`는 DB 접속과 알고리즘 폴더 확인을 함께 합니다.
 
-새 테이블은 SQLAlchemy `create_all`로 만듭니다. 이전 버전 DB가 있다면 서버를 정지한 뒤 다음 명령을 한 번 실행합니다.
-
-```powershell
-.\.venv\Scripts\python.exe scripts\migrate_v3.py
-```
-
-기존 SQLite DB를 먼저 백업하고 측정 메타데이터 컬럼만 추가합니다. 이전 `room_local_v1` 좌표를 임의 회전·변환하지 않습니다. 이전 방은 원본 Android v3 JSON을 새 방으로 가져와 사용하세요. 이전 방 좌표로 새 격자/내보내기를 요청하면 409입니다. 이후 테이블 변경에는 Alembic을 추가할 수 있습니다. PostgreSQL 전환 시에는 DB 드라이버 설치와 DATABASE_URL 변경, 별도 동작 검증이 필요합니다.
-
-공개 서비스 배포는 이번 범위에 포함하지 않았습니다. 배포할 때는 HTTPS와 로그인 요청 제한을 적용하고 `.env`를 소스에 포함하지 마세요.
+새 integration/idempotency 테이블은 서버 시작 시 `create_all`로 추가됩니다. 기존 SQLite 방·창문 컬럼 변경은 기존 절차대로 서버를 정지하고 `scripts/migrate_v3.py`를 실행해야 합니다.
 
 ## 7. 테스트
 
