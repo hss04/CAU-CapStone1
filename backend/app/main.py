@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from sqlalchemy import inspect, update
+from sqlalchemy import inspect, text, update
 from app.integration_models import IntegrationJob
 from app.database import SessionLocal
 from fastapi import FastAPI
@@ -11,6 +11,8 @@ from app.weather import router as weather_router
 from app.integration import router as integration_router
 from app.config import get_settings
 from app.database import Base, engine
+from app.algorithm_bridge import ALGORITHM_DIR
+from fastapi.responses import JSONResponse
 
 
 @asynccontextmanager
@@ -34,7 +36,7 @@ app=FastAPI(title='PlantLight API',version='0.3.0',lifespan=lifespan,
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,
                        allow_credentials=False,allow_methods=['GET','POST','PUT','DELETE'],
-                       allow_headers=['Authorization','Content-Type'])
+                       allow_headers=['Authorization','Content-Type','Idempotency-Key'])
 app.include_router(router)
 app.include_router(weather_router)
 app.include_router(integration_router)
@@ -43,3 +45,21 @@ app.include_router(integration_router)
 @app.get('/health',tags=['Health'])
 def health():
     return {'status':'ok'}
+
+
+@app.get('/ready',tags=['Health'],summary='Check database and algorithm directory readiness')
+def ready():
+    try:
+        with engine.connect() as connection:
+            connection.execute(text('SELECT 1'))
+        database_status='ok'
+    except Exception:
+        database_status='error'
+
+    algorithm_status='available' if ALGORITHM_DIR.is_dir() else 'missing'
+    if database_status!='ok' or algorithm_status!='available':
+        return JSONResponse(status_code=503,content={
+            'status':'not_ready',
+            'checks':{'database':database_status,'algorithm_directory':algorithm_status}
+        })
+    return {'status':'ready','checks':{'database':'ok','algorithm_directory':'available'}}
