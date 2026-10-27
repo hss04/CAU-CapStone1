@@ -164,6 +164,15 @@ export default function SpaceScreen() {
               공간 추가
             </AppText>
           </Pressable>
+          <Pressable
+            onPress={() => router.push('/room-location')}
+            accessibilityLabel="방 위치 설정"
+            style={({ pressed }) => [styles.roomChip, styles.roomChipAdd, styles.locationChip, pressed && { opacity: 0.7 }]}>
+            <MapPin size={14} color={Colors.textSecondary} strokeWidth={2} />
+            <AppText variant="captionStrong" color={Colors.textSecondary} numberOfLines={1}>
+              {room.location ? (room.location.label ?? '위치 저장됨') : '위치 설정'}
+            </AppText>
+          </Pressable>
         </View>
 
         <Card padding={Spacing.lg} radius={Radius.xl} style={styles.planCard}>
@@ -382,6 +391,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderStyle: 'dashed',
     backgroundColor: Colors.surface,
+  },
+  locationChip: {
+    borderStyle: 'solid',
+    flexShrink: 1,
   },
   roomDot: {
     width: 6,

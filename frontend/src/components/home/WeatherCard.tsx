@@ -24,6 +24,8 @@ export interface WeatherCardProps {
   onRetry: () => void;
   todayLight: TodayLightSummary | null;
   onLightPress?: () => void;
+  /** 방 위치 설정 화면으로 (기본 위치·이름 없는 위치일 때 안내) */
+  onSetLocation?: () => void;
 }
 
 const SOFT_BG: Record<ReturnType<typeof weatherTone>, string> = {
@@ -44,7 +46,7 @@ function timeOf(iso: string): string {
 }
 
 /** HOME 상단 — 방이 있는 지역의 현재 날씨와 오늘의 예상 광환경 */
-export function WeatherCard({ weather, onRetry, todayLight, onLightPress }: WeatherCardProps) {
+export function WeatherCard({ weather, onRetry, todayLight, onLightPress, onSetLocation }: WeatherCardProps) {
   const { data } = weather;
 
   if (!data) {
@@ -112,9 +114,11 @@ export function WeatherCard({ weather, onRetry, todayLight, onLightPress }: Weat
       </AppText>
 
       {location.kind === 'default' ? (
-        <AppText variant="small" color={Colors.textTertiary} style={styles.hint}>
-          방 위치가 저장되면 그 지역 날씨로 바뀌어요.
-        </AppText>
+        <Pressable onPress={onSetLocation} disabled={!onSetLocation} hitSlop={Layout.hitSlop} accessibilityRole="button">
+          <AppText variant="small" color={onSetLocation ? Colors.primary : Colors.textTertiary} style={styles.hint}>
+            {onSetLocation ? '방 위치를 설정하면 그 지역 날씨로 바뀌어요 ›' : '방 위치가 저장되면 그 지역 날씨로 바뀌어요.'}
+          </AppText>
+        </Pressable>
       ) : null}
 
       {todayLight ? (

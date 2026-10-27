@@ -115,6 +115,7 @@ export default function HomeScreen() {
           onRetry={weather.refresh}
           todayLight={plants.length > 0 ? summarizeToday(plants, forecast) : null}
           onLightPress={previewPlantId ? () => openLight(previewPlantId) : undefined}
+          onSetLocation={room.server ? () => router.push('/room-location') : undefined}
         />
       </View>
 

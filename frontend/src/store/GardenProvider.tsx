@@ -62,6 +62,8 @@ export interface GardenState {
   windowScans: Record<string, WindowScan>;
   /** 창문별 스캔 업로드·SKY 분석 상태 (앱 창문 ID 기준) */
   scanUploads: Record<string, ScanUploadState>;
+  /** 서버 방 ID → 사용자가 고른 지역 이름 (서버에 이름 필드가 없어 앱에만 둔다) */
+  locationLabels: Record<number, string>;
   /** 앱 종 ↔ 서버 종 연결 (로그인 상태에서만 채워짐) */
   serverSpecies: SpeciesLinks;
   sync: SyncState;
@@ -103,6 +105,7 @@ type Action =
   | { type: 'resetDemo' }
   | { type: 'saveWindowScan'; scan: WindowScan }
   | { type: 'scanUpload'; windowId: string; upload: ScanUploadState }
+  | { type: 'locationLabel'; roomId: number; label: string }
   | { type: 'syncStart' }
   | { type: 'syncSuccess'; links: SpeciesLinks; plants: Plant[]; skipped: number; room: Room; dliMap: ApiDliMap | null }
   | { type: 'syncError'; message: string }
@@ -134,11 +137,19 @@ function createInitialState(hasOnboarded = false): GardenState {
     characterOverride: null,
     windowScans: {},
     scanUploads: {},
+    locationLabels: {},
     serverSpecies: {},
     sync: DEMO_SYNC,
     dliMap: null,
     dliCheck: IDLE_CHECK,
   };
+}
+
+/** 서버 방 위치에 앱에서 기억해 둔 지역 이름을 붙인다 */
+function withLocationLabel(room: Room, labels: Record<number, string>): Room {
+  const label = room.server ? labels[room.server.roomId] : undefined;
+  if (!room.location || !label) return room;
+  return { ...room, location: { ...room.location, label } };
 }
 
 function reducer(state: GardenState, action: Action): GardenState {
@@ -221,6 +232,8 @@ function reducer(state: GardenState, action: Action): GardenState {
     }
     case 'scanUpload':
       return { ...state, scanUploads: { ...state.scanUploads, [action.windowId]: action.upload } };
+    case 'locationLabel':
+      return { ...state, locationLabels: { ...state.locationLabels, [action.roomId]: action.label } };
     case 'removePlant':
       return { ...state, plants: state.plants.filter((p) => p.id !== action.plantId) };
     case 'clearPlants':
@@ -234,7 +247,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         ...state,
         serverSpecies: action.links,
         plants: action.plants,
-        room: action.room,
+        room: withLocationLabel(action.room, state.locationLabels),
         dliMap: action.dliMap,
         dliCheck: IDLE_CHECK,
         sync: { status: 'synced', message: null, skipped: action.skipped },
@@ -279,6 +292,8 @@ interface GardenActions {
   saveWindowScan: (scan: WindowScan) => void;
   /** 창밖 스캔을 서버에 올리고 SKY 분석이 끝날 때까지 상태를 갱신한다 (실패는 scanUploads에 기록) */
   uploadWindowScan: (windowId: string) => Promise<void>;
+  /** 서버 방 위치 저장 후 방을 다시 받는다 (서버가 방 구조 버전을 올린다) */
+  saveRoomLocation: (location: { latitude: number; longitude: number; label: string }) => Promise<void>;
 }
 
 interface GardenContextValue {
@@ -423,6 +438,13 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           report('failed', describeUploadError(e));
         }
+      },
+      saveRoomLocation: async ({ latitude, longitude, label }) => {
+        const { room } = stateRef.current;
+        if (!signedInRef.current || !room.server) throw new Error('로그인하고 서버에 저장된 방에서만 설정할 수 있어요');
+        await api.updateRoomLocation(room.server.roomId, { latitude, longitude });
+        dispatch({ type: 'locationLabel', roomId: room.server.roomId, label });
+        await reloadFromServer();
       },
     };
   }, []);
