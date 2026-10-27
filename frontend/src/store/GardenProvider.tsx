@@ -9,6 +9,13 @@ import { linkSpecies, plantsFromServer, type SpeciesLinks } from '@/services/api
 import { cellToReal, roomFromServer } from '@/services/api/roomSync';
 import { analyzePlacement } from '@/services/placement/placementEngine';
 import { buildMockDliMap } from '@/services/space/dliMap';
+import {
+  describeUploadError,
+  submitWindowScan,
+  waitForScanJob,
+  type ScanUploadPhase,
+  type ScanUploadState,
+} from '@/services/windowScan/uploadService';
 import { useAuth } from '@/store/AuthProvider';
 import type {
   CharacterState,
@@ -51,8 +58,10 @@ export interface GardenState {
   lastWateredEventAt: number | null;
   /** 시연용: 캐릭터 상태 강제 지정 */
   characterOverride: CharacterState | null;
-  /** 창문별 창밖 180° 스캔 결과 (로컬 저장, 서버 업로드 전) */
+  /** 창문별 창밖 180° 스캔 결과 (기기에 저장) */
   windowScans: Record<string, WindowScan>;
+  /** 창문별 스캔 업로드·SKY 분석 상태 (앱 창문 ID 기준) */
+  scanUploads: Record<string, ScanUploadState>;
   /** 앱 종 ↔ 서버 종 연결 (로그인 상태에서만 채워짐) */
   serverSpecies: SpeciesLinks;
   sync: SyncState;
@@ -93,6 +102,7 @@ type Action =
   | { type: 'clearPlants' }
   | { type: 'resetDemo' }
   | { type: 'saveWindowScan'; scan: WindowScan }
+  | { type: 'scanUpload'; windowId: string; upload: ScanUploadState }
   | { type: 'syncStart' }
   | { type: 'syncSuccess'; links: SpeciesLinks; plants: Plant[]; skipped: number; room: Room; dliMap: ApiDliMap | null }
   | { type: 'syncError'; message: string }
@@ -123,6 +133,7 @@ function createInitialState(hasOnboarded = false): GardenState {
     lastWateredEventAt: null,
     characterOverride: null,
     windowScans: {},
+    scanUploads: {},
     serverSpecies: {},
     sync: DEMO_SYNC,
     dliMap: null,
@@ -202,8 +213,14 @@ function reducer(state: GardenState, action: Action): GardenState {
       const index = CHARACTER_CYCLE.indexOf(state.characterOverride);
       return { ...state, characterOverride: CHARACTER_CYCLE[(index + 1) % CHARACTER_CYCLE.length] };
     }
-    case 'saveWindowScan':
-      return { ...state, windowScans: { ...state.windowScans, [action.scan.windowId]: action.scan } };
+    case 'saveWindowScan': {
+      // 새로 찍은 스캔은 아직 서버에 없으므로 이전 업로드 상태를 지운다
+      const scanUploads = { ...state.scanUploads };
+      delete scanUploads[action.scan.windowId];
+      return { ...state, windowScans: { ...state.windowScans, [action.scan.windowId]: action.scan }, scanUploads };
+    }
+    case 'scanUpload':
+      return { ...state, scanUploads: { ...state.scanUploads, [action.windowId]: action.upload } };
     case 'removePlant':
       return { ...state, plants: state.plants.filter((p) => p.id !== action.plantId) };
     case 'clearPlants':
@@ -232,6 +249,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         room: MOCK_ROOM,
         plants: createMockPlants(parseISODate(state.today)),
         serverSpecies: {},
+        scanUploads: {},
         sync: DEMO_SYNC,
         dliMap: null,
         dliCheck: IDLE_CHECK,
@@ -259,6 +277,8 @@ interface GardenActions {
   clearPlants: () => void;
   resetDemo: () => void;
   saveWindowScan: (scan: WindowScan) => void;
+  /** 창밖 스캔을 서버에 올리고 SKY 분석이 끝날 때까지 상태를 갱신한다 (실패는 scanUploads에 기록) */
+  uploadWindowScan: (windowId: string) => Promise<void>;
 }
 
 interface GardenContextValue {
@@ -276,6 +296,8 @@ export function GardenProvider({ children }: { children: ReactNode }) {
   // action은 한 번만 만들고, 최신 state·로그인 상태는 ref로 읽는다
   const stateRef = useRef(state);
   const signedInRef = useRef(authStatus === 'signedIn');
+  /** 창문별 업로드 요청 번호 — 다시 보내거나 로그아웃하면 이전 대기를 멈춘다 */
+  const uploadRuns = useRef<Record<string, number>>({});
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -377,6 +399,31 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         if (signedInRef.current) reloadFromServer();
       },
       saveWindowScan: (scan) => dispatch({ type: 'saveWindowScan', scan }),
+      uploadWindowScan: async (windowId) => {
+        const { room, windowScans } = stateRef.current;
+        const scan = windowScans[windowId];
+        const serverWindowId = room.windows.find((w) => w.id === windowId)?.serverId;
+        if (!scan || !room.server || serverWindowId === undefined) return;
+
+        const run = (uploadRuns.current[windowId] ?? 0) + 1;
+        uploadRuns.current[windowId] = run;
+        const cancelled = () => uploadRuns.current[windowId] !== run || !signedInRef.current;
+        const geometryVersion = room.server.geometryVersion;
+        let jobId: string | null = null;
+        const report = (phase: ScanUploadPhase, error: string | null = null) => {
+          if (cancelled()) return;
+          dispatch({ type: 'scanUpload', windowId, upload: { phase, jobId, error, geometryVersion, updatedAt: Date.now() } });
+        };
+
+        try {
+          jobId = await submitWindowScan(scan, serverWindowId, (phase) => report(phase));
+          report('analyzing');
+          const result = await waitForScanJob(jobId, cancelled);
+          if (result) report(result.ok ? 'done' : 'failed', result.ok ? null : result.error);
+        } catch (e) {
+          report('failed', describeUploadError(e));
+        }
+      },
     };
   }, []);
 

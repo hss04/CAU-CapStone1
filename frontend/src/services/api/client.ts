@@ -35,13 +35,17 @@ export function setUnauthorizedListener(listener: UnauthorizedListener | null) {
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
+  /** multipart 요청 (사진 업로드). 있으면 body 대신 보낸다 — 키 변환 없음 */
+  form?: FormData;
   /** 기본 true */
   auth?: boolean;
   query?: Record<string, string | number | undefined>;
+  /** 기본 API_TIMEOUT_MS. 사진 업로드처럼 큰 요청만 늘린다 */
+  timeoutMs?: number;
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true, query } = options;
+  const { method = 'GET', body, form, auth = true, query, timeoutMs = API_TIMEOUT_MS } = options;
   const headers: Record<string, string> = { Accept: 'application/json' };
 
   if (auth) {
@@ -52,16 +56,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
     headers.Authorization = `Bearer ${token}`;
   }
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // multipart는 boundary가 붙은 Content-Type을 fetch가 직접 정하게 둔다
+  if (body !== undefined && !form) headers['Content-Type'] = 'application/json';
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch(buildUrl(path, query), {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(snakify(body)),
+      body: form ?? (body === undefined ? undefined : JSON.stringify(snakify(body))),
       signal: controller.signal,
     });
   } catch {

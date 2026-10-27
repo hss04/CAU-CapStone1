@@ -91,7 +91,7 @@ export default function WindowScanResultScreen() {
 
   const printUploadJson = () => {
     // 백엔드 창문 ID는 API 연동 전이라 0으로 둔다
-    console.log('[ScanUpload]', JSON.stringify(toScanUpload(scan, 0).meta, null, 2));
+    console.log('[ScanUpload]', JSON.stringify(toScanUpload(scan, 0), null, 2));
     toast.show('업로드 JSON을 콘솔에 출력했어요', 'leaf');
   };
 

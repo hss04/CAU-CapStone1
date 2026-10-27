@@ -5,6 +5,7 @@ import type {
   ApiGrid,
   ApiJob,
   ApiJobCreated,
+  ApiLocationResult,
   ApiPlant,
   ApiPlantInput,
   ApiRoom,
@@ -100,5 +101,28 @@ export function requestDliMap(roomId: number, body: ApiDliRequest) {
 }
 
 export function fetchDliJob(jobId: string) {
-  return apiRequest<ApiJob<ApiDliJobResult>>(`/jobs/${encodeURIComponent(jobId)}`);
+  return fetchJob<ApiDliJobResult>(jobId);
+}
+
+/** 비동기 작업 상태 (DLI 계산, 창밖 스캔 SKY 분석 공통) */
+export function fetchJob<T>(jobId: string) {
+  return apiRequest<ApiJob<T>>(`/jobs/${encodeURIComponent(jobId)}`);
+}
+
+/* ---------------- 창밖 스캔 업로드 ---------------- */
+
+/** 사진 13장 + metadata(JSON 문자열) multipart 업로드 → 202 + job_id (SKY 분석은 백그라운드) */
+export function uploadWindowScan(windowId: number, form: FormData) {
+  return apiRequest<ApiJobCreated>(`/windows/${windowId}/scans`, { method: 'POST', form, timeoutMs: 120000 });
+}
+
+/* ---------------- 방 위치 ---------------- */
+
+/** 지역 이름 검색 (Open-Meteo 지오코딩, 서버 경유) — q는 2글자 이상 */
+export function searchLocations(q: string) {
+  return apiRequest<{ results: ApiLocationResult[] }>('/locations/search', { query: { q } });
+}
+
+export function updateRoomLocation(roomId: number, location: { latitude: number; longitude: number }) {
+  return apiRequest<{ latitude: number; longitude: number }>(`/rooms/${roomId}/location`, { method: 'PUT', body: location });
 }

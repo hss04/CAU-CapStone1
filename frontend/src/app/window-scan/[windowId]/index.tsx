@@ -45,6 +45,11 @@ const FACING_FAIL_TEXT: Record<Exclude<FacingResult, 'ok'>, string> = {
 
 /** 스캔은 창문 정면에서 왼쪽으로 이만큼 돌린 방향에서 시작한다 (180° 스캔의 절반) */
 const START_OFFSET_DEG = -DEFAULT_SCAN_CONFIG.targetAngle / 2;
+/**
+ * 시작 위치 허용 오차 (°). 서버는 사진마다 '정면 −90° + 15°·n'에서 5° 이내를 요구하는데,
+ * 촬영 시점이 15° 지점을 조금 지나서 잡히므로 시작은 더 좁게 맞춘다.
+ */
+const START_TOLERANCE_DEG = 3;
 
 /**
  * 창밖 180° 스캔 (카메라)
@@ -141,7 +146,7 @@ export default function WindowScanScreen() {
       <ScanNotice
         icon={Camera}
         title="카메라 권한이 필요해요"
-        description={'창밖을 180° 촬영해 방향별 사진을 저장해요.\n사진은 서버로 전송되지 않고 기기에만 저장돼요.'}
+        description={'창밖을 180° 촬영해 방향별 사진을 저장해요.\n사진은 기기에 저장되고, \'서버로 보내기\'를 누를 때만 전송돼요.'}
         onClose={goBackOrHome}>
         {permission.canAskAgain ? (
           <PrimaryButton title="카메라 권한 허용하기" icon={Camera} onPress={requestPermission} />
@@ -182,13 +187,16 @@ export default function WindowScanScreen() {
   const scanning = scan.phase === 'scanning';
   const finished = scan.phase === 'finishing' || scan.phase === 'done';
   const cameraReady = useRealCamera ? cameraIsReady : true;
-  const canStart = scan.phase === 'ready' && cameraReady;
   const targetPitch = DEFAULT_SCAN_CONFIG.targetPitch;
   const pitchOff = sample ? isPitchOff(sample.pitch) : false;
   const facing = scan.facing;
   const needsFacing = scan.phase === 'ready' && !facing;
   /** 현재 방향이 정면에서 몇 도 떨어져 있는지 (왼쪽 −, 진북 기준) */
   const fromFacing = facing && sample ? signedDelta(facing.azimuth, trueAz(sample.azimuth)) : null;
+  // 실제 센서일 때만 시작 위치를 맞춰야 시작할 수 있다 (시뮬레이션은 개발용)
+  const startOff = fromFacing === null ? null : fromFacing - START_OFFSET_DEG;
+  const startAligned = sourceKind !== 'sensors' || (startOff !== null && Math.abs(startOff) <= START_TOLERANCE_DEG);
+  const canStart = scan.phase === 'ready' && cameraReady && startAligned;
 
   return (
     <View style={styles.screen}>
@@ -331,11 +339,20 @@ export default function WindowScanScreen() {
               ② 정면에서 왼쪽으로 약 {-START_OFFSET_DEG}° 돌린 뒤{'\n'}휴대폰을 약 {targetPitch}° 위로 들고 시작해 주세요
             </AppText>
             {fromFacing !== null ? (
-              <AppText variant="small" color="rgba(255,255,255,0.65)" align="center">
-                {`지금 정면 기준 ${formatSignedDeg(fromFacing)} / 시작 위치 ${formatSignedDeg(START_OFFSET_DEG)}`}
+              <AppText
+                variant="small"
+                color={startAligned ? '#BFE8C4' : 'rgba(255,255,255,0.65)'}
+                align="center">
+                {startAligned
+                  ? `시작 위치에 맞았어요 (정면 기준 ${formatSignedDeg(fromFacing)})`
+                  : `지금 정면 기준 ${formatSignedDeg(fromFacing)} / 시작 위치 ${formatSignedDeg(START_OFFSET_DEG)} ±${START_TOLERANCE_DEG}°`}
               </AppText>
             ) : null}
-            <PrimaryButton title={cameraReady ? '스캔 시작' : '카메라 준비 중…'} disabled={!canStart} onPress={startScan} />
+            <PrimaryButton
+              title={!cameraReady ? '카메라 준비 중…' : startAligned ? '스캔 시작' : '시작 위치를 맞춰 주세요'}
+              disabled={!canStart}
+              onPress={startScan}
+            />
           </View>
         ) : null}
 

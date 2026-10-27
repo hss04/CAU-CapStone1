@@ -152,6 +152,18 @@ export interface ApiDliJobResult extends ApiDliMap {
   warnings: string[];
 }
 
+/** GET /locations/search 결과 한 건 (Open-Meteo 지오코딩) */
+export interface ApiLocationResult {
+  id: number | null;
+  name: string | null;
+  country: string | null;
+  /** 시·도 */
+  admin1: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string | null;
+}
+
 export interface ApiJob<T> {
   jobId: string;
   kind: 'DLI' | 'SCAN';

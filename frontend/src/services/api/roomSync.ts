@@ -56,6 +56,7 @@ function windowFromServer(w: ApiWindow, grid: ApiGrid, xAxisAzimuthDeg: number |
   const facing = xAxisAzimuthDeg === null ? null : compassOf(windowOutwardAzimuth(w.corners, xAxisAzimuthDeg));
   return {
     id: `server-window-${w.id}`,
+    serverId: w.id,
     label: w.name,
     // segment 창문은 wall/offset을 쓰지 않는다 (WallOpening 호환용 값)
     wall: 'top',

@@ -75,7 +75,9 @@ export function LightForecastProvider({ children }: { children: ReactNode }) {
   const signedIn = authStatus === 'signedIn';
   const syncing = signedIn && sync.status === 'loading';
   const serverReady = signedIn && sync.status === 'synced' && !!room.server && !!room.location;
-  const runKey = room.server ? `${room.server.roomId}:${room.server.geometryVersion}:${today}` : '';
+  // 창밖 스캔 분석이 새로 끝나면 서버가 계산할 수 있게 됐을 수 있어 다시 요청한다
+  const scansDone = Object.values(state.scanUploads).filter((u) => u.phase === 'done').length;
+  const runKey = room.server ? `${room.server.roomId}:${room.server.geometryVersion}:${today}:${scansDone}` : '';
 
   // 예시 데이터 — 서버 방이면 서버 격자 모양 그대로, 데모 방이면 데모 격자
   const grid = useMemo(() => state.dliMap?.grid ?? demoGrid(room), [state.dliMap, room]);

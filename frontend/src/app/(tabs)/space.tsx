@@ -19,16 +19,18 @@ import { FloorPlanGrid, type FloorPlanMarker } from '@/components/space/FloorPla
 import { LightLegend } from '@/components/space/LightLegend';
 import { LightSummaryCard } from '@/components/space/LightSummaryCard';
 import { PlantInfoSheet } from '@/components/space/PlantInfoSheet';
-import { WindowDetailSheet } from '@/components/space/WindowDetailSheet';
+import { isUploadStale, WindowDetailSheet } from '@/components/space/WindowDetailSheet';
 import { LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { buildMockDliMap, demoGrid, dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
 import { describePosition, roomSizeLabel, samePosition } from '@/services/space/geometry';
 import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/services/space/lightAnalysis';
 import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
+import type { ScanUploadState } from '@/services/windowScan/uploadService';
+import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type DliCheck } from '@/store/GardenProvider';
 import { getPlantStatus } from '@/store/selectors';
-import type { GridPosition, Plant, TimeOfDay } from '@/types';
+import type { GridPosition, Plant, Room, RoomWindow, TimeOfDay, WindowScan } from '@/types';
 
 /** 'dli' = 격자별 DLI 지도 (dli_map_v2), 나머지는 창문 기반 시간대별 추정 광량 */
 type MapView = TimeOfDay | 'dli';
@@ -48,6 +50,23 @@ function dliCheckText(check: DliCheck): string | null {
   return null;
 }
 
+/** 창문 목록의 스캔·업로드 상태 칩 */
+function windowScanChip(room: Room, scan: WindowScan | undefined, upload: ScanUploadState | undefined) {
+  if (!scan) return { label: '스캔 전', tone: 'neutral' as const };
+  if (upload && !isUploadStale(room, upload)) {
+    if (upload.phase === 'done') return { label: '분석 완료', tone: 'green' as const };
+    if (upload.phase === 'failed') return { label: '보내기 실패', tone: 'clay' as const };
+    return { label: upload.phase === 'analyzing' ? '분석 중' : '보내는 중', tone: 'water' as const };
+  }
+  return { label: `${scan.scannedAngle.toFixed(0)}° · ${scan.captures.length}장`, tone: 'green' as const };
+}
+
+function uploadBlockedReason(signedIn: boolean, room: Room, w: RoomWindow): string | null {
+  if (!signedIn) return '로그인하면 측정한 방의 창문 스캔을 서버로 보낼 수 있어요.';
+  if (!room.server || w.serverId === undefined) return '서버에 저장된 방의 창문만 보낼 수 있어요.';
+  return null;
+}
+
 function markerStatusOf(plant: Plant, today: Date): FloorPlanMarker['status'] {
   const s = getPlantStatus(plant, today).key;
   if (s === 'thirsty' || s === 'veryThirsty') return 'thirsty';
@@ -56,7 +75,8 @@ function markerStatusOf(plant: Plant, today: Date): FloorPlanMarker['status'] {
 }
 
 export default function SpaceScreen() {
-  const { state, today } = useGarden();
+  const { state, today, actions } = useGarden();
+  const signedIn = useAuth().status === 'signedIn';
   const { room, plants } = state;
   const [view, setView] = useState<MapView>('dli');
   const showDli = view === 'dli';
@@ -220,7 +240,7 @@ export default function SpaceScreen() {
           <SectionHeader eyebrow="Outside view" title="창밖 환경" subtitle="창문을 선택해 바깥을 180° 스캔해보세요" />
           <Card padding={0} radius={Radius.xl}>
             {room.windows.map((w, i) => {
-              const scan = state.windowScans[w.id];
+              const chip = windowScanChip(room, state.windowScans[w.id], state.scanUploads[w.id]);
               return (
                 <Pressable
                   key={w.id}
@@ -239,11 +259,7 @@ export default function SpaceScreen() {
                       {windowFacingLabel(w)} · 폭 약 {windowWidthM(room, w)}m
                     </AppText>
                   </View>
-                  <StatusChip
-                    label={scan ? `${scan.scannedAngle.toFixed(0)}° · ${scan.captures.length}장` : '스캔 전'}
-                    tone={scan ? 'green' : 'neutral'}
-                    size="sm"
-                  />
+                  <StatusChip label={chip.label} tone={chip.tone} size="sm" />
                   <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
                 </Pressable>
               );
@@ -323,6 +339,9 @@ export default function SpaceScreen() {
             room={room}
             roomWindow={selectedWindow}
             scan={state.windowScans[selectedWindow.id]}
+            upload={state.scanUploads[selectedWindow.id]}
+            uploadBlocked={uploadBlockedReason(signedIn, room, selectedWindow)}
+            onUpload={() => actions.uploadWindowScan(selectedWindow.id)}
             onScan={() =>
               goAfterClose(() =>
                 router.push({ pathname: '/window-scan/[windowId]', params: { windowId: selectedWindow.id } }),

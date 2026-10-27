@@ -35,6 +35,8 @@ export interface RoomWindow extends WallOpening {
   facingUnknown?: boolean;
   /** 서버 창문 이름 (예: "창문 1") */
   label?: string;
+  /** 서버(백엔드) 창문 ID — 서버 방의 창문만 있다 (창밖 스캔 업로드용) */
+  serverId?: number;
   /**
    * 다각형 방(서버 방)의 창문: 벽이 기울어져 있을 수 있어 wall/offset 대신 바닥 선분으로 위치를 준다.
    * 있으면 wall/offset/length보다 우선한다.
