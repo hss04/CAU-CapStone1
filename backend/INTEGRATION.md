@@ -9,7 +9,9 @@
 - POST /api/v1/rooms/{id}/direction: 외부 방향 계산 함수 연결점
 - POST /api/v1/rooms/{id}/recommendations: 외부 추천 함수 연결점
 - 기본 격자 0.2m, 기간별 일평균 DLI, 사진 파일·메타데이터·작업 상태 저장
-- 기존 데이터 테이블 수정 없이 integration_jobs 테이블을 서버 시작 때 추가
+- 기존 데이터 테이블 수정 없이 integration_jobs 및 idempotency_records 테이블을 서버 시작 때 추가
+- GET /health는 생존 확인, GET /ready는 DB와 알고리즘 폴더 준비 상태 확인
+- POST /api/v1/rooms/import-ar는 선택적 Idempotency-Key 헤더로 재시도 중복 생성을 방지
 
 ## 실행
 Python 3.12 기준. ZIP을 풀고 backend 루트(app, requirements.txt가 있는 위치)에서:
@@ -81,7 +83,7 @@ metadata: 아래 JSON을 문자열로 전달. files: JPEG 13장(파일명과 fra
 ## AR 앱
 홈 화면에 '저장한 방 서버 전송' 버튼 추가. 서버 주소, 이미 등록된 이메일/비밀번호, 방 이름을 입력하면 로그인 후 저장된 JSON을 import-ar에 보냅니다. 비밀번호·토큰은 저장하지 않습니다. 기본 자동 AR 진입을 해제하여 홈에서 업로드에 접근할 수 있습니다. 측정 후 뒤로 가기로 홈에 돌아오면 됩니다.
 
-폰에서 PC 서버에 연결할 때 localhost가 아닌 PC의 LAN IP를 사용하세요. HTTP는 debug 빌드에서만 허용되며 release는 HTTPS를 사용합니다. 서버는 0.0.0.0 바인딩과 방화벽 허용이 필요합니다. 재전송은 새 방을 만듭니다. 타임아웃 시 방 목록에서 성공 여부 확인 후 재시도하세요.
+폰에서 PC 서버에 연결할 때 localhost가 아닌 PC의 LAN IP를 사용하세요. HTTP는 debug 빌드에서만 허용되며 release는 HTTPS를 사용합니다. 서버는 0.0.0.0 바인딩과 방화벽 허용이 필요합니다. 각 전송에 고유한 `Idempotency-Key`를 만들고 같은 전송을 재시도할 때 그 키를 재사용하면 같은 방 응답을 받습니다. 내용이 다른 요청에 이미 사용한 키를 재사용하면 409가 반환됩니다. 헤더를 보내지 않는 기존 클라이언트 동작은 유지됩니다.
 
 ## dev 협업
 원격 브랜치는 변경하지 않았습니다. backend 변경은 backend/에, algorithm은 담당자의 기존 브랜치에서 dev로 합치세요. ZIP에 포함한 algorithm 원본을 별도 수정본으로 덮어쓸 필요가 없습니다. main에서 dev를 생성하고 backend/algorithm/frontend의 변경을 PR로 합쳐 테스트합니다. main 병합은 팀 3명 확인 이후 진행합니다.
