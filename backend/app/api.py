@@ -1,9 +1,11 @@
 from typing import Annotated
 from datetime import datetime
+import hashlib
+import json
 from app.schemas import KST
 from app.geometry import floor_area, perimeter
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -104,7 +106,25 @@ def rooms(db:Db,user:CurrentUser,limit:Limit=50,offset:Offset=0):
              summary='Import the Android schema_version 3 room export atomically')
 def import_ar(body:s.ARMeasurement,db:Db,user:CurrentUser,
               name:Annotated[str,Query(min_length=1,max_length=100)]='AR 측정 방',
-              x_axis_azimuth_deg:Annotated[float|None,Query(ge=0,lt=360,allow_inf_nan=False)]=None):
+              x_axis_azimuth_deg:Annotated[float|None,Query(ge=0,lt=360,allow_inf_nan=False)]=None,
+              idempotency_key:Annotated[str|None,Header(alias='Idempotency-Key',min_length=1,max_length=128)]=None):
+    request_hash=None
+    if idempotency_key is not None:
+        idempotency_key=idempotency_key.strip()
+        if not idempotency_key:
+            raise HTTPException(422,'Idempotency-Key must not be blank')
+        canonical=json.dumps(
+            {'measurement':body.model_dump(mode='json'),'name':name,
+             'x_axis_azimuth_deg':x_axis_azimuth_deg},
+            sort_keys=True,separators=(',',':'),ensure_ascii=False)
+        request_hash=hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        prior=db.scalar(select(m.IdempotencyRecord).where(
+            m.IdempotencyRecord.user_id==user.id,m.IdempotencyRecord.key==idempotency_key))
+        if prior is not None:
+            if prior.request_hash!=request_hash:
+                raise HTTPException(409,'Idempotency-Key was already used for a different request')
+            return prior.response_json
+
     room=m.Room(user_id=user.id,name=name,coordinate_frame=body.coordinate_system,
                 saved_at=body.saved_at.isoformat(),x_axis_azimuth_deg=x_axis_azimuth_deg)
     room.corners=[m.RoomCorner(**c.model_dump()) for c in body.corners]
@@ -112,8 +132,27 @@ def import_ar(body:s.ARMeasurement,db:Db,user:CurrentUser,
                            corners=[m.WindowCorner(**c.model_dump()) for c in w.corners])
                   for i,w in enumerate(body.windows)]
     db.add(room)
-    commit(db)
-    return room
+    if idempotency_key is None:
+        commit(db)
+        return room
+
+    db.flush()
+    response=s.RoomOut.model_validate(room).model_dump(mode='json')
+    db.add(m.IdempotencyRecord(user_id=user.id,key=idempotency_key,
+                               request_hash=request_hash,response_json=response))
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        # A simultaneous retry may have committed the same key after our initial lookup.
+        prior=db.scalar(select(m.IdempotencyRecord).where(
+            m.IdempotencyRecord.user_id==user.id,m.IdempotencyRecord.key==idempotency_key))
+        if prior is not None:
+            if prior.request_hash==request_hash:
+                return prior.response_json
+            raise HTTPException(409,'Idempotency-Key was already used for a different request') from exc
+        raise HTTPException(409,'Data conflict; reload and retry') from exc
+    return response
 
 
 @router.get('/rooms/{room_id}/ar-measurement',response_model=s.ARMeasurement,tags=['Rooms'])
