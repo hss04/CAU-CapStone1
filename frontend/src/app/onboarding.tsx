@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react-native';
-import { useRef, useState, type ComponentType } from 'react';
+import { useRef, useState, type ComponentRef, type ComponentType } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -58,7 +58,8 @@ const PAGES: Page[] = [
 
 export default function OnboardingScreen() {
   const { actions } = useGarden();
-  const scrollRef = useRef<ScrollView>(null);
+  // RN 0.88부터 ScrollView가 함수 컴포넌트라 ref 타입을 props에서 꺼낸다
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [width, setWidth] = useState(0);
   const [index, setIndex] = useState(0);
   const isLast = index === PAGES.length - 1;

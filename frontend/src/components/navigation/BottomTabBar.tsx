@@ -14,7 +14,7 @@ const TAB_META: Record<string, { label: string; icon: LucideIcon }> = {
 };
 
 /** 얇은 line icon + 대문자 라벨의 하단 탭 */
-export function BottomTabBar({ state, navigation, insets }: BottomTabBarProps) {
+export function BottomTabBar({ state, emitter, navigateToTab, insets }: BottomTabBarProps) {
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       {state.routes.map((route, index) => {
@@ -25,10 +25,11 @@ export function BottomTabBar({ state, navigation, insets }: BottomTabBarProps) {
         const Icon = meta.icon;
 
         const onPress = () => {
-          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) {
             haptic.selection();
-            navigation.navigate(route.name, route.params);
+            // SDK 58: 탭 바는 navigation 대신 route.key로 탭을 바꾼다
+            navigateToTab(route.key);
           }
         };
 
