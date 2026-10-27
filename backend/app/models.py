@@ -94,6 +94,17 @@ class Plant(Base):
     room: Mapped[Room | None] = relationship(back_populates='plants')
 
 
+class IdempotencyRecord(Base):
+    __tablename__ = 'idempotency_records'
+    __table_args__ = (UniqueConstraint('user_id', 'key'),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
+    key: Mapped[str] = mapped_column(String(128))
+    request_hash: Mapped[str] = mapped_column(String(64))
+    response_json: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class WeatherCache(Base):
     __tablename__ = 'weather_cache'
     cache_key: Mapped[str] = mapped_column(String(180), primary_key=True)
