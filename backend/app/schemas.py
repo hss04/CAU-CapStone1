@@ -124,6 +124,7 @@ class RoomOut(Output):
     latitude: float | None
     longitude: float | None
     timezone: str
+    location_name: str | None = None
     geometry_version: int
     corners: list[Corner]
 
@@ -201,10 +202,19 @@ class Position(Input):
 
 
 class PlantInput(Input):
+    watering_interval_days: int = Field(default=7, ge=1, le=3650, strict=True)
+    last_watered_at: date | None = None
     species_id: int = Field(gt=0)
     nickname: Name
     room_id: int | None = Field(default=None, gt=0)
     position: Position | None = None
+
+    @field_validator('last_watered_at')
+    @classmethod
+    def no_future_watering(cls, value):
+        if value is not None and value > datetime.now(KST).date():
+            raise ValueError('last_watered_at cannot be in the future (KST)')
+        return value
 
     @model_validator(mode='after')
     def placement(self):
@@ -214,6 +224,8 @@ class PlantInput(Input):
 
 
 class PlantOut(Output):
+    watering_interval_days: int
+    last_watered_at: date | None
     id: int
     user_id: int
     room_id: int | None
@@ -350,3 +362,14 @@ class ARMeasurement(Input):
         RoomInput(name='AR measurement', corners=self.corners)
         validate_measurement(self)
         return self
+
+
+class WateringInput(Input):
+    watered_at: date
+
+    @field_validator("watered_at")
+    @classmethod
+    def no_future(cls, value):
+        if value > datetime.now(KST).date():
+            raise ValueError("watered_at cannot be in the future (KST)")
+        return value

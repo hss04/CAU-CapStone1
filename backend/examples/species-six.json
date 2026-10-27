@@ -1,0 +1,44 @@
+[
+  {
+    "name": "몬스테라",
+    "scientific_name": "Monstera deliciosa",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Monstera genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "스킨답서스",
+    "scientific_name": "Epipremnum aureum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Pothos / Epipremnum genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "올리브",
+    "scientific_name": "Olea europaea",
+    "min_dli": 18.0,
+    "max_dli": 40.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Olive / Olea genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "산세베리아",
+    "scientific_name": "Dracaena trifasciata",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Snake Plant entry, not generic Dracaena; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "떡갈고무나무",
+    "scientific_name": "Ficus lyrata",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Ficus genus; species-specific optimum unverified; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "필레아 페페로미오이데스",
+    "scientific_name": "Pilea peperomioides",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "ESTIMATED app starting range 6-12 mol/m2/day; species-specific DLI not verified. NC State describes bright indirect light, not numeric DLI: https://plants.ces.ncsu.edu/plants/pilea-peperomioides/ . Numeric range is a provisional medium-light category assumption; calibrate with measurements. Checked 2026-10-27."
+  }
+]

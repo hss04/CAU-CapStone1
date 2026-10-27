@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.database import Base, SessionLocal, engine
 from app.models import PlantSpecies
@@ -26,14 +26,18 @@ def main():
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         for item in values:
-            species=db.scalar(select(PlantSpecies).where(PlantSpecies.name==item.name))
+            species=None
+            if item.scientific_name:
+                species=db.scalar(select(PlantSpecies).where(func.lower(PlantSpecies.scientific_name)==item.scientific_name.lower()))
+            if species is None:
+                species=db.scalar(select(PlantSpecies).where(PlantSpecies.name==item.name))
             if species is None:
                 species=PlantSpecies()
                 db.add(species)
             for key,value in item.model_dump().items():
                 setattr(species,key,value)
         db.commit()
-    print(f'Imported {len(values)} species (upsert by name).')
+    print(f'Imported {len(values)} species (upsert by scientific name, then name).')
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 from uuid import uuid4
+from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile
 from pydantic import Field, model_validator, ValidationError
@@ -13,7 +14,8 @@ from sqlalchemy.orm import sessionmaker
 from PIL import Image, ImageOps
 
 from app import models as m
-from app.schemas import Input, DliMap, GridSpec, Position
+from app.schemas import Input, DliMap, GridSpec, Position, RoomOut, KST, DliValue
+from app import dli_cache
 from app.security import CurrentUser, Db
 from app.api import owned_room, owned_window, commit
 from app.geometry import grid
@@ -27,14 +29,21 @@ UPLOAD_ROOT = Path(os.environ.get('UPLOAD_ROOT', 'data/scans')).resolve()
 class Location(Input):
     latitude: float = Field(ge=-90, le=90, allow_inf_nan=False)
     longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
+    location_name: str | None = Field(default=None, max_length=100)
 
-@router.put('/rooms/{room_id}/location')
+@router.put('/rooms/{room_id}/location', response_model=RoomOut)
 def set_location(room_id: int, body: Location, db: Db, user: CurrentUser):
     room = owned_room(db, user, room_id)
+    changed = (room.latitude, room.longitude) != (body.latitude, body.longitude)
     room.latitude, room.longitude = body.latitude, body.longitude
-    room.geometry_version += 1
+    if 'location_name' in body.model_fields_set:
+        room.location_name = body.location_name
+    if changed:
+        for job in db.scalars(select(IntegrationJob).where(IntegrationJob.room_id==room.id,
+                IntegrationJob.kind.in_(['DLI','DLI_SERIES']), IntegrationJob.status=='COMPLETED')):
+            job.status='STALE'
     commit(db)
-    return body
+    return room
 
 @router.get('/locations/search')
 def locations(user: CurrentUser, q: str = Query(min_length=2, max_length=100)):
@@ -57,6 +66,53 @@ class DliRequest(Input):
         if not 0 <= (self.end_date-self.start_date).days <= 92:
             raise ValueError('Period must contain 1 to 93 days')
         return self
+
+class DliSeriesRequest(DliRequest):
+    # This endpoint exposes the installed algorithm, with provisional warnings in results.
+    # Keep /dli-map's existing explicit opt-in behavior for backwards compatibility.
+    accept_provisional_algorithm: bool = Field(default=True,
+        description='Bundled algorithm is provisional (08:00-18:00). Set false to reject it; custom DLI_CALLABLE is unaffected.')
+
+
+class DliDay(Input):
+    date: date
+    dataset: Literal['ERA5','BEST_MATCH_FORECAST']
+    total_dli: list[list[DliValue]]
+    direct_dli: list[list[DliValue]]
+    diffuse_dli: list[list[DliValue]]
+
+
+class PlantDaily(Input):
+    date: date
+    total_dli: DliValue
+
+
+class PlantSeries(Input):
+    plant_id: int
+    row: int
+    col: int
+    daily: list[PlantDaily]
+
+
+class DliSeries(Input):
+    room_id: int
+    geometry_version: int
+    grid: GridSpec
+    timezone: Literal['Asia/Seoul'] = 'Asia/Seoul'
+    unit: Literal['mol/m2/day'] = 'mol/m2/day'
+    mock_sky: bool
+    temporary_direction: bool
+    warnings: list[str]
+    days: list[DliDay]
+    missing_dates: list[date]
+    plants: list[PlantSeries]
+
+
+class JobAccepted(Input):
+    job_id: str
+    status: Literal['PENDING']
+    status_url: str
+
 
 class Period(Input):
     start_date: date
@@ -89,11 +145,11 @@ def wall_index(window, room):
     return candidates[0]
 
 
-def prepare_dli(room, body, db):
-    if room.latitude is None or room.longitude is None:
+def prepare_dli(room, body, db, for_lookup=False):
+    if not for_lookup and (room.latitude is None or room.longitude is None):
         raise HTTPException(422, 'Save room location first')
     angle = body.temporary_x_axis_azimuth_deg if body.temporary_x_axis_azimuth_deg is not None else room.x_axis_azimuth_deg
-    if angle is None:
+    if angle is None and not for_lookup:
         raise HTTPException(422, 'Room direction is missing; supply explicit temporary direction for testing')
     try:
         spec = grid(room, body.cell_size_m, body.sample_height_m)
@@ -104,9 +160,9 @@ def prepare_dli(room, body, db):
     supported = len(c)==4 and c[1].x>0 and c[2].z>0 and all(abs(a-b)<1e-6 for a,b in
         [(c[0].x,0),(c[0].z,0),(c[1].z,0),(c[2].x,c[1].x),(c[3].x,0),(c[3].z,c[2].z)])
     custom = os.environ.get('DLI_CALLABLE')
-    if not custom and (not supported or len(room.windows)!=1 or body.sample_height_m!=0):
+    if not for_lookup and not custom and (not supported or len(room.windows)!=1 or body.sample_height_m!=0):
         raise HTTPException(501, 'Current algorithm supports only axis-aligned rectangular rooms, one window and height 0; set DLI_CALLABLE for the polygon/multi-window implementation')
-    if not custom and not body.accept_provisional_algorithm:
+    if not for_lookup and not custom and not body.accept_provisional_algorithm:
         raise HTTPException(409, 'Upstream uses 08:00-18:00 and instantaneous interpolation of hourly means. Explicitly accept_provisional_algorithm for integration testing')
     windows=[]
     for w in room.windows:
@@ -114,34 +170,76 @@ def prepare_dli(room, body, db):
         scan=None
         if not body.mock_sky:
             job=db.scalar(select(IntegrationJob).where(IntegrationJob.window_id==w.id,
-                IntegrationJob.kind=='SCAN',IntegrationJob.status=='COMPLETED').order_by(IntegrationJob.created_at.desc()))
+                IntegrationJob.kind=='SCAN',IntegrationJob.status=='COMPLETED').order_by(IntegrationJob.created_at.desc(), IntegrationJob.id.desc()))
             if job is None or job.payload['geometry_version'] != room.geometry_version:
-                raise HTTPException(409,'A current completed SKY scan is required for every window')
-            scan=job.result
+                if not for_lookup:
+                    raise HTTPException(409,'A current completed SKY scan is required for every window')
+            else:
+                scan={'scan_job_id':job.id, **job.result}
         windows.append({'window_id':w.id,'wall_index':wi,
             **{f'v{i}':[p.x,p.y,p.z] for i,p in enumerate(w.corners)},'sky':scan})
-    if not windows:
+    if not windows and not for_lookup:
         raise HTTPException(422,'At least one window is required')
     return spec, angle, windows, custom
 
-@router.post('/rooms/{room_id}/dli-map', status_code=202)
-def calculate(room_id:int, body:DliRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser):
-    room=owned_room(db,user,room_id)
-    spec,angle,windows,custom=prepare_dli(room,body,db)
-    payload={'request':body.model_dump(mode='json'),'grid':spec,'room_id':room.id,
+def make_payload(room, body, db, for_lookup=False):
+    spec,angle,windows,custom=prepare_dli(room,body,db,for_lookup)
+    return {'request':body.model_dump(mode='json'),'grid':spec,'room_id':room.id,
         'geometry_version':room.geometry_version,'room':{'corners':[{'order_index':p.order_index,'x':p.x,'z':p.z} for p in room.corners],
-        'height_m':max(p.y for w in room.windows for p in w.corners),
+        'height_m':max((p.y for w in room.windows for p in w.corners),default=0),
         'x_axis_azimuth_deg':angle,'latitude':room.latitude,'longitude':room.longitude},'windows':windows,'callable':custom}
-    job=IntegrationJob(id=str(uuid4()),user_id=user.id,room_id=room_id,kind='DLI',payload=payload)
+
+
+def enqueue(room_id, body, tasks, db, user, kind):
+    room=owned_room(db,user,room_id)
+    payload=make_payload(room,body,db)
+    payload['result_kind']=kind
+    job=IntegrationJob(id=str(uuid4()),user_id=user.id,room_id=room_id,kind=kind,payload=payload)
     db.add(job); commit(db)
     tasks.add_task(run_job,job.id,sessionmaker(bind=db.get_bind(),expire_on_commit=False))
     return {'job_id':job.id,'status':'PENDING','status_url':f'/api/v1/jobs/{job.id}'}
+
+
+@router.post('/rooms/{room_id}/dli-map', status_code=202)
+def calculate(room_id:int, body:DliRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser):
+    return enqueue(room_id,body,tasks,db,user,'DLI')
+
+
+@router.post('/rooms/{room_id}/dli-series', status_code=202, response_model=JobAccepted)
+def calculate_series(room_id:int, body:DliSeriesRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser):
+    return enqueue(room_id,body,tasks,db,user,'DLI_SERIES')
+
+
+@router.get('/rooms/{room_id}/dli-series', response_model=DliSeries)
+def get_series(room_id:int, start_date:date, end_date:date, db:Db, user:CurrentUser,
+               cell_size_m:float=Query(default=.2,ge=.05,le=5,allow_inf_nan=False),
+               sample_height_m:float=Query(default=0,ge=0,le=10,allow_inf_nan=False),
+               mock_sky:bool=False,
+               temporary_x_axis_azimuth_deg:float|None=Query(default=None,ge=0,lt=360,allow_inf_nan=False)):
+    room=owned_room(db,user,room_id)
+    try:
+        body=DliRequest(start_date=start_date,end_date=end_date,cell_size_m=cell_size_m,
+            sample_height_m=sample_height_m,mock_sky=mock_sky,
+            temporary_x_axis_azimuth_deg=temporary_x_axis_azimuth_deg)
+    except ValidationError as exc:
+        raise HTTPException(422,str(exc)) from exc
+    p=make_payload(room,body,db,for_lookup=True)
+    days=[]; missing=[]; day=start_date
+    while day<=end_date:
+        result=dli_cache.lookup(db,p,day)
+        if result is None: missing.append(day.isoformat())
+        else: days.append(result)
+        day+=timedelta(days=1)
+    return dli_cache.series_result(p,days,missing,db)
 
 
 def compute_job(p,db):
     body=DliRequest(**p['request']); results=[]
     day=body.start_date
     while day<=body.end_date:
+        cached=dli_cache.lookup(db,p,day)
+        if cached is not None:
+            results.append(cached); day+=timedelta(days=1); continue
         weather=get_irradiance(db,p['room']['latitude'],p['room']['longitude'],day)
         payload={'room_id':p['room_id'],'room':p['room'],'date':day.isoformat(),'grid':p['grid'],
             'windows':p['windows'],'dni_dhi':weather['values'],'time_basis':weather['time_basis'],
@@ -157,9 +255,13 @@ def compute_job(p,db):
             a=result[key]
             if len(a)!=p['grid']['rows'] or any(len(row)!=p['grid']['cols'] for row in a):
                 raise ValueError('Algorithm grid dimensions mismatch')
-            if any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for r,row in enumerate(a) for c,v in enumerate(row) if p['grid']['inside_mask'][r][c]):
+            if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for r,row in enumerate(a) for c,v in enumerate(row) if p['grid']['inside_mask'][r][c]):
                 raise ValueError('Invalid algorithm values')
-        results.append(result); day+=timedelta(days=1)
+        daily=dli_cache.daily_result(p,day,result,weather['dataset'])
+        dli_cache.save(db,p,day,daily,weather)
+        results.append(daily); day+=timedelta(days=1)
+    if p.get('result_kind')=='DLI_SERIES':
+        return dli_cache.series_result(p,results,[],db)
     arrays={}
     for key in ['direct_dli','diffuse_dli']:
         arrays[key]=[[sum(x[key][r][c] for x in results)/len(results) if inside else None
@@ -177,7 +279,7 @@ def run_job(job_id,factory):
         if job is None:return
         job.status='RUNNING'; db.commit()
         try:
-            result=compute_job(job.payload,db) if job.kind=='DLI' else invoke('scan',job.payload)
+            result=compute_job(job.payload,db) if job.kind in ('DLI','DLI_SERIES') else invoke('scan',job.payload)
             if job.kind=='SCAN':
                 if len(result['sky'])!=91 or any(len(r)!=360 for r in result['sky']) or len(result['max_captured_elevation_deg'])!=360:
                     raise ValueError('Invalid SKY dimensions')
@@ -185,8 +287,10 @@ def run_job(job_id,factory):
             room=db.get(m.Room,job.room_id)
             db.refresh(room)
             if room.geometry_version!=job.payload['geometry_version']:raise ValueError('Room changed during calculation; submit again')
-            if job.kind=='DLI' and job.payload['request']['temporary_x_axis_azimuth_deg'] is None and room.x_axis_azimuth_deg!=job.payload['room']['x_axis_azimuth_deg']:
+            if job.kind in ('DLI','DLI_SERIES') and job.payload['request']['temporary_x_axis_azimuth_deg'] is None and room.x_axis_azimuth_deg!=job.payload['room']['x_axis_azimuth_deg']:
                 raise ValueError('Room direction changed during calculation')
+            if job.kind in ('DLI','DLI_SERIES') and light_inputs_changed(job,room,db):
+                raise ValueError('Light inputs changed during calculation; submit again')
             job.result=result; job.status='COMPLETED'
         except Exception as exc:
             db.rollback()
@@ -203,7 +307,7 @@ def status(job_id:str,db:Db,user:CurrentUser):
     if job is None:raise HTTPException(404,'Job not found')
     room=owned_room(db,user,job.room_id)
     return {'job_id':job.id,'kind':job.kind,'status':job.status,'error':job.error,
-            'stale':job.status=='STALE' or room.geometry_version!=job.payload['geometry_version'],'result':job.result}
+            'stale':job.status=='STALE' or room.geometry_version!=job.payload['geometry_version'] or (job.kind in ('DLI','DLI_SERIES') and light_inputs_changed(job,room,db)),'result':job.result}
 
 class Camera(Input):
     hfov_deg:float=Field(gt=0,lt=180,allow_inf_nan=False)
@@ -288,7 +392,7 @@ def direction(room_id:int,db:Db,user:CurrentUser):
     if not isinstance(angle,(int,float)) or not math.isfinite(angle) or not 0<=angle<360:raise HTTPException(502,'Invalid direction result')
     room.x_axis_azimuth_deg=angle
     # Direction does not change scan geometry; DLI results using old direction marked stale separately.
-    for j in db.scalars(select(IntegrationJob).where(IntegrationJob.room_id==room.id,IntegrationJob.kind=='DLI')):
+    for j in db.scalars(select(IntegrationJob).where(IntegrationJob.room_id==room.id,IntegrationJob.kind.in_(['DLI','DLI_SERIES']))):
         if j.status=='COMPLETED':j.status='STALE'
     commit(db)
     return {'x_axis_azimuth_deg':angle}
@@ -312,3 +416,31 @@ def recommend(room_id:int,body:RecommendationRequest,db:Db,user:CurrentUser):
     spec=job.result['grid']
     if any(not(0<=r<spec['rows'] and 0<=c<spec['cols']) for r,c in body.blocked_cells):raise HTTPException(422,'Blocked cell outside grid')
     return invoke('custom',{'_callable':fn,'room_id':room.id,'dli_map':job.result,'plants':plants,'blocked_cells':[{'row':r,'col':c} for r,c in body.blocked_cells]})
+
+
+def light_inputs_changed(job, room, db):
+    request=DliRequest(**job.payload['request'])
+    current=make_payload(room,request,db,for_lookup=True)
+    # Older jobs did not store a scan id; changing them to stale is intentional.
+    return dli_cache.fingerprint(current)!=dli_cache.fingerprint(job.payload)
+
+
+@router.get('/windows/{window_id}/scans')
+def scans(window_id:int,db:Db,user:CurrentUser,limit:int=Query(default=20,ge=1,le=100)):
+    window=owned_window(db,user,window_id)
+    room=owned_room(db,user,window.room_id)
+    jobs=db.scalars(select(IntegrationJob).where(IntegrationJob.window_id==window_id,
+        IntegrationJob.kind=='SCAN').order_by(IntegrationJob.created_at.desc(),IntegrationJob.id.desc()).limit(limit)).all()
+    def summary(j):
+        stamp=j.created_at
+        from datetime import timezone
+        stamp=(stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp).astimezone(KST)
+        return {'job_id':j.id,'status':j.status,'error':j.error,'created_at':stamp.isoformat(),
+                'captured_at':j.payload.get('captured_at'),'geometry_version':j.payload['geometry_version'],
+                'stale':j.payload['geometry_version']!=room.geometry_version}
+    completed=db.scalars(select(IntegrationJob).where(IntegrationJob.window_id==window_id,
+        IntegrationJob.kind=='SCAN',IntegrationJob.status=='COMPLETED').order_by(IntegrationJob.created_at.desc(),IntegrationJob.id.desc()))
+    usable=next((j for j in completed if j.payload['geometry_version']==room.geometry_version),None)
+    return {'window_id':window.id,'geometry_version':room.geometry_version,'scan_completed':usable is not None,
+            'latest':summary(jobs[0]) if jobs else None,'latest_completed':summary(usable) if usable else None,
+            'scans':[summary(j) for j in jobs]}

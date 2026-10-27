@@ -17,7 +17,7 @@ def make_room(client, headers):
 def test_dli_job_and_ownership(client,headers,other_headers,monkeypatch):
     rid=make_room(client,headers)
     monkeypatch.setenv('DLI_CALLABLE','test_adapter:compute')
-    monkeypatch.setattr(i,'get_irradiance',lambda *args:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN'})
+    monkeypatch.setattr(i,'get_irradiance',lambda *args:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN','dataset':'ERA5','fetched_at':'2026-10-27T10:00:00+09:00','expires_at':'2026-10-27T11:00:00+09:00'})
     captured=[]
     def compute(op,p):
         captured.append(p)
@@ -72,7 +72,7 @@ def test_unavailable_algorithms_are_explicit(client,headers):
 def test_algorithm_failure_is_persisted(client,headers,monkeypatch):
     rid=make_room(client,headers)
     monkeypatch.setenv('DLI_CALLABLE','test_adapter:compute')
-    monkeypatch.setattr(i,'get_irradiance',lambda *args:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN'})
+    monkeypatch.setattr(i,'get_irradiance',lambda *args:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN','dataset':'ERA5','fetched_at':'2026-10-27T10:00:00+09:00','expires_at':'2026-10-27T11:00:00+09:00'})
     def fail(*args): raise RuntimeError('test failure')
     monkeypatch.setattr(i,'invoke',fail)
     res=client.post(f'/api/v1/rooms/{rid}/dli-map',headers=headers,json={'start_date':'2026-10-01','end_date':'2026-10-01','mock_sky':True,'temporary_x_axis_azimuth_deg':0})

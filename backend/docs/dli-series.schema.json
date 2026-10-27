@@ -1,0 +1,339 @@
+{
+  "$defs": {
+    "DliDay": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "dataset": {
+          "enum": [
+            "ERA5",
+            "BEST_MATCH_FORECAST"
+          ],
+          "title": "Dataset",
+          "type": "string"
+        },
+        "total_dli": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Total Dli",
+          "type": "array"
+        },
+        "direct_dli": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Direct Dli",
+          "type": "array"
+        },
+        "diffuse_dli": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Diffuse Dli",
+          "type": "array"
+        }
+      },
+      "required": [
+        "date",
+        "dataset",
+        "total_dli",
+        "direct_dli",
+        "diffuse_dli"
+      ],
+      "title": "DliDay",
+      "type": "object"
+    },
+    "GridSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "grid_v2",
+          "default": "grid_v2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "room_id": {
+          "exclusiveMinimum": 0,
+          "title": "Room Id",
+          "type": "integer"
+        },
+        "geometry_version": {
+          "exclusiveMinimum": 0,
+          "title": "Geometry Version",
+          "type": "integer"
+        },
+        "coordinate_system": {
+          "const": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+          "default": "FIRST_CORNER_ORIGIN_AR_HORIZONTAL",
+          "title": "Coordinate System",
+          "type": "string"
+        },
+        "unit": {
+          "const": "m",
+          "default": "m",
+          "title": "Unit",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/Position"
+        },
+        "cell_size_m": {
+          "maximum": 5,
+          "minimum": 0.05,
+          "title": "Cell Size M",
+          "type": "number"
+        },
+        "sample_height_m": {
+          "default": 0,
+          "maximum": 10,
+          "minimum": 0,
+          "title": "Sample Height M",
+          "type": "number"
+        },
+        "rows": {
+          "maximum": 40000,
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "maximum": 40000,
+          "minimum": 1,
+          "title": "Cols",
+          "type": "integer"
+        },
+        "array_order": {
+          "const": "[row_z][col_x]",
+          "default": "[row_z][col_x]",
+          "title": "Array Order",
+          "type": "string"
+        },
+        "inside_mask": {
+          "items": {
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array"
+          },
+          "title": "Inside Mask",
+          "type": "array"
+        }
+      },
+      "required": [
+        "room_id",
+        "geometry_version",
+        "origin",
+        "cell_size_m",
+        "rows",
+        "cols",
+        "inside_mask"
+      ],
+      "title": "GridSpec",
+      "type": "object"
+    },
+    "PlantDaily": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "total_dli": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Total Dli"
+        }
+      },
+      "required": [
+        "date",
+        "total_dli"
+      ],
+      "title": "PlantDaily",
+      "type": "object"
+    },
+    "PlantSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "plant_id": {
+          "title": "Plant Id",
+          "type": "integer"
+        },
+        "row": {
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "title": "Col",
+          "type": "integer"
+        },
+        "daily": {
+          "items": {
+            "$ref": "#/$defs/PlantDaily"
+          },
+          "title": "Daily",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plant_id",
+        "row",
+        "col",
+        "daily"
+      ],
+      "title": "PlantSeries",
+      "type": "object"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "default": 0,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        },
+        "z": {
+          "maximum": 10000,
+          "minimum": -10000,
+          "title": "Z",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "z"
+      ],
+      "title": "Position",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "room_id": {
+      "title": "Room Id",
+      "type": "integer"
+    },
+    "geometry_version": {
+      "title": "Geometry Version",
+      "type": "integer"
+    },
+    "grid": {
+      "$ref": "#/$defs/GridSpec"
+    },
+    "timezone": {
+      "const": "Asia/Seoul",
+      "default": "Asia/Seoul",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "unit": {
+      "const": "mol/m2/day",
+      "default": "mol/m2/day",
+      "title": "Unit",
+      "type": "string"
+    },
+    "mock_sky": {
+      "title": "Mock Sky",
+      "type": "boolean"
+    },
+    "temporary_direction": {
+      "title": "Temporary Direction",
+      "type": "boolean"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "days": {
+      "items": {
+        "$ref": "#/$defs/DliDay"
+      },
+      "title": "Days",
+      "type": "array"
+    },
+    "missing_dates": {
+      "items": {
+        "format": "date",
+        "type": "string"
+      },
+      "title": "Missing Dates",
+      "type": "array"
+    },
+    "plants": {
+      "items": {
+        "$ref": "#/$defs/PlantSeries"
+      },
+      "title": "Plants",
+      "type": "array"
+    }
+  },
+  "required": [
+    "room_id",
+    "geometry_version",
+    "grid",
+    "mock_sky",
+    "temporary_direction",
+    "warnings",
+    "days",
+    "missing_dates",
+    "plants"
+  ],
+  "title": "DliSeries",
+  "type": "object"
+}

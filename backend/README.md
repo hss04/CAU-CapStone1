@@ -1,3 +1,5 @@
+> **2026-10-27 프론트 요구사항 반영 v0.4.0:** 적용 및 API 규격은 [FRONTEND_V4.md](docs/FRONTEND_V4.md)를 먼저 확인하세요. 기존 DB는 서버를 중지한 뒤 `python scripts/migrate_v4.py` 실행이 필요합니다.
+
 > 연동 추가 구현과 현재 제한은 [INTEGRATION.md](INTEGRATION.md)를 먼저 확인하세요.
 
 # PlantLight FastAPI 백엔드
@@ -12,7 +14,7 @@ ZIP을 압축 해제한 뒤 **README.md, app, scripts가 있는 plantlight-backe
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts\init_env.py
-.\.venv\Scripts\python.exe scripts\import_species.py examples\species-demo.json
+.\.venv\Scripts\python.exe scripts\migrate_v4.py
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -26,7 +28,7 @@ Linux/macOS에서는 다음을 사용합니다.
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python scripts/init_env.py
-.venv/bin/python scripts/import_species.py examples/species-demo.json
+.venv/bin/python scripts/migrate_v4.py
 .venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 

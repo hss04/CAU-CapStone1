@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -28,6 +28,7 @@ class Room(Base):
     x_axis_azimuth_deg: Mapped[float | None] = mapped_column(Float)
     latitude: Mapped[float | None] = mapped_column(Float)
     longitude: Mapped[float | None] = mapped_column(Float)
+    location_name: Mapped[str | None] = mapped_column(String(100))
     timezone: Mapped[str] = mapped_column(String(64), default='Asia/Seoul')
     geometry_version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -82,6 +83,9 @@ class PlantSpecies(Base):
 
 class Plant(Base):
     __tablename__ = 'plants'
+    __table_args__ = (CheckConstraint('watering_interval_days > 0'),)
+    watering_interval_days: Mapped[int] = mapped_column(Integer, default=7, server_default='7')
+    last_watered_at: Mapped[date | None] = mapped_column(Date)
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
     room_id: Mapped[int | None] = mapped_column(ForeignKey('rooms.id', ondelete='SET NULL'), index=True)

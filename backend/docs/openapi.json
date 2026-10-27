@@ -3,7 +3,7 @@
   "info": {
     "title": "PlantLight API",
     "description": "JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/api/v1/auth/register": {
@@ -305,6 +305,24 @@
                 }
               ],
               "title": "X Axis Azimuth Deg"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
             }
           }
         ],
@@ -1315,6 +1333,63 @@
         }
       }
     },
+    "/api/v1/plants/{plant_id}/waterings": {
+      "post": {
+        "tags": [
+          "Plants"
+        ],
+        "summary": "Water Plant",
+        "operationId": "water_plant_api_v1_plants__plant_id__waterings_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WateringInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/weather/irradiance": {
       "get": {
         "tags": [
@@ -1442,6 +1517,51 @@
         }
       }
     },
+    "/api/v1/rooms/{room_id}/weather": {
+      "get": {
+        "tags": [
+          "Weather"
+        ],
+        "summary": "Room Weather",
+        "operationId": "room_weather_api_v1_rooms__room_id__weather_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rooms/{room_id}/location": {
       "put": {
         "tags": [
@@ -1480,7 +1600,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RoomOut"
+                }
               }
             }
           },
@@ -1599,6 +1721,180 @@
         }
       }
     },
+    "/api/v1/rooms/{room_id}/dli-series": {
+      "post": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Calculate Series",
+        "operationId": "calculate_series_api_v1_rooms__room_id__dli_series_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DliSeriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Get Series",
+        "operationId": "get_series_api_v1_rooms__room_id__dli_series_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Room Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "cell_size_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 5,
+              "minimum": 0.05,
+              "default": 0.2,
+              "title": "Cell Size M"
+            }
+          },
+          {
+            "name": "sample_height_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 10,
+              "minimum": 0,
+              "default": 0,
+              "title": "Sample Height M"
+            }
+          },
+          {
+            "name": "mock_sky",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Mock Sky"
+            }
+          },
+          {
+            "name": "temporary_x_axis_azimuth_deg",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMaximum": 360
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Temporary X Axis Azimuth Deg"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DliSeries"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/jobs/{job_id}": {
       "get": {
         "tags": [
@@ -1679,6 +1975,61 @@
         },
         "responses": {
           "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "Scans",
+        "operationId": "scans_api_v1_windows__window_id__scans_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "window_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Window Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -1806,6 +2157,25 @@
         ],
         "summary": "Health",
         "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check database and algorithm directory readiness",
+        "operationId": "ready_ready_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2001,6 +2371,87 @@
         ],
         "title": "Corner"
       },
+      "DliDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "dataset": {
+            "type": "string",
+            "enum": [
+              "ERA5",
+              "BEST_MATCH_FORECAST"
+            ],
+            "title": "Dataset"
+          },
+          "total_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Total Dli"
+          },
+          "direct_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Direct Dli"
+          },
+          "diffuse_dli": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Diffuse Dli"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "dataset",
+          "total_dli",
+          "direct_dli",
+          "diffuse_dli"
+        ],
+        "title": "DliDay"
+      },
       "DliMap": {
         "properties": {
           "period": {
@@ -2192,6 +2643,143 @@
           "end_date"
         ],
         "title": "DliRequest"
+      },
+      "DliSeries": {
+        "properties": {
+          "room_id": {
+            "type": "integer",
+            "title": "Room Id"
+          },
+          "geometry_version": {
+            "type": "integer",
+            "title": "Geometry Version"
+          },
+          "grid": {
+            "$ref": "#/components/schemas/GridSpec"
+          },
+          "timezone": {
+            "type": "string",
+            "const": "Asia/Seoul",
+            "title": "Timezone",
+            "default": "Asia/Seoul"
+          },
+          "unit": {
+            "type": "string",
+            "const": "mol/m2/day",
+            "title": "Unit",
+            "default": "mol/m2/day"
+          },
+          "mock_sky": {
+            "type": "boolean",
+            "title": "Mock Sky"
+          },
+          "temporary_direction": {
+            "type": "boolean",
+            "title": "Temporary Direction"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DliDay"
+            },
+            "type": "array",
+            "title": "Days"
+          },
+          "missing_dates": {
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "type": "array",
+            "title": "Missing Dates"
+          },
+          "plants": {
+            "items": {
+              "$ref": "#/components/schemas/PlantSeries"
+            },
+            "type": "array",
+            "title": "Plants"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "room_id",
+          "geometry_version",
+          "grid",
+          "mock_sky",
+          "temporary_direction",
+          "warnings",
+          "days",
+          "missing_dates",
+          "plants"
+        ],
+        "title": "DliSeries"
+      },
+      "DliSeriesRequest": {
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "cell_size_m": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.05,
+            "title": "Cell Size M",
+            "default": 0.2
+          },
+          "sample_height_m": {
+            "type": "number",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Sample Height M",
+            "default": 0
+          },
+          "mock_sky": {
+            "type": "boolean",
+            "title": "Mock Sky",
+            "default": false
+          },
+          "temporary_x_axis_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 360.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporary X Axis Azimuth Deg"
+          },
+          "accept_provisional_algorithm": {
+            "type": "boolean",
+            "title": "Accept Provisional Algorithm",
+            "description": "Bundled algorithm is provisional (08:00-18:00). Set false to reject it; custom DLI_CALLABLE is unaffected.",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start_date",
+          "end_date"
+        ],
+        "title": "DliSeriesRequest"
       },
       "GridSpec": {
         "properties": {
@@ -2397,6 +2985,31 @@
         ],
         "title": "IrradiancePoint"
       },
+      "JobAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "PENDING",
+            "title": "Status"
+          },
+          "status_url": {
+            "type": "string",
+            "title": "Status Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "status_url"
+        ],
+        "title": "JobAccepted"
+      },
       "Location": {
         "properties": {
           "latitude": {
@@ -2410,6 +3023,18 @@
             "maximum": 180.0,
             "minimum": -180.0,
             "title": "Longitude"
+          },
+          "location_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Name"
           }
         },
         "additionalProperties": false,
@@ -2472,8 +3097,55 @@
         ],
         "title": "MeasurementPoint"
       },
+      "PlantDaily": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "total_dli": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Dli"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "date",
+          "total_dli"
+        ],
+        "title": "PlantDaily"
+      },
       "PlantInput": {
         "properties": {
+          "watering_interval_days": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Watering Interval Days",
+            "default": 7
+          },
+          "last_watered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Watered At"
+          },
           "species_id": {
             "type": "integer",
             "exclusiveMinimum": 0.0,
@@ -2518,6 +3190,22 @@
       },
       "PlantOut": {
         "properties": {
+          "watering_interval_days": {
+            "type": "integer",
+            "title": "Watering Interval Days"
+          },
+          "last_watered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Watered At"
+          },
           "id": {
             "type": "integer",
             "title": "Id"
@@ -2592,6 +3280,8 @@
         },
         "type": "object",
         "required": [
+          "watering_interval_days",
+          "last_watered_at",
           "id",
           "user_id",
           "room_id",
@@ -2603,6 +3293,38 @@
           "position"
         ],
         "title": "PlantOut"
+      },
+      "PlantSeries": {
+        "properties": {
+          "plant_id": {
+            "type": "integer",
+            "title": "Plant Id"
+          },
+          "row": {
+            "type": "integer",
+            "title": "Row"
+          },
+          "col": {
+            "type": "integer",
+            "title": "Col"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/PlantDaily"
+            },
+            "type": "array",
+            "title": "Daily"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "plant_id",
+          "row",
+          "col",
+          "daily"
+        ],
+        "title": "PlantSeries"
       },
       "Position": {
         "properties": {
@@ -2838,6 +3560,17 @@
             "type": "string",
             "title": "Timezone"
           },
+          "location_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Name"
+          },
           "geometry_version": {
             "type": "integer",
             "title": "Geometry Version"
@@ -3039,6 +3772,21 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WateringInput": {
+        "properties": {
+          "watered_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Watered At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "watered_at"
+        ],
+        "title": "WateringInput"
       },
       "WindowInput": {
         "properties": {

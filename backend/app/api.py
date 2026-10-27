@@ -7,7 +7,7 @@ from app.geometry import floor_area, perimeter
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import models as m, schemas as s
@@ -306,7 +306,7 @@ def delete_window(window_id:int,db:Db,user:CurrentUser):
 def species(db:Db,user:CurrentUser,q:str=Query(default='',max_length=100),limit:Limit=50,offset:Offset=0):
     query=select(m.PlantSpecies)
     if q:
-        query=query.where(m.PlantSpecies.name.contains(q,autoescape=True))
+        query=query.where(or_(m.PlantSpecies.name.contains(q,autoescape=True), m.PlantSpecies.scientific_name.contains(q,autoescape=True)))
     return db.scalars(query.order_by(m.PlantSpecies.id).limit(limit).offset(offset)).all()
 
 
@@ -325,6 +325,9 @@ def set_plant(plant,body,db,user):
         room=owned_room(db,user,body.room_id)
         if not contains(room.corners,body.position.x,body.position.z):
             raise HTTPException(422,'Plant x/z must be inside its room')
+    for field in ("watering_interval_days", "last_watered_at"):
+        if field in body.model_fields_set:
+            setattr(plant, field, getattr(body, field))
     plant.species_id=body.species_id
     plant.nickname=body.nickname
     plant.room_id=body.room_id
@@ -368,3 +371,16 @@ def delete_plant(plant_id:int,db:Db,user:CurrentUser):
     db.delete(owned_plant(db,user,plant_id))
     commit(db)
     return Response(status_code=204)
+
+
+@router.post('/plants/{plant_id}/waterings',response_model=s.PlantOut,tags=['Plants'])
+def water_plant(plant_id:int,body:s.WateringInput,db:Db,user:CurrentUser):
+    plant=owned_plant(db,user,plant_id)
+    # Older/offline events must not move the latest watering date backwards.
+    from sqlalchemy import update, or_
+    db.execute(update(m.Plant).where(m.Plant.id==plant.id,
+        or_(m.Plant.last_watered_at.is_(None),m.Plant.last_watered_at<body.watered_at))
+        .values(last_watered_at=body.watered_at))
+    commit(db)
+    db.refresh(plant)
+    return plant

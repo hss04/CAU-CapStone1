@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.exc import IntegrityError
 
 from app.models import WeatherCache
@@ -37,6 +37,11 @@ class IrradianceOut(BaseModel):
     expires_at: datetime
     cache_hit: bool
     values: list[IrradiancePoint]
+
+    @field_validator('fetched_at','expires_at')
+    @classmethod
+    def kst_timestamps(cls, value):
+        return utc(value).astimezone(KST)
 
 
 def utc(value):
@@ -145,3 +150,49 @@ def room_irradiance(room_id: int, date: date, db: Db, user: CurrentUser):
     if room.latitude is None or room.longitude is None:
         raise HTTPException(422, "Save room latitude and longitude first")
     return get_irradiance(db, room.latitude, room.longitude, date)
+
+
+@router.get('/rooms/{room_id}/weather')
+def room_weather(room_id:int,db:Db,user:CurrentUser):
+    room=owned_room(db,user,room_id)
+    if room.latitude is None or room.longitude is None:
+        raise HTTPException(422,'Save room location first')
+    now=datetime.now(timezone.utc)
+    key=f'weather-v1|{room.latitude!r}|{room.longitude!r}|Asia/Seoul'
+    cached=db.get(WeatherCache,key)
+    hit=bool(cached and utc(cached.expires_at)>now)
+    if not hit:
+        raw=fetch_raw('https://api.open-meteo.com/v1/forecast',{
+            'latitude':room.latitude,'longitude':room.longitude,'timezone':'Asia/Seoul',
+            'current':'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m',
+            'daily':'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max',
+            'forecast_days':7})
+        try:
+            current=dict(raw['current']); daily=dict(raw['daily'])
+            if not current or not daily['time'] or current['temperature_2m'] is None:
+                raise ValueError()
+            def stamp(value):
+                d=datetime.fromisoformat(value)
+                return (d.replace(tzinfo=KST) if d.tzinfo is None else d.astimezone(KST)).isoformat()
+            current['time']=stamp(current['time'])
+            for field in ('sunrise','sunset'):
+                if field in daily: daily[field]=[stamp(v) if v else None for v in daily[field]]
+        except (KeyError,TypeError,ValueError) as exc:
+            raise HTTPException(502,'Open-Meteo returned incomplete weather data') from exc
+        payload={'source':'OPEN_METEO','timezone':'Asia/Seoul','current':current,'daily':daily,
+                 'current_units':raw.get('current_units',{}),'daily_units':raw.get('daily_units',{})}
+        cached=cached or WeatherCache(cache_key=key)
+        cached.raw_response=raw; cached.payload=payload
+        cached.fetched_at=now; cached.expires_at=now+timedelta(hours=1)
+        db.add(cached)
+        try: db.commit()
+        except IntegrityError:
+            db.rollback()
+            cached=db.get(WeatherCache,key)
+            if cached is None or utc(cached.expires_at)<=now:
+                raise HTTPException(409,'Concurrent weather cache update; retry')
+            hit=True
+    return {**cached.payload,'room_id':room.id,'location_name':room.location_name,
+            'latitude':room.latitude,'longitude':room.longitude,'cache_hit':hit,
+            'fetched_at':utc(cached.fetched_at).astimezone(KST).isoformat(),
+            'expires_at':utc(cached.expires_at).astimezone(KST).isoformat()}

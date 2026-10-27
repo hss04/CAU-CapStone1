@@ -1,3 +1,7 @@
+> GitHub backend 통합: 기존 AR 재시도 중복 방지와 /ready 보존. 통합 테스트 74 passed (기존 v4 71 + 회귀 3).
+
+> v0.4.0 검증: 2026-10-27 `python -m pytest -q` 71 passed. 기존 57개 + 신규 14개. 외부 기상/알고리즘은 대체 응답으로 검증했습니다. 세부 범위는 FRONTEND_V4.md 참조. 아래는 이전 버전 검증 기록입니다.
+
 # 보정 버전 검증 기록
 
 - 버전: 0.2.0, Python 3.12, Linux, SQLite.

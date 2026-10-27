@@ -1,3 +1,5 @@
+> v0.4.0 변경 규격은 [docs/FRONTEND_V4.md](docs/FRONTEND_V4.md)가 우선합니다. `/dli-map`의 기존 형식은 유지됩니다.
+
 # 연동 구현 및 실행 안내
 
 ## 이번 변경

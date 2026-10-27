@@ -17,21 +17,23 @@ from fastapi.responses import JSONResponse
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
-    # Schema additions are applied explicitly with scripts/migrate_v3.py.
+    # Schema additions are applied explicitly with scripts/migrate_v4.py.
     Base.metadata.create_all(bind=engine)
     inspector=inspect(engine)
-    for table,column in [('rooms','saved_at'),('windows','measurement')]:
+    for table,column in [('rooms','saved_at'),('windows','measurement'),('rooms','location_name'),('plants','watering_interval_days'),('plants','last_watered_at')]:
         if column not in {c['name'] for c in inspector.get_columns(table)}:
-            raise RuntimeError('Existing DB needs migration: stop server and run python scripts/migrate_v3.py')
+            raise RuntimeError('Existing DB needs migration: stop server and run python scripts/migrate_v4.py')
     # This MVP uses one server worker. A restart interrupts in-process jobs.
     with SessionLocal() as db:
+        from app.species_seed import seed_species
+        seed_species(db)
         db.execute(update(IntegrationJob).where(IntegrationJob.status.in_(['PENDING','RUNNING']))
                    .values(status='FAILED',error='Server restarted during processing; submit again'))
         db.commit()
     yield
 
 
-app=FastAPI(title='PlantLight API',version='0.3.0',lifespan=lifespan,
+app=FastAPI(title='PlantLight API',version='0.4.0',lifespan=lifespan,
             description='JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.')
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,

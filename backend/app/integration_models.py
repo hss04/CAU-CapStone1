@@ -15,3 +15,12 @@ class IntegrationJob(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     result: Mapped[dict | None] = mapped_column(JSON)
     error: Mapped[str | None] = mapped_column(String(500))
+
+
+class DliDailyCache(Base):
+    __tablename__ = 'dli_daily_cache'
+    cache_key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
