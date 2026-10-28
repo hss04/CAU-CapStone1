@@ -2,7 +2,7 @@ import { useState, type ReactElement } from 'react';
 import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
-import { FACING_KO } from '@/constants/labels';
+import { FACING_AZIMUTH, FACING_KO } from '@/constants/labels';
 import { Colors } from '@/constants/theme';
 import { dliOverlayColor, getLightMap, lightOverlayColor } from '@/services/space/lightAnalysis';
 import { windowName } from '@/services/space/windows';
@@ -115,6 +115,29 @@ function openingCoords(o: WallOpening, g: Geo) {
     case 'right':
       return { a: [ox + floorW, oy + o.offset * cell], b: [ox + floorW, oy + (o.offset + o.length) * cell], n: [-1, 0] };
   }
+}
+
+const WALL_INWARD: Record<WallOpening['wall'], [number, number]> = {
+  top: [0, 1],
+  bottom: [0, -1],
+  left: [1, 0],
+  right: [-1, 0],
+};
+
+/**
+ * 화면에서 북쪽이 가리키는 각도 (화면 위쪽 = 0°, 시계 방향). 모르면 null.
+ * - 서버 방: 방 좌표 x → 화면 오른쪽, z → 화면 아래. 북쪽은 방 좌표 (cos X, −sin X)라 화면 각도 = 90° − X
+ * - 그 밖(예시 방): 방향을 아는 창문의 바깥 방향 화면 각도 − 그 창문 방위각
+ */
+function northScreenAngle(room: Room): number | null {
+  const x = room.server?.xAxisAzimuthDeg;
+  if (x !== null && x !== undefined) return (((90 - x) % 360) + 360) % 360;
+  const w = room.windows.find((win) => !win.facingUnknown);
+  if (!w) return null;
+  const inward = w.segment ? (w.inward ? [w.inward.x, w.inward.y] : null) : WALL_INWARD[w.wall];
+  if (!inward) return null;
+  const outwardAngle = (Math.atan2(-inward[0], inward[1]) * 180) / Math.PI;
+  return (((outwardAngle - FACING_AZIMUTH[w.facing]) % 360) + 360) % 360;
 }
 
 /**
@@ -382,6 +405,7 @@ export function FloorPlanGrid({
   const pad = padCellsFor(compact);
   const aspectRatio = (room.cols + pad * 2) / (room.rows + pad * 2);
   const map = lightMap ?? getLightMap(room, timeOfDay);
+  const north = northScreenAngle(room);
 
   const g = width > 0 ? makeGeo(room, width, compact) : null;
   const outlinePoints = g && room.outline ? toPoints(room.outline.map((p) => [g.ox + p.x * g.cell, g.oy + p.y * g.cell])) : null;
@@ -610,6 +634,9 @@ export function FloorPlanGrid({
             {path ? <MovePath from={center(path.from)} to={center(path.to)} cell={g.cell} /> : null}
           </Svg>
 
+          {/* 방향 정보라 창문 라벨(창문 · 남)과 같이 보여준다 */}
+          {showWindowLabels && !compact && north !== null ? <NorthBadge angle={north} /> : null}
+
           {onCellPress ? (
             <Pressable
               accessibilityLabel="평면도에서 위치 선택"
@@ -777,9 +804,34 @@ function MovePath({ from, to, cell }: { from: number[]; to: number[]; cell: numb
   );
 }
 
+/** 평면도 오른쪽 위 북쪽 표시 — 화살표와 N이 화면에서 북쪽을 가리키도록 돌린다 */
+function NorthBadge({ angle }: { angle: number }) {
+  const size = 26;
+  const c = size / 2;
+  return (
+    <View style={styles.north} accessibilityLabel="북쪽 방향 표시">
+      <Svg width={size} height={size}>
+        <Circle cx={c} cy={c} r={c - 1} fill={Colors.surface} stroke={Colors.border} strokeWidth={1} />
+        <G transform={`rotate(${angle} ${c} ${c})`}>
+          <Polygon points={`${c},2.5 ${c - 3},7 ${c + 3},7`} fill={Colors.clayDeep} />
+          <SvgText x={c} y={c + 4.5} fontSize={10} fontWeight="700" fill={WALL} textAnchor="middle">
+            N
+          </SvgText>
+        </G>
+      </Svg>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   cellLayer: {
     position: 'absolute',
+  },
+  north: {
+    pointerEvents: 'none',
+    position: 'absolute',
+    top: 0,
+    right: 0,
   },
   marker: {
     pointerEvents: 'box-none',

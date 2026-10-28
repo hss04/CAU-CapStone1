@@ -4,10 +4,11 @@ import type { Room } from '@/types';
  * Mock 공간 데이터 — "내 방 / 남동향 / 창문 2개"
  *
  * 9 x 11 grid, 1칸 = 0.45m → 약 4.0m x 5.0m
+ * 평면도 위쪽 = 동쪽 (북쪽은 왼쪽) → 위쪽 벽은 동쪽, 오른쪽 벽은 남쪽을 본다
  *
- *   ┌──[ 창문(남) ]──┐
+ *   ┌──[ 창문(동) ]──┐
  *   │서랍장           │
- *   │              창문(동)
+ *   │              창문(남)
  *   │                 │
  *   │책상 🌿           │
  *   │책상 의자     침대 │
@@ -26,8 +27,8 @@ export const MOCK_ROOM: Room = {
   rows: 11,
   cellSizeM: 0.45,
   windows: [
-    { id: 'window-south', wall: 'top', offset: 2, length: 4, facing: 'S' },
-    { id: 'window-east', wall: 'right', offset: 2, length: 3, facing: 'E' },
+    { id: 'window-east', wall: 'top', offset: 2, length: 4, facing: 'E' },
+    { id: 'window-south', wall: 'right', offset: 2, length: 3, facing: 'S' },
   ],
   doors: [{ id: 'door-main', wall: 'bottom', offset: 3, length: 2, hinge: 'start' }],
   furniture: [
