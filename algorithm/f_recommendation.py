@@ -1,7 +1,13 @@
 """f. 추천: 점수 기반 최적 위치 추천, 식물 여러 개일 때 위치 중복 금지 (CLAUDE.md 10장).
 
-score 계산식은 CLAUDE.md에 [결정 필요]로 남아있던 항목이라, 문서가 제안한 방식
-("요구 DLI 범위 중앙값과의 차이 기반")을 기본값으로 구현했다. 추후 바뀌면 score() 함수만 교체하면 된다.
+score 계산식 (CLAUDE.md 10장 [결정 필요] 항목, 2026-10-28 수정):
+- 범위 안: 0.5 ~ 1.0. 요구 범위 중앙값이면 1.0, 경계(min/max)면 0.5
+- 모자람(DLI < min): 0.5 x DLI / min   (필요량의 절반이면 0.25, DLI 0일 때만 0)
+- 넘침(DLI > max): 0.5 x max / DLI     (필요량의 2배면 0.25)
+범위 안은 항상 범위 밖보다 높고, 범위 밖도 가까울수록 높다. 그래서 방 전체가 범위에 못 미쳐도
+"가장 덜 나쁜 자리"가 고정적으로 골라진다(예전 식은 경계와 범위 밖이 전부 0점이라 아무 칸이나 골랐음).
+밖에서 비율을 쓰는 이유: DLI 차이는 "2배 많다/절반이다"처럼 비율로 의미가 있어서.
+추후 바뀌면 _raw_score()만 교체하면 된다.
 
 배치 자체는 "식물마다 그때그때 제일 좋은 빈 칸을 집는" 방식이 아니라, 추천이 필요한 식물 전체를
 헝가리안 알고리즘(scipy linear_sum_assignment)으로 한 번에 배정한다. 이때 점수를 그대로 더하지 않고
@@ -25,13 +31,26 @@ except ImportError:
 TOP_K_CANDIDATES_PER_PLANT = 8  # 식물별 상위 몇 칸까지 조합 탐색에 넣을지 (너무 크면 조합 수 폭증)
 
 
-def score(total_dli: float, min_dli: float, max_dli: float) -> float:
-    """요구 DLI 범위의 중앙값에 가까울수록 1.0, 범위 절반만큼 벗어나면 0.0, 그 밖은 더 음수(0으로 clamp)."""
-    mid = (min_dli + max_dli) / 2
+def _raw_score(total_dli: float, min_dli: float, max_dli: float) -> float:
+    """반올림 전 점수 (0~1). 배정·정렬에는 이 값을 써서 작은 차이도 구분한다. 식은 모듈 docstring 참고."""
+    if total_dli < min_dli:
+        return 0.5 * max(total_dli, 0.0) / min_dli  # min_dli > 0 (total < min이므로)
+    if total_dli > max_dli:
+        return 0.5 * max_dli / total_dli  # total_dli > 0
     half_range = (max_dli - min_dli) / 2
-    if half_range <= 0:  # min==max인 종: 정확히 그 값일 때만 만점
-        return 1.0 if total_dli == mid else 0.0
-    return max(0.0, round(1 - abs(total_dli - mid) / half_range, 2))
+    if half_range <= 0:  # min==max인 종: 정확히 그 값
+        return 1.0
+    mid = (min_dli + max_dli) / 2
+    return 1.0 - 0.5 * abs(total_dli - mid) / half_range
+
+
+def score(total_dli: float, min_dli: float, max_dli: float) -> float:
+    """출력용 점수 (소수 2자리). 범위 안 0.5~1.0, 범위 밖 0.5 미만."""
+    return round(_raw_score(total_dli, min_dli, max_dli), 2)
+
+
+def in_range(total_dli: float, min_dli: float, max_dli: float) -> bool:
+    return min_dli <= total_dli <= max_dli
 
 
 def _assign_best_cells(
@@ -48,7 +67,7 @@ def _assign_best_cells(
     cost = np.empty((len(needy_plants), len(candidates)))
     for i, plant in enumerate(needy_plants):
         for j, (r, c) in enumerate(candidates):
-            s = score(total_dli_grid[r][c], plant.species.min_dli, plant.species.max_dli)
+            s = _raw_score(total_dli_grid[r][c], plant.species.min_dli, plant.species.max_dli)
             cost[i, j] = -math.sqrt(s)
 
     row_idx, col_idx = linear_sum_assignment(cost)
@@ -87,7 +106,7 @@ def recommend_top_k_combinations(
     per_plant_candidates = []
     for plant in needy_plants:
         scored = [
-            (score(total_dli_grid[r][c], plant.species.min_dli, plant.species.max_dli), (r, c))
+            (_raw_score(total_dli_grid[r][c], plant.species.min_dli, plant.species.max_dli), (r, c))
             for (r, c) in candidates
         ]
         scored.sort(key=lambda x: -x[0])
@@ -113,7 +132,7 @@ def recommend_top_k_combinations(
                     "row": r,
                     "col": c,
                     "total_dli": total_dli_grid[r][c],
-                    "score": s,
+                    "score": round(s, 2),
                 }
             )
         results.append({"total_score": total_score, "placements": placements})

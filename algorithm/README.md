@@ -17,6 +17,10 @@ DIRECTION_CALLABLE=room_geometry:compute_room_direction
 RECOMMENDATION_CALLABLE=recommend_service:recommend_for_room
 ```
 
+**주의: 백엔드는 이 값들을 `.env` 파일이 아니라 환경변수(`os.environ`)에서 읽는다.** (`.env`는 JWT·DB 설정에만
+쓰임 — `app/config.py`) 그래서 `.env`에 적었다면 서버를 `uvicorn app.main:app ... --env-file .env`로 켜야 적용된다.
+`ALGORITHM_DIR`, `UPLOAD_ROOT`, `DLI_CACHE_VERSION`도 같은 방식. 2026-10-28 로컬 백엔드로 이 방식 동작 확인함.
+
 백엔드 `algorithm_worker.py`가 subprocess에서 이 폴더를 `sys.path`에 넣고 `module:function`을 import해서
 `function(payload_dict)`로 부른다. 패키지 방식(`from algorithm.grid_dli_service import ...`)으로도 import 된다.
 
@@ -27,6 +31,17 @@ RECOMMENDATION_CALLABLE=recommend_service:recommend_for_room
 | `compute_room_dli` (하루치 DLI) | `date`, `room{corners[{order_index,x,z}], x_axis_azimuth_deg, latitude, longitude}`, `grid`(백엔드 grid_v2 그대로), `windows[{window_id, wall_index, v0..v3, sky 또는 None}]`, `dni_dhi[{time,dni,dhi}]`, `time_basis`, `mock_sky` | `{date, direct_dli, diffuse_dli, total_dli, warnings}` — 배열 `[row_z][col_x]`, 방 밖 칸 `null`, 소수 2자리 |
 | `compute_room_direction` (방 방향) | `corners[{order_index,x,z}]`, `windows[{wall_index, window_azimuth_deg, (선택) v0,v1,v3}]` | `{x_axis_azimuth_deg (0≤값<360), per_window, spread_deg, warnings}` |
 | `recommend_for_room` (진단·추천) | `room_id`, `dli_map`(완료된 DLI 결과), `plants[{plant_id, species_id, position{x,y,z} 또는 null, min_dli, max_dli}]`, `blocked_cells[{row,col}]` | `{room_id, date, period, plants[{plant_id, species_id, required_dli, current 또는 null, recommended 또는 null}], warnings}` (CLAUDE.md 10장 형식) |
+
+**`compute_room_dli` 10분 단위 PPFD 옵션** (2026-10-28 추가, 프론트 MySpace 화면용):
+- 입력에 `timeseries: true`를 넣으면 `times`(해 떠 있는 10분 구간의 가운데 시각, 예 `06:35`~`18:05`, 밤 구간 없음),
+  `interval_minutes: 10`, `ppfd_unit: "umol/m2/s"`와 함께 시점별 PPFD를 추가로 돌려줌. 기존 DLI 3종은 그대로.
+  - `cells` 없음: `direct_ppfd`, `diffuse_ppfd` = `[t][row][col]` (방 밖 칸 null). 25×20 격자·70시점 기준 약 366KB
+  - `cells: [[row, col], ...]` 있음: `cell_series: [{row, col, direct_ppfd: [t], diffuse_ppfd: [t]}]` (그 칸만, 2칸 약 12KB).
+    `[t][row][col]` 모양을 유지하면 나머지 칸이 전부 null이라 오히려 더 커져서 칸별 목록으로 줌
+- `direct_ppfd = DNI × sin(고도) × 2.04 × fdirect`, `diffuse_ppfd = DHI × 2.04 × Vwindow` (소수 1자리).
+  `Σ(PPFD × 600초) / 1e6` = 그 칸의 DLI
+- `cells`를 줘도 DLI는 방 전체를 계산함(백엔드가 방 안 모든 칸을 검사하므로). 백엔드가 이 두 옵션을 payload에
+  넣어 주는 작업은 백엔드 쪽에 필요함(현재 백엔드는 이 키를 보내지 않고, 결과에서도 DLI 키만 꺼내 씀).
 
 자세한 키 설명은 각 함수 docstring에 있다. 계산 규칙 요약:
 
@@ -40,7 +55,9 @@ RECOMMENDATION_CALLABLE=recommend_service:recommend_for_room
   1시간 평균 에너지 보존. 해 떠 있는 시각의 값이 없으면 오류(조용히 0으로 채우지 않음).
 - **방 방향**: 벽 `wall_index`의 바깥 법선 각도 θ(X축 0°, Z축 90°) → `x_axis_azimuth_deg = (창문 정면 방위각 − θ) mod 360`,
   창문 여러 개면 원형 평균. 창문별 값이 15° 넘게 벌어지면 경고, 창문 꼭짓점 법선이 벽과 20° 넘게 다르면 경고.
-- **추천**: `score = max(0, 1 − |DLI − 범위 중앙값| / (범위/2))`, OK가 아닌 식물 전체를 헝가리안 배정(자리 중복 없음).
+- **추천**: score = 범위 안 0.5~1.0(중앙값 1.0, 경계 0.5), 모자람 `0.5 × DLI/min`, 넘침 `0.5 × max/DLI`.
+  범위 밖도 가까울수록 높아서, 방 전체가 범위에 못 미치면 가장 가까운 칸을 추천하고 `warnings`로 알림.
+  OK가 아닌 식물 전체를 헝가리안 배정(자리 중복 없음).
   식물 실좌표 → `row = floor((z−origin.z)/cell)`, `col = floor((x−origin.x)/cell)`. 위치 없음/방 밖이면 `current: null`.
 
 ### 백엔드에 알려야 할 것
@@ -187,8 +204,10 @@ pvlib로 태양 위치 계산(NREL SPA, 진짜 계산). DNI/DHI는 **백엔드�
 
 ### `f_recommendation.py`
 LOW/HIGH인 식물에 대해 빈 칸을 추천. 식물끼리 추천 칸 중복 방지.
-- **score 계산식은 기본값으로 구현, 팀 확정 필요**: CLAUDE.md 10장 [결정 필요] 항목. 문서가 예시로 든
-  "요구 DLI 범위 중앙값과의 차이 기반"을 기본값으로 구현함. 바뀌면 `score()` 함수만 교체하면 됨.
+- **score 계산식** (CLAUDE.md 10장 [결정 필요] 항목): 범위 안 0.5~1.0(중앙값 1.0, 경계 0.5),
+  모자람 `0.5 × DLI/min`, 넘침 `0.5 × max/DLI`. 예전 식(`max(0, 1 − |DLI−중앙값|/(범위/2))`)은 경계 칸과
+  범위 밖이 전부 0점이라, 방 전체가 모자라면 아무 칸이나 추천하는 문제가 있어서 2026-10-28 수정.
+  바뀌면 `_raw_score()`만 교체하면 됨.
 - **불가 칸(`blocked_cells`) 구현됨**: CLAUDE.md 10장 [결정 필요]였던 항목이 ①(요청에 `blocked_cells`
   `[{row, col}]`를 보내 제외)로 확정됨에 따라 `recommend_all(..., blocked_cells=...)`,
   `recommend_top_k_combinations(..., blocked_cells=...)`에 파라미터 추가 — 이미 식물이 있는 칸과 같은

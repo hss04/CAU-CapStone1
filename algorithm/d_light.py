@@ -253,43 +253,83 @@ def compute_light_multi(
     산란광: 창문별 Vwindow 합 x DHI. Vwindow는 시간과 무관하므로 칸마다 1번만 계산하고,
             DHI 쪽은 하루 합계(Σ DHI x K_PPFD x DT_SEC)를 미리 구해 곱한다.
     """
-    # 시점별로 칸과 무관한 값(태양 방향, 창문별 SKY 여부, 수평면 직사광 세기)을 먼저 계산
-    timesteps = []
+    direct_dli, diffuse_dli, _ = _light_core(cells, x_axis_azimuth_deg, sources, walls, solar_df, None)
+    return direct_dli, diffuse_dli
+
+
+def compute_light_multi_with_series(
+    cells: list[list[GridCell | None]],
+    x_axis_azimuth_deg: float,
+    sources: list[WindowSource],
+    walls: list[Wall],
+    solar_df: pd.DataFrame,
+    series_cells: str | set[tuple[int, int]] = "all",
+) -> tuple[list[list[float | None]], list[list[float | None]], dict]:
+    """compute_light_multi + 시점별(10분) PPFD.
+
+    series_cells: "all"이면 방 안 전체 칸, {(row, col), ...}이면 그 칸만 시점별 값을 만든다.
+                  DLI(하루 합계)는 항상 방 안 전체 칸을 계산한다.
+    세 번째 반환값: {"direct_ppfd": [t][row][col], "diffuse_ppfd": [t][row][col]}  (μmol/m^2/s, 소수 1자리)
+                    t는 solar_df의 행 순서(해 떠 있는 10분 구간). 방 밖 칸, 지정 안 한 칸은 None.
+                    direct_ppfd = DNI x sin(고도) x K_PPFD x fdirect,  diffuse_ppfd = DHI x K_PPFD x Vwindow
+                    Σ(ppfd x DT_SEC) / 1e6 = 그 칸의 DLI (반올림 오차 범위)
+    """
+    return _light_core(cells, x_axis_azimuth_deg, sources, walls, solar_df, series_cells)
+
+
+def _light_core(cells, x_axis_azimuth_deg, sources, walls, solar_df, series_cells):
+    # 시점별로 칸과 무관한 값(태양 방향, 창문별 SKY 여부, 직사/산란 PPFD 세기)을 먼저 계산
+    steps = []
     for _, t in solar_df.iterrows():
         az, el = t["azimuth_deg"], t["elevation_deg"]
         open_sources = [s for s in sources if lookup_sky(s.resolved_sky, az, el) == 1]
-        direct_energy = t["dni"] * math.sin(math.radians(el)) * K_PPFD * DT_SEC  # μmol/m^2 (fdirect=1일 때)
-        if open_sources and direct_energy > 0:
-            timesteps.append((sun_direction(az, el, x_axis_azimuth_deg), open_sources, direct_energy))
+        direct_ppfd = t["dni"] * math.sin(math.radians(el)) * K_PPFD  # μmol/m^2/s (fdirect=1일 때, 수평면)
+        diffuse_ppfd = t["dhi"] * K_PPFD  # μmol/m^2/s (vwin=1일 때)
+        steps.append((sun_direction(az, el, x_axis_azimuth_deg), open_sources, direct_ppfd, diffuse_ppfd))
     diffuse_energy_per_vwin = float((solar_df["dhi"] * K_PPFD * DT_SEC).sum())  # μmol/m^2 (vwin=1일 때)
+
+    series = None
+    if series_cells is not None:
+        n_rows, n_cols = len(cells), (len(cells[0]) if cells else 0)
+        series = {
+            key: [[[None] * n_cols for _ in range(n_rows)] for _ in range(len(steps))]
+            for key in ("direct_ppfd", "diffuse_ppfd")
+        }
 
     direct_dli: list[list[float | None]] = []
     diffuse_dli: list[list[float | None]] = []
-    for row in cells:
+    for r, row in enumerate(cells):
         direct_row: list[float | None] = []
         diffuse_row: list[float | None] = []
-        for cell in row:
+        for c, cell in enumerate(row):
             if cell is None:
                 direct_row.append(None)
                 diffuse_row.append(None)
                 continue
             p = (cell.x, cell.y, cell.z)
+            want = series is not None and (series_cells == "all" or (r, c) in series_cells)
 
             acc_direct = 0.0
-            for d, open_sources, energy in timesteps:
-                if any(_passes_window(p, d, s, walls) for s in open_sources):
-                    acc_direct += energy
+            for k, (d, open_sources, direct_ppfd, _) in enumerate(steps):
+                lit = direct_ppfd > 0 and any(_passes_window(p, d, s, walls) for s in open_sources)
+                if lit:
+                    acc_direct += direct_ppfd * DT_SEC
+                if want:
+                    series["direct_ppfd"][k][r][c] = round(direct_ppfd, 1) if lit else 0.0
 
             vwin = sum(vwindow_with_walls(cell, s, x_axis_azimuth_deg, walls) for s in sources)
             vwin = min(vwin, 1.0)  # 안전장치 (정상이면 창문끼리 샘플 Ray가 겹치지 않아 1을 넘지 않음)
             acc_diffuse = diffuse_energy_per_vwin * vwin
+            if want:
+                for k, step in enumerate(steps):
+                    series["diffuse_ppfd"][k][r][c] = round(step[3] * vwin, 1)
 
             # μmol/m^2 -> mol/m^2(DLI)
             direct_row.append(round(acc_direct / 1_000_000, 2))
             diffuse_row.append(round(acc_diffuse / 1_000_000, 2))
         direct_dli.append(direct_row)
         diffuse_dli.append(diffuse_row)
-    return direct_dli, diffuse_dli
+    return direct_dli, diffuse_dli, series
 
 
 def average_light_results(light_results: list[dict], label: str) -> dict:

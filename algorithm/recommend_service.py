@@ -4,8 +4,9 @@
 
 판정·점수·배치 규칙 자체는 e_diagnosis.py / f_recommendation.py 그대로다.
 - 판정: total_dli < min_dli -> LOW, > max_dli -> HIGH, 그 사이 OK (CLAUDE.md 10장)
-- score: 요구 범위 중앙값이면 1.0, 범위 끝(min 또는 max)이면 0.5, 범위 절반만큼 더 벗어나면 0.0
-         = max(0, 1 - |DLI - 중앙값| / (범위/2))  (f_recommendation.score)
+- score (f_recommendation.score): 범위 안 0.5~1.0 (중앙값 1.0, 경계 0.5),
+         모자람 0.5 x DLI/min, 넘침 0.5 x max/DLI (범위 밖은 0.5 미만, 가까울수록 높음)
+- 방 안에 요구 범위를 만족하는 칸이 없으면 가장 가까운 칸을 추천하고 warnings에 알림
 - 배치: OK가 아닌 식물 전체를 한 번에 배정(헝가리안), sqrt(score) 합 최대 -> 자리 중복 없음
 - 후보 제외: 방 밖 칸, blocked_cells(가구 등), 다른 식물이 이미 있는 칸
 
@@ -19,11 +20,11 @@ import math
 
 try:  # 패키지/평면 import 둘 다 지원 - __init__.py 참고
     from .e_diagnosis import Diagnosis, diagnose
-    from .f_recommendation import recommend_all
+    from .f_recommendation import in_range, recommend_all
     from .models import Plant, PlantSpecies
 except ImportError:
     from e_diagnosis import Diagnosis, diagnose
-    from f_recommendation import recommend_all
+    from f_recommendation import in_range, recommend_all
     from models import Plant, PlantSpecies
 
 STATUS_UNPLACED = "UNPLACED"  # 내부 표시용. 출력에는 current=None으로 나감
@@ -105,8 +106,19 @@ def recommend_for_room(payload: dict) -> dict:
     for entry in results:
         if entry["current"]["status"] == STATUS_UNPLACED:
             entry["current"] = None
+        # 백엔드 dli_map의 total은 direct+diffuse 합이라 13.540000000000001처럼 올 수 있음 -> DLI는 소수 2자리(CLAUDE.md 9장)
+        for key in ("current", "recommended"):
+            if entry[key] is not None and entry[key]["total_dli"] is not None:
+                entry[key]["total_dli"] = round(entry[key]["total_dli"], 2)
         if entry["recommended"] is None and entry["current"] is None:
             warnings.append(f"plant {entry['plant_id']}: no free cell available for recommendation")
+        rec = entry["recommended"]
+        req = entry["required_dli"]
+        if rec is not None and not in_range(rec["total_dli"], req["min"], req["max"]):
+            warnings.append(
+                f"plant {entry['plant_id']}: no cell in this room meets the required DLI "
+                f"{req['min']}~{req['max']}; recommended the closest cell ({rec['total_dli']})"
+            )
 
     return {
         "room_id": payload.get("room_id"),

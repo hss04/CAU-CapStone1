@@ -248,6 +248,19 @@ check("가구 칸(0,2)/방 밖(1,2)/다른 식물 자리(1,1) 추천 안 함",
       not set(recommended) & {(0, 2), (1, 2), (1, 1), (0, 0)}, f"{recommended}")
 check("범위 안(8~12) 칸 (0,1)=8.0이 추천에 포함", (0, 1) in recommended, f"{recommended}")
 
+from f_recommendation import score
+check("score: 범위 중앙 1.0, 경계 0.5", score(10, 8, 12) == 1.0 and score(8, 8, 12) == 0.5 and score(12, 8, 12) == 0.5)
+check("score: 모자람 0.5 x DLI/min (필요량 절반 -> 0.25)", score(4, 8, 12) == 0.25)
+check("score: 넘침 0.5 x max/DLI (2배 -> 0.25)", score(24, 8, 12) == 0.25)
+check("score: 범위 밖이어도 가까울수록 높음 (0점 아님)", 0 < score(1, 18, 40) < score(9, 18, 40) < score(17, 18, 40) < 0.5)
+dim_map = {"date": DATE, "grid": {"origin": {"x": 0, "y": 0, "z": 0}, "cell_size_m": 1.0, "rows": 1, "cols": 4,
+                                  "inside_mask": [[True] * 4]}, "total_dli": [[0.1, 3.0, 13.5, 0.04]]}
+dim = recommend_for_room({"room_id": 1, "dli_map": dim_map, "blocked_cells": [], "plants": [
+    {"plant_id": 9, "species_id": 3, "position": {"x": 3.5, "y": 0, "z": 0.5}, "min_dli": 18.0, "max_dli": 40.0}]})
+r9 = dim["plants"][0]["recommended"]
+check("방 전체가 모자라면 가장 밝은 칸 추천 (올리브 사례)", r9 is not None and r9["col"] == 2 and r9["score"] > 0, f"{r9}")
+check("그때 '범위 만족 칸 없음' 경고", any("no cell in this room meets" in w for w in dim["warnings"]), f"{dim['warnings']}")
+
 # ---------------------------------------------------------------------------
 print("\n[8] import 방식")
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -256,6 +269,50 @@ code = (f"import sys; sys.path.insert(0, {parent!r}); "
         f"import {pkg}.grid_dli_service, {pkg}.room_geometry, {pkg}.recommend_service; print('ok')")
 p = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
 check(f"패키지 import (from {pkg}.grid_dli_service ...)", p.returncode == 0 and "ok" in p.stdout, p.stderr.strip()[-200:])
+
+# ---------------------------------------------------------------------------
+print("\n[9] 10분 단위 PPFD 출력 (프론트 요청: timeseries / cells)")
+import json as _json
+
+from d_light import K_PPFD
+
+base = {"date": DATE, "room": room_payload(rect, X_AZ), "grid": backend_grid(rect),
+        "windows": [{"window_id": 1, "wall_index": 2, **window, "sky": scan}]}
+plain = compute_room_dli(dict(base))
+ts = compute_room_dli(dict(base, timeseries=True))
+check("기본(timeseries 없음)은 PPFD 키 없음", "direct_ppfd" not in plain and "times" not in plain)
+check("timeseries 켜도 DLI 3종은 그대로", all(ts[k] == plain[k] for k in ("direct_dli", "diffuse_dli", "total_dli")))
+solar = compute_solar_times(Room([RoomCorner(i, x, z) for i, (x, z) in enumerate(rect)], 2.5, X_AZ, LAT, LON), DATE)
+nt, nr, nc = len(ts["times"]), len(ts["direct_dli"]), len(ts["direct_dli"][0])
+check("시점 = 해 떠 있는 10분 구간 (구간 가운데 시각)", nt == len(solar) and ts["times"][0].endswith("+09:00") and ts["times"][0][14:16] in ("05", "15", "25", "35", "45", "55"),
+      f"{nt}개, 첫 {ts['times'][0]}, 끝 {ts['times'][-1]}")
+check("배열 모양 [t][row][col]", len(ts["direct_ppfd"]) == nt and len(ts["direct_ppfd"][0]) == nr and len(ts["direct_ppfd"][0][0]) == nc)
+sum_err = 0.0
+for r in range(nr):
+    for c in range(nc):
+        if ts["direct_dli"][r][c] is None:
+            continue
+        d_sum = sum(ts["direct_ppfd"][k][r][c] for k in range(nt)) * 600 / 1e6
+        f_sum = sum(ts["diffuse_ppfd"][k][r][c] for k in range(nt)) * 600 / 1e6
+        sum_err = max(sum_err, abs(d_sum - ts["direct_dli"][r][c]), abs(f_sum - ts["diffuse_dli"][r][c]))
+check("모든 칸: Σ(10분 PPFD x 600초)/1e6 == 그 칸 DLI (반올림 오차 0.01 이내)", sum_err <= 0.01, f"최대 차이 {sum_err:.4f}")
+lit = [(k, r, c) for k in range(nt) for r in range(nr) for c in range(nc) if (ts["direct_ppfd"][k][r][c] or 0) > 0]
+k, r, c = lit[len(lit) // 2]
+row_t = solar.iloc[k]
+expect_direct = round(row_t["dni"] * math.sin(math.radians(row_t["elevation_deg"])) * K_PPFD, 1)
+check("직사 PPFD = DNI x sin(고도) x 2.04 (해가 드는 칸·시점)", ts["direct_ppfd"][k][r][c] == expect_direct,
+      f"{ts['times'][k]} 칸({r},{c}) = {ts['direct_ppfd'][k][r][c]}, 계산 {expect_direct}")
+pick = compute_room_dli(dict(base, timeseries=True, cells=[[24, 10], [0, 0], [99, 99]]))
+got = {(s["row"], s["col"]) for s in pick.get("cell_series", [])}
+check("cells 지정하면 그 칸만 cell_series로", got == {(24, 10), (0, 0)} and "direct_ppfd" not in pick, f"{sorted(got)}")
+s2410 = next(s for s in pick["cell_series"] if (s["row"], s["col"]) == (24, 10))
+check("cell_series 값 == 전체 출력의 같은 칸 값", s2410["direct_ppfd"] == [ts["direct_ppfd"][k][24][10] for k in range(nt)]
+      and s2410["diffuse_ppfd"] == [ts["diffuse_ppfd"][k][24][10] for k in range(nt)])
+check("격자 밖 칸은 건너뛰고 경고", any("[99, 99]" in w for w in pick["warnings"]))
+check("cells 지정해도 DLI는 방 전체", pick["total_dli"] == plain["total_dli"])
+size_all = len(_json.dumps(ts)) / 1024
+size_pick = len(_json.dumps(pick)) / 1024
+print(f"  (JSON 크기: 기본 {len(_json.dumps(plain)) / 1024:.0f}KB, 전체 칸 시점별 {size_all:.0f}KB, 2칸만 {size_pick:.0f}KB / {nr}x{nc} 격자, {nt}시점)")
 
 print(f"\n결과: 실패 {failures}건")
 sys.exit(1 if failures else 0)
