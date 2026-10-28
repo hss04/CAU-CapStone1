@@ -59,8 +59,8 @@ class PlantSpecies:
 class Plant:
     plant_id: int
     species: PlantSpecies
-    row: int
-    col: int
+    row: int | None  # None = 아직 방에 배치 안 함 (백엔드 Plant 위치가 비어 있는 경우)
+    col: int | None
 
 
 def build_mock_room() -> Room:
