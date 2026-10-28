@@ -24,6 +24,7 @@ from app.geometry import grid
 from app.weather import get_irradiance, fetch_raw
 from app.integration_models import IntegrationJob
 from app.algorithm_bridge import invoke
+from app.korean_cities import KoreanCitiesOut, city_by_id, search_cities
 
 router = APIRouter(prefix='/api/v1', tags=['Integration'])
 UPLOAD_ROOT = Path(os.environ.get('UPLOAD_ROOT', 'data/scans')).resolve()
@@ -33,9 +34,19 @@ class Location(Input):
     longitude: float = Field(ge=-180, le=180, allow_inf_nan=False)
     location_name: str | None = Field(default=None, max_length=100)
 
+
+class CityLocation(Input):
+    city_id: int = Field(gt=0, strict=True, description='ID selected from GET /api/v1/locations/cities')
+
+
 @router.put('/rooms/{room_id}/location', response_model=RoomOut)
-def set_location(room_id: int, body: Location, db: Db, user: CurrentUser):
+def set_location(room_id: int, body: Location | CityLocation, db: Db, user: CurrentUser):
     room = owned_room(db, user, room_id)
+    if isinstance(body, CityLocation):
+        city = city_by_id(body.city_id)
+        if city is None:
+            raise HTTPException(404, 'Korean city not found; select an ID from /api/v1/locations/cities')
+        body = Location(latitude=city.latitude, longitude=city.longitude, location_name=city.display_name)
     changed = (room.latitude, room.longitude) != (body.latitude, body.longitude)
     room.latitude, room.longitude = body.latitude, body.longitude
     if 'location_name' in body.model_fields_set:
@@ -47,12 +58,28 @@ def set_location(room_id: int, body: Location, db: Db, user: CurrentUser):
     commit(db)
     return room
 
-@router.get('/locations/search')
+@router.get('/locations/cities', response_model=KoreanCitiesOut,
+            summary='List or search Korean cities and their representative WGS84 coordinates')
+def korean_cities(user: CurrentUser,
+                  q: str | None = Query(default=None, min_length=1, max_length=100),
+                  admin1: str | None = Query(default=None, min_length=1, max_length=100)):
+    if (q is not None and not q.strip()) or (admin1 is not None and not admin1.strip()):
+        raise HTTPException(422, 'City search parameters must not be blank')
+    return {'results': search_cities(q, admin1)}
+
+
+@router.get('/locations/search', summary='Search Korean cities first, then other Korean locations')
 def locations(user: CurrentUser, q: str = Query(min_length=2, max_length=100)):
+    q = q.strip()
+    if len(q) < 2:
+        raise HTTPException(422, 'Search query must contain at least two characters')
+    cities = search_cities(q)
+    if cities:
+        return {'results': cities[:10]}
     raw = fetch_raw('https://geocoding-api.open-meteo.com/v1/search',
-                    {'name': q, 'count': 10, 'language': 'ko', 'format': 'json'})
-    return {'results': [{k: r.get(k) for k in ('id','name','country','admin1','latitude','longitude','timezone')}
-                        for r in raw.get('results', [])]}
+                    {'name': q, 'count': 10, 'language': 'ko', 'format': 'json', 'countryCode': 'KR'})
+    return {'results': [{k: r.get(k) for k in ('id','name','country','country_code','admin1','latitude','longitude','timezone')}
+                        for r in raw.get('results', []) if r.get('country_code') == 'KR']}
 
 class DliRequest(Input):
     start_date: date
@@ -453,3 +480,4 @@ def scans(window_id:int,db:Db,user:CurrentUser,limit:int=Query(default=20,ge=1,l
     return {'window_id':window.id,'geometry_version':room.geometry_version,'scan_completed':usable is not None,
             'latest':summary(jobs[0]) if jobs else None,'latest_completed':summary(usable) if usable else None,
             'scans':[summary(j) for j in jobs]}
+

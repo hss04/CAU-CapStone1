@@ -1590,7 +1590,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Location"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Location"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CityLocation"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -1619,12 +1627,86 @@
         }
       }
     },
+    "/api/v1/locations/cities": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "summary": "List or search Korean cities and their representative WGS84 coordinates",
+        "operationId": "korean_cities_api_v1_locations_cities_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "admin1",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Admin1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KoreanCitiesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/locations/search": {
       "get": {
         "tags": [
           "Integration"
         ],
-        "summary": "Locations",
+        "summary": "Search Korean cities first, then other Korean locations",
         "operationId": "locations_api_v1_locations_search_get",
         "security": [
           {
@@ -2335,6 +2417,22 @@
           "files"
         ],
         "title": "Body_upload_scan_api_v1_windows__window_id__scans_post"
+      },
+      "CityLocation": {
+        "properties": {
+          "city_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "City Id",
+            "description": "ID selected from GET /api/v1/locations/cities"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "city_id"
+        ],
+        "title": "CityLocation"
       },
       "Corner": {
         "properties": {
@@ -3048,6 +3146,97 @@
           "status_url"
         ],
         "title": "JobAccepted"
+      },
+      "KoreanCitiesOut": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/KoreanCity"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "KoreanCitiesOut"
+      },
+      "KoreanCity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Id",
+            "description": "Stable GeoNames city administrative-record ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "country": {
+            "type": "string",
+            "const": "대한민국",
+            "title": "Country",
+            "default": "대한민국"
+          },
+          "country_code": {
+            "type": "string",
+            "const": "KR",
+            "title": "Country Code",
+            "default": "KR"
+          },
+          "admin1": {
+            "type": "string",
+            "title": "Admin1"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "timezone": {
+            "type": "string",
+            "const": "Asia/Seoul",
+            "title": "Timezone",
+            "default": "Asia/Seoul"
+          },
+          "coordinate_basis": {
+            "type": "string",
+            "const": "CITY_REPRESENTATIVE",
+            "title": "Coordinate Basis",
+            "default": "CITY_REPRESENTATIVE"
+          },
+          "source": {
+            "type": "string",
+            "const": "GEONAMES",
+            "title": "Source",
+            "default": "GEONAMES"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "admin1",
+          "latitude",
+          "longitude"
+        ],
+        "title": "KoreanCity"
       },
       "Location": {
         "properties": {

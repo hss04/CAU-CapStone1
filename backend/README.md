@@ -1,3 +1,5 @@
+> **2026-10-28 한국 도시 선택:** 서울·부산·광주 등 85개 도시의 대표 위경도 조회와 도시 ID로 방 위치 저장을 지원합니다. API 예시와 동명 지역 구분은 [KOREAN_CITIES.md](docs/KOREAN_CITIES.md)를 확인하세요.
+
 > **v0.5.0 알고리즘 연동:** 변경/실행 방법과 검증 범위는 [CHANGES_V5.md](docs/CHANGES_V5.md), 프론트 연결은 [frontend-integration/README.md](frontend-integration/README.md)를 먼저 확인하세요.
 
 > **2026-10-27 프론트 요구사항 반영 v0.4.0:** 적용 및 API 규격은 [FRONTEND_V4.md](docs/FRONTEND_V4.md)를 먼저 확인하세요. 기존 DB는 서버를 중지한 뒤 `python scripts/migrate_v4.py` 실행이 필요합니다.
@@ -157,3 +159,4 @@ tests/                API 통합 테스트
 ## 0.3.0 일사량 조회 추가
 
 Open-Meteo 시간별 DNI/DHI 조회와 DB 캐시를 추가했습니다. 설치·기존 DB 유지·Swagger 시험·C 입력 계약은 [docs/WEATHER_API.md](docs/WEATHER_API.md)를 확인하세요.
+

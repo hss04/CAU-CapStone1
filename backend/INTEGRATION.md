@@ -7,8 +7,11 @@
 ## 이번 변경
 - POST /api/v1/rooms/{id}/dli-map: 비동기 계산, 202 + job_id 반환
 - GET /api/v1/jobs/{job_id}: PENDING/RUNNING/COMPLETED/FAILED/STALE, 결과·오류·stale 반환
-- PUT /api/v1/rooms/{id}/location: 위경도 설정
-- GET /api/v1/locations/search?q=서울: 지역명 검색, 사용자가 후보 선택 후 location 호출
+- PUT /api/v1/rooms/{id}/location: 위경도 또는 `{"city_id":1838519}`로 한국 도시 위치 설정
+- GET /api/v1/locations/cities: 한국 85개 도시와 대표 위경도 목록. q/admin1로 검색 가능
+- GET /api/v1/locations/search?q=서울: 한국 도시 우선 검색, 사용자가 후보 선택 후 location 호출
+
+한국 도시 목록, 광주 동명 지역 구분, 좌표 기준과 요청 예시는 [docs/KOREAN_CITIES.md](docs/KOREAN_CITIES.md)를 참고하세요.
 - POST /api/v1/windows/{id}/scans: metadata JSON 문자열과 files 13장 multipart
 - POST /api/v1/rooms/{id}/direction: 외부 방향 계산 함수 연결점
 - POST /api/v1/rooms/{id}/recommendations: 외부 추천 함수 연결점
@@ -96,3 +99,4 @@ metadata: 아래 JSON을 문자열로 전달. files: JPEG 13장(파일명과 fra
 기존 52개 테스트와 추가 통합 테스트를 실행했습니다. 추가 테스트는 인증·소유권, 날짜 범위, 기간 평균, wall_index 전달, stale 결과, 업로드·SKY 결과 저장, 실패 상태, 미제공 함수 명시 응답을 검사합니다. 실제 upstream DLI subprocess 실행에서 5x4 격자 수치 반환을 확인했습니다. 실제 SKY 투영 함수는 가짜 분류기를 넣어 91x360 결과를 확인했습니다.
 
 Android SDK가 없어 앱 빌드·실기기 전송은 미검증입니다. 실제 SegFormer 추론과 실시간 Open-Meteo 네트워크 연동은 이번 환경에서 실행하지 않았습니다.
+

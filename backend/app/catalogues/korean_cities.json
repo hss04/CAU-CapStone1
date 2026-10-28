@@ -1,0 +1,2065 @@
+{
+  "source": "GeoNames",
+  "source_url": "https://download.geonames.org/export/dump/KR.zip",
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "retrieved_at": "2026-10-28",
+  "source_sha256": "851c743b4f02efb9f802aa0cea40b2baf7cd5c3fc942f07345c730cacad0fc2e",
+  "coordinate_basis": "GeoNames ADM1/ADM2 representative WGS84 point; not a measured home position or a computed centroid.",
+  "selection": "KR ADM1 city records plus KR ADM2 records with a Korean city name ending in 시; includes Jeju/Seogwipo administrative cities. GeoNames administrative labels are retained as search aliases; this is not a current legal-address registry.",
+  "cities": [
+    {
+      "id": 1843136,
+      "name": "강릉시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.7519,
+      "longitude": 128.87825,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "강릉시",
+        "강릉",
+        "강원특별자치도강릉시",
+        "강원특별자치도강릉",
+        "강원도강릉시",
+        "강원도강릉",
+        "강원강릉시",
+        "강원강릉",
+        "Gangneung-si",
+        "Gangneung"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-07"
+    },
+    {
+      "id": 1842752,
+      "name": "거제시",
+      "admin1": "경상남도",
+      "latitude": 34.9,
+      "longitude": 128.66666,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "거제시",
+        "거제",
+        "경상남도거제시",
+        "경상남도거제",
+        "경남거제시",
+        "경남거제",
+        "Geoje-si",
+        "Geoje"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 1841596,
+      "name": "경산시",
+      "admin1": "경상북도",
+      "latitude": 35.83333,
+      "longitude": 128.8,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "경산시",
+        "경산",
+        "경상북도경산시",
+        "경상북도경산",
+        "경북경산시",
+        "경북경산",
+        "Gyeongsan-si",
+        "Gyeongsan"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 1833276,
+      "name": "경주시",
+      "admin1": "경상북도",
+      "latitude": 35.82686,
+      "longitude": 129.23619,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "경주시",
+        "경주",
+        "경상북도경주시",
+        "경상북도경주",
+        "경북경주시",
+        "경북경주",
+        "Gyeongju"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8419251,
+      "name": "계룡시",
+      "admin1": "충청남도",
+      "latitude": 36.29076,
+      "longitude": 127.22657,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "계룡시",
+        "계룡",
+        "충청남도계룡시",
+        "충청남도계룡",
+        "충남계룡시",
+        "충남계룡",
+        "Gyeryong-si",
+        "Gyeryong"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1842486,
+      "name": "고양시",
+      "admin1": "경기도",
+      "latitude": 37.66667,
+      "longitude": 126.83333,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "고양시",
+        "고양",
+        "고양특례시",
+        "경기도고양시",
+        "경기도고양",
+        "경기고양시",
+        "경기고양",
+        "Goyang-si",
+        "Goyang"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2017-01-23"
+    },
+    {
+      "id": 1842615,
+      "name": "공주시",
+      "admin1": "충청남도",
+      "latitude": 36.5,
+      "longitude": 127.08333,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "공주시",
+        "공주",
+        "충청남도공주시",
+        "충청남도공주",
+        "충남공주시",
+        "충남공주",
+        "Gongju-si",
+        "Gongju"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 8393798,
+      "name": "과천시",
+      "admin1": "경기도",
+      "latitude": 37.43407,
+      "longitude": 126.99989,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "과천시",
+        "과천",
+        "경기도과천시",
+        "경기도과천",
+        "경기과천시",
+        "경기과천",
+        "Gwacheon-si",
+        "Gwacheon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 8393794,
+      "name": "광명시",
+      "admin1": "경기도",
+      "latitude": 37.44435,
+      "longitude": 126.86499,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "광명시",
+        "광명",
+        "경기도광명시",
+        "경기도광명",
+        "경기광명시",
+        "경기광명",
+        "Gwangmyeong-si",
+        "Gwangmyeong"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1841773,
+      "name": "광양시",
+      "admin1": "전라남도",
+      "latitude": 35.04007,
+      "longitude": 127.60949,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "광양시",
+        "광양",
+        "전라남도광양시",
+        "전라남도광양",
+        "전남광양시",
+        "전남광양",
+        "Gwangyang-si",
+        "Gwangyang"
+      ],
+      "admin1_aliases": [
+        "전라남도",
+        "전남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2018-04-06"
+    },
+    {
+      "id": 1841808,
+      "name": "광주광역시",
+      "admin1": "광주광역시",
+      "latitude": 35.16667,
+      "longitude": 126.91667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "광주광역시",
+        "광주시",
+        "광주",
+        "Gwangju"
+      ],
+      "admin1_aliases": [
+        "광주광역시",
+        "광주시",
+        "광주"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-04-16"
+    },
+    {
+      "id": 1841809,
+      "name": "광주시",
+      "admin1": "경기도",
+      "latitude": 37.40329,
+      "longitude": 127.29855,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "광주시",
+        "광주",
+        "경기도광주시",
+        "경기도광주",
+        "경기광주시",
+        "경기광주",
+        "Gwangju-si",
+        "Gwangju"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 8393803,
+      "name": "구리시",
+      "admin1": "경기도",
+      "latitude": 37.6012,
+      "longitude": 127.1338,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "구리시",
+        "구리",
+        "경기도구리시",
+        "경기도구리",
+        "경기구리시",
+        "경기구리",
+        "Guri-si",
+        "Guri"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2023-11-13"
+    },
+    {
+      "id": 1842218,
+      "name": "구미시",
+      "admin1": "경상북도",
+      "latitude": 36.20737,
+      "longitude": 128.35546,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "구미시",
+        "구미",
+        "경상북도구미시",
+        "경상북도구미",
+        "경북구미시",
+        "경북구미",
+        "Gumi"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1842023,
+      "name": "군산시",
+      "admin1": "전북특별자치도",
+      "latitude": 35.94324,
+      "longitude": 126.72893,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "군산시",
+        "군산",
+        "전북특별자치도군산시",
+        "전북특별자치도군산",
+        "전라북도군산시",
+        "전라북도군산",
+        "전북군산시",
+        "전북군산",
+        "Gunsan"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8393793,
+      "name": "군포시",
+      "admin1": "경기도",
+      "latitude": 37.34261,
+      "longitude": 126.92149,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "군포시",
+        "군포",
+        "경기도군포시",
+        "경기도군포",
+        "경기군포시",
+        "경기군포",
+        "Gunpo-si",
+        "Gunpo"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1842211,
+      "name": "김제시",
+      "admin1": "전북특별자치도",
+      "latitude": 35.80833,
+      "longitude": 126.90189,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "김제시",
+        "김제",
+        "전북특별자치도김제시",
+        "전북특별자치도김제",
+        "전라북도김제시",
+        "전라북도김제",
+        "전북김제시",
+        "전북김제",
+        "Gimje"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8604733,
+      "name": "김천시",
+      "admin1": "경상북도",
+      "latitude": 36.14481,
+      "longitude": 128.11157,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "김천시",
+        "김천",
+        "경상북도김천시",
+        "경상북도김천",
+        "경북김천시",
+        "경북김천",
+        "Gimcheon-si",
+        "Gimcheon"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2023-11-12"
+    },
+    {
+      "id": 1842170,
+      "name": "김포시",
+      "admin1": "경기도",
+      "latitude": 37.63637,
+      "longitude": 126.6927,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "김포시",
+        "김포",
+        "경기도김포시",
+        "경기도김포",
+        "경기김포시",
+        "경기김포",
+        "Gimpo-si",
+        "Gimpo"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1842942,
+      "name": "김해시",
+      "admin1": "경상남도",
+      "latitude": 35.25,
+      "longitude": 128.86667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "김해시",
+        "김해",
+        "경상남도김해시",
+        "경상남도김해",
+        "경남김해시",
+        "경남김해",
+        "Gimhae-si",
+        "Gimhae"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1840535,
+      "name": "나주시",
+      "admin1": "전라남도",
+      "latitude": 35.05683,
+      "longitude": 126.67362,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "나주시",
+        "나주",
+        "전라남도나주시",
+        "전라남도나주",
+        "전남나주시",
+        "전남나주",
+        "Naju-si",
+        "Naju"
+      ],
+      "admin1_aliases": [
+        "전라남도",
+        "전남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1840374,
+      "name": "남양주시",
+      "admin1": "경기도",
+      "latitude": 37.65217,
+      "longitude": 127.2401,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "남양주시",
+        "남양주",
+        "경기도남양주시",
+        "경기도남양주",
+        "경기남양주시",
+        "경기남양주",
+        "Namyangju-si",
+        "Namyangju"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1840378,
+      "name": "남원시",
+      "admin1": "전북특별자치도",
+      "latitude": 35.43919,
+      "longitude": 127.44042,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "남원시",
+        "남원",
+        "전북특별자치도남원시",
+        "전북특별자치도남원",
+        "전라북도남원시",
+        "전라북도남원",
+        "전북남원시",
+        "전북남원",
+        "Namwon"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1840209,
+      "name": "논산시",
+      "admin1": "충청남도",
+      "latitude": 36.19774,
+      "longitude": 127.12143,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "논산시",
+        "논산",
+        "충청남도논산시",
+        "충청남도논산",
+        "충남논산시",
+        "충남논산",
+        "Nonsan-si",
+        "Nonsan"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1834884,
+      "name": "당진시",
+      "admin1": "충청남도",
+      "latitude": 36.91667,
+      "longitude": 126.66667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "당진시",
+        "당진",
+        "충청남도당진시",
+        "충청남도당진",
+        "충남당진시",
+        "충남당진",
+        "Dangjin-si",
+        "Dangjin"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 1835327,
+      "name": "대구광역시",
+      "admin1": "대구광역시",
+      "latitude": 35.96762,
+      "longitude": 128.64726,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "대구광역시",
+        "대구시",
+        "대구",
+        "Daegu"
+      ],
+      "admin1_aliases": [
+        "대구광역시",
+        "대구시",
+        "대구"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-10-21"
+    },
+    {
+      "id": 1835224,
+      "name": "대전광역시",
+      "admin1": "대전광역시",
+      "latitude": 36.33642,
+      "longitude": 127.40849,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "대전광역시",
+        "대전시",
+        "대전",
+        "Daejeon"
+      ],
+      "admin1_aliases": [
+        "대전광역시",
+        "대전시",
+        "대전"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-10-21"
+    },
+    {
+      "id": 1834308,
+      "name": "동두천시",
+      "admin1": "경기도",
+      "latitude": 37.91647,
+      "longitude": 127.07781,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "동두천시",
+        "동두천",
+        "경기도동두천시",
+        "경기도동두천",
+        "경기동두천시",
+        "경기동두천",
+        "Dongducheon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1834262,
+      "name": "동해시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.52345,
+      "longitude": 129.11357,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "동해시",
+        "동해",
+        "강원특별자치도동해시",
+        "강원특별자치도동해",
+        "강원도동해시",
+        "강원도동해",
+        "강원동해시",
+        "강원동해",
+        "Donghae-si",
+        "Donghae"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-04-13"
+    },
+    {
+      "id": 1841063,
+      "name": "목포시",
+      "admin1": "전라남도",
+      "latitude": 34.81226,
+      "longitude": 126.39179,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "목포시",
+        "목포",
+        "전라남도목포시",
+        "전라남도목포",
+        "전남목포시",
+        "전남목포",
+        "Mokpo-si",
+        "Mokpo"
+      ],
+      "admin1_aliases": [
+        "전라남도",
+        "전남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 8604735,
+      "name": "문경시",
+      "admin1": "경상북도",
+      "latitude": 36.58755,
+      "longitude": 128.18624,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "문경시",
+        "문경",
+        "경상북도문경시",
+        "경상북도문경",
+        "경북문경시",
+        "경북문경",
+        "Mungyeong-si",
+        "Mungyeong"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 1841147,
+      "name": "밀양시",
+      "admin1": "경상남도",
+      "latitude": 35.49858,
+      "longitude": 128.78964,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "밀양시",
+        "밀양",
+        "경상남도밀양시",
+        "경상남도밀양",
+        "경남밀양시",
+        "경남밀양",
+        "Miryang-si",
+        "Miryang"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1838749,
+      "name": "보령시",
+      "admin1": "충청남도",
+      "latitude": 36.35649,
+      "longitude": 126.59444,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "보령시",
+        "보령",
+        "충청남도보령시",
+        "충청남도보령",
+        "충남보령시",
+        "충남보령",
+        "Boryeong-si",
+        "Boryeong"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1838519,
+      "name": "부산광역시",
+      "admin1": "부산광역시",
+      "latitude": 35.18169,
+      "longitude": 129.04047,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "부산광역시",
+        "부산시",
+        "부산",
+        "Busan"
+      ],
+      "admin1_aliases": [
+        "부산광역시",
+        "부산시",
+        "부산"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-10-21"
+    },
+    {
+      "id": 1838715,
+      "name": "부천시",
+      "admin1": "경기도",
+      "latitude": 37.5044,
+      "longitude": 126.76625,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "부천시",
+        "부천",
+        "경기도부천시",
+        "경기도부천",
+        "경기부천시",
+        "경기부천",
+        "Bucheon-si",
+        "Bucheon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 8604736,
+      "name": "사천시",
+      "admin1": "경상남도",
+      "latitude": 35.00385,
+      "longitude": 128.06857,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "사천시",
+        "사천",
+        "경상남도사천시",
+        "경상남도사천",
+        "경남사천시",
+        "경남사천",
+        "Sacheon-si",
+        "Sacheon"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 8604737,
+      "name": "삼척시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.45013,
+      "longitude": 129.16626,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "삼척시",
+        "삼척",
+        "강원특별자치도삼척시",
+        "강원특별자치도삼척",
+        "강원도삼척시",
+        "강원도삼척",
+        "강원삼척시",
+        "강원삼척",
+        "Samcheok-si",
+        "Samcheok"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2015-06-14"
+    },
+    {
+      "id": 1837700,
+      "name": "상주시",
+      "admin1": "경상북도",
+      "latitude": 36.41667,
+      "longitude": 128.16667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "상주시",
+        "상주",
+        "경상북도상주시",
+        "경상북도상주",
+        "경북상주시",
+        "경북상주",
+        "Sangju-si",
+        "Sangju"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 1836630,
+      "name": "서귀포시",
+      "admin1": "제주특별자치도",
+      "latitude": 33.32517,
+      "longitude": 126.58097,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "서귀포시",
+        "서귀포",
+        "제주특별자치도서귀포시",
+        "제주특별자치도서귀포",
+        "제주도서귀포시",
+        "제주도서귀포",
+        "제주서귀포시",
+        "제주서귀포",
+        "Seogwipo"
+      ],
+      "admin1_aliases": [
+        "제주특별자치도",
+        "제주도",
+        "제주"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1835889,
+      "name": "서산시",
+      "admin1": "충청남도",
+      "latitude": 36.78418,
+      "longitude": 126.46399,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "서산시",
+        "서산",
+        "충청남도서산시",
+        "충청남도서산",
+        "충남서산시",
+        "충남서산",
+        "Seosan-si",
+        "Seosan"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1835847,
+      "name": "서울특별시",
+      "admin1": "서울특별시",
+      "latitude": 37.58333,
+      "longitude": 127.0,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "서울특별시",
+        "서울시",
+        "서울",
+        "Seoul"
+      ],
+      "admin1_aliases": [
+        "서울특별시",
+        "서울시",
+        "서울"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-04-16"
+    },
+    {
+      "id": 1836091,
+      "name": "성남시",
+      "admin1": "경기도",
+      "latitude": 37.41875,
+      "longitude": 127.12877,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "성남시",
+        "성남",
+        "경기도성남시",
+        "경기도성남",
+        "경기성남시",
+        "경기성남",
+        "Seongnam-si",
+        "Seongnam"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 8394437,
+      "name": "세종특별자치시",
+      "admin1": "세종특별자치시",
+      "latitude": 36.59296,
+      "longitude": 127.29239,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "세종특별자치시",
+        "세종시",
+        "세종",
+        "Sejong-si",
+        "Sejong"
+      ],
+      "admin1_aliases": [
+        "세종특별자치시",
+        "세종시",
+        "세종"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-10-14"
+    },
+    {
+      "id": 1836534,
+      "name": "속초시",
+      "admin1": "강원특별자치도",
+      "latitude": 38.20725,
+      "longitude": 128.59275,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "속초시",
+        "속초",
+        "강원특별자치도속초시",
+        "강원특별자치도속초",
+        "강원도속초시",
+        "강원도속초",
+        "강원속초시",
+        "강원속초",
+        "Sokcho-si",
+        "Sokcho"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 1835551,
+      "name": "수원시",
+      "admin1": "경기도",
+      "latitude": 37.28072,
+      "longitude": 127.01356,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "수원시",
+        "수원",
+        "수원특례시",
+        "경기도수원시",
+        "경기도수원",
+        "경기수원시",
+        "경기수원",
+        "Suwon-si",
+        "Suwon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1835646,
+      "name": "순천시",
+      "admin1": "전라남도",
+      "latitude": 34.97162,
+      "longitude": 127.46096,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "순천시",
+        "순천",
+        "전라남도순천시",
+        "전라남도순천",
+        "전남순천시",
+        "전남순천",
+        "Suncheon-si",
+        "Suncheon"
+      ],
+      "admin1_aliases": [
+        "전라남도",
+        "전남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1837364,
+      "name": "시흥시",
+      "admin1": "경기도",
+      "latitude": 37.38853,
+      "longitude": 126.78657,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "시흥시",
+        "시흥",
+        "경기도시흥시",
+        "경기도시흥",
+        "경기시흥시",
+        "경기시흥",
+        "Siheung"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846848,
+      "name": "아산시",
+      "admin1": "충청남도",
+      "latitude": 36.80741,
+      "longitude": 126.98015,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "아산시",
+        "아산",
+        "충청남도아산시",
+        "충청남도아산",
+        "충남아산시",
+        "충남아산",
+        "Asan"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846980,
+      "name": "안동시",
+      "admin1": "경상북도",
+      "latitude": 36.59815,
+      "longitude": 128.8078,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "안동시",
+        "안동",
+        "경상북도안동시",
+        "경상북도안동",
+        "경북안동시",
+        "경북안동",
+        "Andong-si",
+        "Andong"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8393792,
+      "name": "안산시",
+      "admin1": "경기도",
+      "latitude": 37.31693,
+      "longitude": 126.83048,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "안산시",
+        "안산",
+        "경기도안산시",
+        "경기도안산",
+        "경기안산시",
+        "경기안산",
+        "Ansan-si",
+        "Ansan"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1846909,
+      "name": "안성시",
+      "admin1": "경기도",
+      "latitude": 37.03469,
+      "longitude": 127.30282,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "안성시",
+        "안성",
+        "경기도안성시",
+        "경기도안성",
+        "경기안성시",
+        "경기안성",
+        "Anseong"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846894,
+      "name": "안양시",
+      "admin1": "경기도",
+      "latitude": 37.40896,
+      "longitude": 126.92828,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "안양시",
+        "안양",
+        "경기도안양시",
+        "경기도안양",
+        "경기안양시",
+        "경기안양",
+        "Anyang-si",
+        "Anyang"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1832824,
+      "name": "양산시",
+      "admin1": "경상남도",
+      "latitude": 35.40183,
+      "longitude": 129.04118,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "양산시",
+        "양산",
+        "경상남도양산시",
+        "경상남도양산",
+        "경남양산시",
+        "경남양산",
+        "Yangsan-si",
+        "Yangsan"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8393804,
+      "name": "양주시",
+      "admin1": "경기도",
+      "latitude": 37.81732,
+      "longitude": 127.046,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "양주시",
+        "양주",
+        "경기도양주시",
+        "경기도양주",
+        "경기양주시",
+        "경기양주",
+        "Yangju-si",
+        "Yangju"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1832757,
+      "name": "여수시",
+      "admin1": "전라남도",
+      "latitude": 34.77647,
+      "longitude": 127.64253,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "여수시",
+        "여수",
+        "전라남도여수시",
+        "전라남도여수",
+        "전남여수시",
+        "전남여수",
+        "Yeosu-si",
+        "Yeosu"
+      ],
+      "admin1_aliases": [
+        "전라남도",
+        "전남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 1832742,
+      "name": "여주시",
+      "admin1": "경기도",
+      "latitude": 37.29562,
+      "longitude": 127.63668,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "여주시",
+        "여주",
+        "경기도여주시",
+        "경기도여주",
+        "경기여주시",
+        "경기여주",
+        "Yeoju-si",
+        "Yeoju"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-04-13"
+    },
+    {
+      "id": 1844834,
+      "name": "영주시",
+      "admin1": "경상북도",
+      "latitude": 36.85192,
+      "longitude": 128.58151,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "영주시",
+        "영주",
+        "경상북도영주시",
+        "경상북도영주",
+        "경북영주시",
+        "경북영주",
+        "Yeongju-si",
+        "Yeongju"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1832611,
+      "name": "영천시",
+      "admin1": "경상북도",
+      "latitude": 36.0,
+      "longitude": 129.0,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "영천시",
+        "영천",
+        "경상북도영천시",
+        "경상북도영천",
+        "경북영천시",
+        "경북영천",
+        "Yeongcheon-si",
+        "Yeongcheon"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 8393795,
+      "name": "오산시",
+      "admin1": "경기도",
+      "latitude": 37.1623,
+      "longitude": 127.05246,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "오산시",
+        "오산",
+        "경기도오산시",
+        "경기도오산",
+        "경기오산시",
+        "경기오산",
+        "Osan-si",
+        "Osan"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1832426,
+      "name": "용인시",
+      "admin1": "경기도",
+      "latitude": 37.23825,
+      "longitude": 127.17795,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "용인시",
+        "용인",
+        "용인특례시",
+        "경기도용인시",
+        "경기도용인",
+        "경기용인시",
+        "경기용인",
+        "Yongin-si",
+        "Yongin"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-04-30"
+    },
+    {
+      "id": 1833742,
+      "name": "울산광역시",
+      "admin1": "울산광역시",
+      "latitude": 35.57075,
+      "longitude": 129.24182,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "울산광역시",
+        "울산시",
+        "울산",
+        "Ulsan"
+      ],
+      "admin1_aliases": [
+        "울산광역시",
+        "울산시",
+        "울산"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-10-21"
+    },
+    {
+      "id": 1833099,
+      "name": "원주시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.3318,
+      "longitude": 127.92564,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "원주시",
+        "원주",
+        "강원특별자치도원주시",
+        "강원특별자치도원주",
+        "강원도원주시",
+        "강원도원주",
+        "강원원주시",
+        "강원원주",
+        "Wonju-si",
+        "Wonju"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8393796,
+      "name": "의왕시",
+      "admin1": "경기도",
+      "latitude": 37.345,
+      "longitude": 126.97575,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "의왕시",
+        "의왕",
+        "경기도의왕시",
+        "경기도의왕",
+        "경기의왕시",
+        "경기의왕",
+        "Uiwang-si",
+        "Uiwang"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-04-01"
+    },
+    {
+      "id": 1833787,
+      "name": "의정부시",
+      "admin1": "경기도",
+      "latitude": 37.73865,
+      "longitude": 127.0477,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "의정부시",
+        "의정부",
+        "경기도의정부시",
+        "경기도의정부",
+        "경기의정부시",
+        "경기의정부",
+        "Uijeongbu-si",
+        "Uijeongbu"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1843700,
+      "name": "이천시",
+      "admin1": "경기도",
+      "latitude": 37.27642,
+      "longitude": 127.43692,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "이천시",
+        "이천",
+        "경기도이천시",
+        "경기도이천",
+        "경기이천시",
+        "경기이천",
+        "Icheon-si",
+        "Icheon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1843663,
+      "name": "익산시",
+      "admin1": "전북특별자치도",
+      "latitude": 36.02443,
+      "longitude": 127.0093,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "익산시",
+        "익산",
+        "전북특별자치도익산시",
+        "전북특별자치도익산",
+        "전라북도익산시",
+        "전라북도익산",
+        "전북익산시",
+        "전북익산",
+        "Iksan-si",
+        "Iksan"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2020-03-15"
+    },
+    {
+      "id": 1843561,
+      "name": "인천광역시",
+      "admin1": "인천광역시",
+      "latitude": 37.46178,
+      "longitude": 126.70017,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "인천광역시",
+        "인천시",
+        "인천",
+        "Incheon"
+      ],
+      "admin1_aliases": [
+        "인천광역시",
+        "인천시",
+        "인천"
+      ],
+      "source_feature_code": "ADM1",
+      "source_modified_at": "2026-04-16"
+    },
+    {
+      "id": 1845453,
+      "name": "전주시",
+      "admin1": "전북특별자치도",
+      "latitude": 35.83333,
+      "longitude": 127.15,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "전주시",
+        "전주",
+        "전북특별자치도전주시",
+        "전북특별자치도전주",
+        "전라북도전주시",
+        "전라북도전주",
+        "전북전주시",
+        "전북전주",
+        "Jeonju-si",
+        "Jeonju"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 1845501,
+      "name": "정읍시",
+      "admin1": "전북특별자치도",
+      "latitude": 35.6,
+      "longitude": 126.91667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "정읍시",
+        "정읍",
+        "전북특별자치도정읍시",
+        "전북특별자치도정읍",
+        "전라북도정읍시",
+        "전라북도정읍",
+        "전북정읍시",
+        "전북정읍",
+        "Jeongeup-si",
+        "Jeongeup"
+      ],
+      "admin1_aliases": [
+        "전북특별자치도",
+        "전라북도",
+        "전북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-08"
+    },
+    {
+      "id": 1846261,
+      "name": "제주시",
+      "admin1": "제주특별자치도",
+      "latitude": 33.44223,
+      "longitude": 126.52926,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "제주시",
+        "제주",
+        "제주특별자치도제주시",
+        "제주특별자치도제주",
+        "제주도제주시",
+        "제주도제주",
+        "제주제주시",
+        "제주제주",
+        "Jeju-si",
+        "Jeju"
+      ],
+      "admin1_aliases": [
+        "제주특별자치도",
+        "제주도",
+        "제주"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846277,
+      "name": "제천시",
+      "admin1": "충청북도",
+      "latitude": 37.06012,
+      "longitude": 128.15995,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "제천시",
+        "제천",
+        "충청북도제천시",
+        "충청북도제천",
+        "충북제천시",
+        "충북제천",
+        "Jecheon-si",
+        "Jecheon"
+      ],
+      "admin1_aliases": [
+        "충청북도",
+        "충북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846050,
+      "name": "진주시",
+      "admin1": "경상남도",
+      "latitude": 35.20523,
+      "longitude": 128.12983,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "진주시",
+        "진주",
+        "경상남도진주시",
+        "경상남도진주",
+        "경남진주시",
+        "경남진주",
+        "Jinju"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1846322,
+      "name": "창원시",
+      "admin1": "경상남도",
+      "latitude": 35.24547,
+      "longitude": 128.61162,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "창원시",
+        "창원",
+        "창원특례시",
+        "경상남도창원시",
+        "경상남도창원",
+        "경남창원시",
+        "경남창원",
+        "Changwon-si",
+        "Changwon"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1845757,
+      "name": "천안시",
+      "admin1": "충청남도",
+      "latitude": 36.81685,
+      "longitude": 127.20076,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "천안시",
+        "천안",
+        "충청남도천안시",
+        "충청남도천안",
+        "충남천안시",
+        "충남천안",
+        "Cheonan"
+      ],
+      "admin1_aliases": [
+        "충청남도",
+        "충남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1845599,
+      "name": "청주시",
+      "admin1": "충청북도",
+      "latitude": 36.63535,
+      "longitude": 127.46781,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "청주시",
+        "청주",
+        "충청북도청주시",
+        "충청북도청주",
+        "충북청주시",
+        "충북청주",
+        "Cheongju-si",
+        "Cheongju"
+      ],
+      "admin1_aliases": [
+        "충청북도",
+        "충북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 1845134,
+      "name": "춘천시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.88048,
+      "longitude": 127.72776,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "춘천시",
+        "춘천",
+        "강원특별자치도춘천시",
+        "강원특별자치도춘천",
+        "강원도춘천시",
+        "강원도춘천",
+        "강원춘천시",
+        "강원춘천",
+        "Chuncheon-si",
+        "Chuncheon"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2022-09-12"
+    },
+    {
+      "id": 1845032,
+      "name": "충주시",
+      "admin1": "충청북도",
+      "latitude": 37.0151,
+      "longitude": 127.89577,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "충주시",
+        "충주",
+        "충청북도충주시",
+        "충청북도충주",
+        "충북충주시",
+        "충북충주",
+        "Chungju"
+      ],
+      "admin1_aliases": [
+        "충청북도",
+        "충북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 8393711,
+      "name": "태백시",
+      "admin1": "강원특별자치도",
+      "latitude": 37.1652,
+      "longitude": 128.9857,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "태백시",
+        "태백",
+        "강원특별자치도태백시",
+        "강원특별자치도태백",
+        "강원도태백시",
+        "강원도태백",
+        "강원태백시",
+        "강원태백",
+        "Taebaek-si",
+        "Taebaek"
+      ],
+      "admin1_aliases": [
+        "강원특별자치도",
+        "강원도",
+        "강원"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1845017,
+      "name": "통영시",
+      "admin1": "경상남도",
+      "latitude": 34.82934,
+      "longitude": 128.37464,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "통영시",
+        "통영",
+        "경상남도통영시",
+        "경상남도통영",
+        "경남통영시",
+        "경남통영",
+        "Tong-yeong-si",
+        "Tong-yeong"
+      ],
+      "admin1_aliases": [
+        "경상남도",
+        "경남"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1839430,
+      "name": "파주시",
+      "admin1": "경기도",
+      "latitude": 37.75952,
+      "longitude": 126.77772,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "파주시",
+        "파주",
+        "경기도파주시",
+        "경기도파주",
+        "경기파주시",
+        "경기파주",
+        "Paju-si",
+        "Paju"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1838341,
+      "name": "평택시",
+      "admin1": "경기도",
+      "latitude": 37.012,
+      "longitude": 126.98796,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "평택시",
+        "평택",
+        "경기도평택시",
+        "경기도평택",
+        "경기평택시",
+        "경기평택",
+        "Pyeongtaek"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-10-22"
+    },
+    {
+      "id": 1839102,
+      "name": "포천시",
+      "admin1": "경기도",
+      "latitude": 37.8937,
+      "longitude": 127.20028,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "포천시",
+        "포천",
+        "경기도포천시",
+        "경기도포천",
+        "경기포천시",
+        "경기포천",
+        "Pocheon-si",
+        "Pocheon"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 1839068,
+      "name": "포항시",
+      "admin1": "경상북도",
+      "latitude": 36.08333,
+      "longitude": 129.36667,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "포항시",
+        "포항",
+        "경상북도포항시",
+        "경상북도포항",
+        "경북포항시",
+        "경북포항",
+        "Pohang-si",
+        "Pohang"
+      ],
+      "admin1_aliases": [
+        "경상북도",
+        "경북"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2014-01-12"
+    },
+    {
+      "id": 8393790,
+      "name": "하남시",
+      "admin1": "경기도",
+      "latitude": 37.53895,
+      "longitude": 127.2125,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "하남시",
+        "하남",
+        "경기도하남시",
+        "경기도하남",
+        "경기하남시",
+        "경기하남",
+        "Hanam-si",
+        "Hanam"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2025-03-31"
+    },
+    {
+      "id": 8604734,
+      "name": "화성시",
+      "admin1": "경기도",
+      "latitude": 37.20025,
+      "longitude": 126.82909,
+      "timezone": "Asia/Seoul",
+      "aliases": [
+        "화성시",
+        "화성",
+        "화성특례시",
+        "경기도화성시",
+        "경기도화성",
+        "경기화성시",
+        "경기화성",
+        "Hwaseong-si",
+        "Hwaseong"
+      ],
+      "admin1_aliases": [
+        "경기도",
+        "경기"
+      ],
+      "source_feature_code": "ADM2",
+      "source_modified_at": "2026-05-10"
+    }
+  ]
+}
