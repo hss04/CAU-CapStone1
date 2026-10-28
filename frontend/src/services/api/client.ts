@@ -69,8 +69,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       body: form ?? (body === undefined ? undefined : JSON.stringify(snakify(body))),
       signal: controller.signal,
     });
-  } catch {
-    throw new ApiError(0, `서버에 연결할 수 없어요 (${API_BASE_URL})`);
+  } catch (e) {
+    // 시간 초과인지, 연결 자체가 안 되는지 구분해서 알려준다 (원인 찾기용)
+    const reason = controller.signal.aborted
+      ? `${Math.round(timeoutMs / 1000)}초 안에 응답이 없어요`
+      : e instanceof Error && e.message
+        ? e.message
+        : '네트워크 오류';
+    throw new ApiError(0, `서버에 연결할 수 없어요 (${API_BASE_URL}) · ${reason}`);
   } finally {
     clearTimeout(timer);
   }

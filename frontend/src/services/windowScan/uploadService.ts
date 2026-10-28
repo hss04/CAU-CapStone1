@@ -33,23 +33,35 @@ const JOB_TIMEOUT_MS = 20 * 60 * 1000;
 /** 다시 인코딩해서 저장하면 EXIF 회전 정보 없이 픽셀이 바로 선 사진이 된다 */
 async function preparePhoto(uri: string) {
   const rendered = await ImageManipulator.manipulate(uri).resize({ height: UPLOAD_HEIGHT_PX }).renderAsync();
-  return rendered.saveAsync({ compress: JPEG_COMPRESS, format: SaveFormat.JPEG });
+  // base64는 앱(네이티브)에서 사진을 바이트로 첨부할 때 쓴다
+  return rendered.saveAsync({ compress: JPEG_COMPRESS, format: SaveFormat.JPEG, base64: Platform.OS !== 'web' });
 }
 
-async function appendJpeg(form: FormData, uri: string, name: string) {
+function base64ToBytes(base64: string) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function appendJpeg(form: FormData, photo: { uri: string; base64?: string | null }, name: string) {
   if (Platform.OS === 'web') {
-    const blob = await (await fetch(uri)).blob();
+    const blob = await (await fetch(photo.uri)).blob();
     form.append('files', blob, name);
-  } else {
-    // React Native FormData 파일 형식
-    form.append('files', { uri, name, type: 'image/jpeg' } as unknown as Blob);
+    return;
   }
+  if (!photo.base64) throw new Error('사진을 읽지 못했어요. 다시 스캔해 주세요.');
+  // SDK 58부터 fetch가 expo/fetch라 RN식 { uri } 첨부를 못 보낸다 ("Unsupported FormDataPart implementation").
+  // expo/fetch는 bytes()가 있는 파트를 받으므로 사진 바이트를 직접 넘긴다
+  const bytes = base64ToBytes(photo.base64);
+  form.append('files', { name, type: 'image/jpeg', bytes: async () => bytes } as unknown as Blob);
 }
 
 /** 서버 오류(영문 detail) → 사용자 안내 */
 export function describeUploadError(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.isNetwork) return '서버에 연결할 수 없어요';
+    // 연결 실패는 서버 주소와 원인을 그대로 보여준다 (예: 시간 초과, Network request failed)
+    if (e.isNetwork) return e.message;
     if (e.status === 413) return '사진 용량이 너무 커요 (장당 5MB 이하)';
     const m = e.message;
     if (/Frame angles/i.test(m)) return '사진 방향이 기준(정면 −90°부터 15° 간격)에서 5° 넘게 벗어났어요. 다시 스캔해 주세요.';
@@ -79,7 +91,7 @@ export async function submitWindowScan(
 
   const form = new FormData();
   form.append('metadata', JSON.stringify(toScanUpload(scan, serverWindowId, { width, height })));
-  for (const [i, p] of photos.entries()) await appendJpeg(form, p.uri, frameFileName(i));
+  for (const [i, p] of photos.entries()) await appendJpeg(form, p, frameFileName(i));
 
   onPhase('uploading');
   const created = await uploadWindowScan(serverWindowId, form);
