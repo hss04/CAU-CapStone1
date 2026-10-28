@@ -3,7 +3,10 @@
 import math
 from dataclasses import dataclass
 
-from models import Room
+try:  # 패키지(from algorithm import ...)와 평면(sys.path) import 둘 다 지원 - __init__.py 참고
+    from .models import Room
+except ImportError:
+    from models import Room
 
 DEFAULT_CELL_SIZE_M = 0.2  # 20cm
 
@@ -55,4 +58,3 @@ def generate_grid_fixed_size(
             grid_row.append(GridCell(row=row, col=col, x=x, y=0.0, z=z))
         grid.append(grid_row)
     return grid, rows, cols
-

@@ -3,7 +3,7 @@
   "info": {
     "title": "PlantLight API",
     "description": "JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/api/v1/auth/register": {
@@ -2133,7 +2133,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                }
               }
             }
           },
@@ -2370,6 +2372,43 @@
           "order_index"
         ],
         "title": "Corner"
+      },
+      "CurrentPlacement": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Row"
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Col"
+          },
+          "total_dli": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Dli"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "LOW",
+              "HIGH"
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "row",
+          "col",
+          "total_dli",
+          "status"
+        ],
+        "title": "CurrentPlacement"
       },
       "DliDay": {
         "properties": {
@@ -3294,6 +3333,51 @@
         ],
         "title": "PlantOut"
       },
+      "PlantRecommendation": {
+        "properties": {
+          "plant_id": {
+            "type": "integer",
+            "title": "Plant Id"
+          },
+          "species_id": {
+            "type": "integer",
+            "title": "Species Id"
+          },
+          "required_dli": {
+            "$ref": "#/components/schemas/RequiredDli"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CurrentPlacement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommended": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendedPlacement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "plant_id",
+          "species_id",
+          "required_dli",
+          "current",
+          "recommended"
+        ],
+        "title": "PlantRecommendation"
+      },
       "PlantSeries": {
         "properties": {
           "plant_id": {
@@ -3388,6 +3472,95 @@
         ],
         "title": "RecommendationRequest"
       },
+      "RecommendationResponse": {
+        "properties": {
+          "room_id": {
+            "type": "integer",
+            "title": "Room Id"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "plants": {
+            "items": {
+              "$ref": "#/components/schemas/PlantRecommendation"
+            },
+            "type": "array",
+            "title": "Plants"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "room_id",
+          "date",
+          "period",
+          "plants",
+          "warnings"
+        ],
+        "title": "RecommendationResponse"
+      },
+      "RecommendedPlacement": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Row"
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Col"
+          },
+          "total_dli": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Dli"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "row",
+          "col",
+          "total_dli",
+          "score"
+        ],
+        "title": "RecommendedPlacement"
+      },
       "Register": {
         "properties": {
           "email": {
@@ -3416,6 +3589,27 @@
           "nickname"
         ],
         "title": "Register"
+      },
+      "RequiredDli": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Max"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "min",
+          "max"
+        ],
+        "title": "RequiredDli"
       },
       "RoomInput": {
         "properties": {

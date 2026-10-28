@@ -240,4 +240,3 @@ def build_scan_from_frames(
             max_captured[az] = float(captured_els.max())
 
     return {"sky": raw_sky.tolist(), "max_captured_elevation_deg": max_captured.tolist()}
-

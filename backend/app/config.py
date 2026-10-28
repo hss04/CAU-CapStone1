@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,3 +23,17 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+class AlgorithmSettings(BaseSettings):
+    """Read .env as well as process environment; process values take precedence."""
+    model_config = SettingsConfigDict(env_file=Path(__file__).resolve().parents[1] / '.env', extra='ignore')
+    dli_callable: str = ''
+    direction_callable: str = ''
+    recommendation_callable: str = ''
+    algorithm_dir: str = ''
+    dli_cache_version: str = '3206220-v5'
+
+
+def get_algorithm_settings() -> AlgorithmSettings:
+    return AlgorithmSettings()

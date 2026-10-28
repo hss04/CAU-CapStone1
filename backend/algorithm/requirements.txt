@@ -1,0 +1,15 @@
+# 알고리즘(algorithm/) 의존성. 버전 범위는 backend/requirements.txt와 맞춤.
+# 설치: pip install -r requirements.txt
+
+# DLI 계산 (a_grid, b_solar, d_light, grid_dli_service, room_geometry)
+numpy>=1.26,<3
+pandas>=2.2,<4
+pvlib>=0.11,<1
+
+# 추천 (f_recommendation: 헝가리안 배정) - backend requirements에는 아직 없음, 추가 필요
+scipy>=1.11,<2
+
+# 창밖 사진 SKY 판정 (c_sky.build_scan_from_frames)
+opencv-python-headless>=4.10,<5
+torch>=2.4,<3
+transformers>=4.45,<5

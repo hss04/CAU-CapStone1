@@ -1,3 +1,5 @@
+> **v0.5.0 알고리즘 연동:** 변경/실행 방법과 검증 범위는 [CHANGES_V5.md](docs/CHANGES_V5.md), 프론트 연결은 [frontend-integration/README.md](frontend-integration/README.md)를 먼저 확인하세요.
+
 > **2026-10-27 프론트 요구사항 반영 v0.4.0:** 적용 및 API 규격은 [FRONTEND_V4.md](docs/FRONTEND_V4.md)를 먼저 확인하세요. 기존 DB는 서버를 중지한 뒤 `python scripts/migrate_v4.py` 실행이 필요합니다.
 
 > 연동 추가 구현과 현재 제한은 [INTEGRATION.md](INTEGRATION.md)를 먼저 확인하세요.

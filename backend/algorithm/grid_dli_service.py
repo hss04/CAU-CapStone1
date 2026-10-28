@@ -1,13 +1,12 @@
-"""a_grid + b_solar + c_sky + d_light을 하나로 묶은 단일 진입점.
+"""a_grid + b_solar + c_sky + d_light을 하나로 묶은 진입점 2개.
 
-CLAUDE.md 9장 LightResult까지만 필요한 쪽(식물 진단/추천 없이 "격자별 DLI"만 필요한 팀원)에게 넘겨주는
-용도. e_diagnosis/f_recommendation은 식물 종 데이터가 있어야 해서 여기 안 들어간다.
+1) compute_room_dli(payload)  ← 백엔드 연동용 (DLI_CALLABLE=grid_dli_service:compute_room_dli)
+   다각형 방, 창문 여러 개, ㄱ자 벽 가림, 백엔드 격자(grid_v2) 그대로 사용. 입출력은 함수 docstring 참고.
 
-아직 FastAPI 서버가 없어서(README TODO) 팀원이 바로 import해서 쓸 수 있게 dict(JSON과 1:1 대응) 입력을
-받는 함수로 만들었다 - 나중에 API 엔드포인트를 만들 때도 요청 바디를 거의 그대로 이 함수에 넘기면 된다.
-Room/Window는 CLAUDE.md에 JSON 예시가 없어서(3~4장에 필드명만 있음) 아래 PAYLOAD 형태를 새로 정의했다.
+2) compute_grid_dli(payload)  ← 예전 진입점 (직사각형 방 + 창문 1개). 백엔드가 DLI_CALLABLE 없이
+   기본으로 부르는 경로라 형식을 바꾸지 않고 유지한다. 아래 입력 형태 설명은 이 함수 기준.
 
-입력(payload) 형태:
+compute_grid_dli 입력(payload) 형태:
 {
   "room_id": 1,
   "date": "2026-10-05",              # 하루치. 여러 날짜 평균 내려면 "dates": [...] 로 대신 줘도 됨
@@ -35,21 +34,55 @@ Room/Window는 CLAUDE.md에 JSON 예시가 없어서(3~4장에 필드명만 있�
   },
   "grid": {"cell_size_m": 0.2},       # 생략 가능(기본 0.2). {"rows":20,"cols":20}처럼 칸 개수 고정도 가능
   "dni_dhi": [                        # 생략 가능 - 없으면 맑은 하늘 모델로 대체(b_solar.py 참고)
-    {"time": "2026-10-05T08:00:00+09:00", "dni": 650.0, "dhi": 120.0},
-    ...시간별(보통 1시간 간격)...
-  ]
+    {"time": "2026-10-05T01:00:00+09:00", "dni": 0.0, "dhi": 0.0},
+    ...시간별 1시간 간격, 여러 날짜 섞여도 됨...
+  ],
+  "time_basis": "PRECEDING_HOUR_MEAN" # 생략 가능(기본값). 순간값이면 "INSTANTANEOUS"
 }
 
 출력: CLAUDE.md 9장 LightResult 그대로 ({"room_id", "date", "grid", "unit", "direct_dli", "diffuse_dli", "total_dli"}).
 """
 
+import math
+
 import pandas as pd
 
-from a_grid import generate_grid, generate_grid_fixed_size
-from b_solar import compute_solar_times
-from c_sky import resolve_unscanned
-from d_light import average_light_results, build_vwindow_cache, compute_light_result
-from models import Room, RoomCorner, Window
+try:  # 패키지/평면 import 둘 다 지원 - __init__.py 참고
+    from .a_grid import GridCell, generate_grid, generate_grid_fixed_size
+    from .b_solar import TIME_BASIS_PRECEDING_HOUR_MEAN, compute_solar_times
+    from .c_sky import generate_mock_scan, resolve_unscanned
+    from .d_light import (
+        WindowSource,
+        average_light_results,
+        build_vwindow_cache,
+        compute_light_multi,
+        compute_light_result,
+    )
+    from .models import Room, RoomCorner, Window
+    from .room_geometry import (
+        corners_to_points,
+        normal_angle_deg,
+        walls_from_points,
+        window_outward_normal_xz,
+    )
+except ImportError:
+    from a_grid import GridCell, generate_grid, generate_grid_fixed_size
+    from b_solar import TIME_BASIS_PRECEDING_HOUR_MEAN, compute_solar_times
+    from c_sky import generate_mock_scan, resolve_unscanned
+    from d_light import (
+        WindowSource,
+        average_light_results,
+        build_vwindow_cache,
+        compute_light_multi,
+        compute_light_result,
+    )
+    from models import Room, RoomCorner, Window
+    from room_geometry import (
+        corners_to_points,
+        normal_angle_deg,
+        walls_from_points,
+        window_outward_normal_xz,
+    )
 
 
 def _parse_room(room_payload: dict) -> Room:
@@ -103,11 +136,13 @@ def compute_grid_dli(payload: dict) -> dict:
     grid, rows, cols = _parse_grid(room, payload.get("grid"))
     vwindow_cache = build_vwindow_cache(grid, window, room.x_axis_azimuth_deg)
     dni_dhi = _parse_dni_dhi(payload.get("dni_dhi"))
+    time_basis = payload.get("time_basis") or TIME_BASIS_PRECEDING_HOUR_MEAN
 
     dates = payload["dates"] if "dates" in payload else [payload["date"]]
     results = []
     for d in dates:
-        solar_df = compute_solar_times(room, d, dni_dhi=dni_dhi)
+        # dni_dhi에 여러 날짜가 섞여 있어도 compute_solar_times가 그 날짜 시각만 골라 씀 (⑦)
+        solar_df = compute_solar_times(room, d, dni_dhi=dni_dhi, time_basis=time_basis)
         results.append(
             compute_light_result(
                 room_id=room_id,
@@ -127,6 +162,117 @@ def compute_grid_dli(payload: dict) -> dict:
         return results[0]
     label = f"{dates[0]}~{dates[-1]} 평균 ({len(dates)}일)"
     return average_light_results(results, label=label)
+
+
+# ---------------------------------------------------------------------------
+# 백엔드 연동용: 다각형 방 + 창문 여러 개 + 벽 가림
+# ---------------------------------------------------------------------------
+
+
+def _cells_from_backend_grid(grid: dict) -> list[list[GridCell | None]]:
+    """백엔드 grid_v2 -> 칸 중심 좌표. 셀 중심 = origin + (idx + 0.5) x cell_size_m, 배열 [row_z][col_x].
+
+    inside_mask가 false인 칸(방 밖)은 None. 높이(y)는 grid의 sample_height_m.
+    AR 축을 회전하지 않으므로 origin이 음수일 수 있다(그대로 쓰면 됨).
+    """
+    ox, oz = float(grid["origin"]["x"]), float(grid["origin"]["z"])
+    size = float(grid["cell_size_m"])
+    y = float(grid.get("sample_height_m", 0.0))
+    rows, cols = int(grid["rows"]), int(grid["cols"])
+    mask = grid["inside_mask"]
+    if len(mask) != rows or any(len(r) != cols for r in mask):
+        raise ValueError("inside_mask dimensions must equal rows x cols")
+    return [
+        [
+            GridCell(row=r, col=c, x=ox + (c + 0.5) * size, y=y, z=oz + (r + 0.5) * size) if mask[r][c] else None
+            for c in range(cols)
+        ]
+        for r in range(rows)
+    ]
+
+
+def window_outward_azimuth_deg(window: Window, x_axis_azimuth_deg: float) -> float:
+    """창문 바깥 방향의 진북 방위각 (mock SKY를 창문 방향에 맞춰 만들 때 사용)."""
+    normal = window_outward_normal_xz(window.v0, window.v1, window.v3)
+    return (x_axis_azimuth_deg + normal_angle_deg(*normal)) % 360.0
+
+
+def compute_room_dli(payload: dict) -> dict:
+    """백엔드 DLI_CALLABLE 진입점. 하루치 격자별 DLI.
+
+    입력 (백엔드 integration.py가 만드는 dict 그대로):
+      date: "YYYY-MM-DD"
+      room: {corners: [{order_index, x, z}], height_m, x_axis_azimuth_deg, latitude, longitude}
+      grid: 백엔드 grid_v2 {origin{x,y,z}, cell_size_m, sample_height_m, rows, cols, inside_mask}
+      windows: [{window_id, wall_index, v0, v1, v2, v3 ([x,y,z]),
+                 sky: {sky: 91x360, max_captured_elevation_deg: 360개, ...} 또는 None}]
+      dni_dhi: [{time, dni, dhi}] 시간별 (없으면 맑은 하늘 모델)
+      time_basis: "PRECEDING_HOUR_MEAN"(기본) | "INSTANTANEOUS"
+      mock_sky: true면 sky가 None인 창문에 창문 방향 기준 가짜 SKY(장애물 없음)를 만들어 씀
+    출력:
+      {date, direct_dli, diffuse_dli, total_dli: [row_z][col_x] (방 밖 None, 소수 2자리), warnings: [...]}
+      (백엔드는 direct/diffuse만 검사하고 total은 다시 계산함)
+    """
+    room_payload = payload["room"]
+    corners = [RoomCorner(int(c["order_index"]), float(c["x"]), float(c["z"])) for c in room_payload["corners"]]
+    room = Room(
+        corners=sorted(corners, key=lambda c: c.order_index),
+        height_m=float(room_payload.get("height_m") or 0.0),
+        x_axis_azimuth_deg=float(room_payload["x_axis_azimuth_deg"]),
+        latitude=float(room_payload["latitude"]),
+        longitude=float(room_payload["longitude"]),
+    )
+    walls = walls_from_points(corners_to_points(room_payload["corners"]))
+    cells = _cells_from_backend_grid(payload["grid"])
+    mock_sky = bool(payload.get("mock_sky"))
+
+    warnings: list[str] = []
+    sources: list[WindowSource] = []
+    for w in payload["windows"]:
+        window = _parse_window(w)
+        wall_index = w.get("wall_index")
+        if wall_index is not None and not 0 <= int(wall_index) < len(walls):
+            raise ValueError(f"window {w.get('window_id')}: wall_index {wall_index} out of range")
+        scan = w.get("sky")
+        if scan is None:
+            if not mock_sky:
+                raise ValueError(f"window {w.get('window_id')}: SKY scan is missing (set mock_sky for testing)")
+            scan = generate_mock_scan(window_outward_azimuth_deg(window, room.x_axis_azimuth_deg))
+            warnings.append(f"window {w.get('window_id')}: MOCK_SKY used")
+        sources.append(
+            WindowSource(
+                window=window,
+                wall_index=None if wall_index is None else int(wall_index),
+                resolved_sky=resolve_unscanned(scan),
+            )
+        )
+    if not sources:
+        raise ValueError("At least one window is required")
+
+    time_basis = payload.get("time_basis") or TIME_BASIS_PRECEDING_HOUR_MEAN
+    solar_df = compute_solar_times(
+        room, payload["date"], dni_dhi=_parse_dni_dhi(payload.get("dni_dhi")), time_basis=time_basis
+    )
+    if payload.get("dni_dhi") is None:
+        warnings.append("CLEAR_SKY_MODEL: no irradiance given, used pvlib clear-sky DNI/DHI")
+
+    direct_dli, diffuse_dli = compute_light_multi(cells, room.x_axis_azimuth_deg, sources, walls, solar_df)
+    total_dli = [
+        [None if d is None else round(d + f, 2) for d, f in zip(d_row, f_row)]
+        for d_row, f_row in zip(direct_dli, diffuse_dli)
+    ]
+    for grid_rows in (direct_dli, diffuse_dli):
+        for row in grid_rows:
+            if any(v is not None and not math.isfinite(v) for v in row):
+                raise ValueError("Non-finite DLI value produced")
+
+    return {
+        "date": payload["date"],
+        "direct_dli": direct_dli,
+        "diffuse_dli": diffuse_dli,
+        "total_dli": total_dli,
+        "warnings": warnings,
+    }
 
 
 if __name__ == "__main__":
@@ -157,4 +303,3 @@ if __name__ == "__main__":
     print(f"grid: {result['grid']}, unit: {result['unit']}")
     r, c = result["grid"]["rows"] - 1, result["grid"]["cols"] // 2
     print(f"창가 칸 ({r},{c}) total_dli = {result['total_dli'][r][c]}")
-

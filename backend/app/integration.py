@@ -1,3 +1,5 @@
+from app.recommendation_schema import RecommendationResponse
+from app.config import get_algorithm_settings
 from datetime import date, datetime, timedelta
 import io
 import math
@@ -159,7 +161,7 @@ def prepare_dli(room, body, db, for_lookup=False):
     c = room.corners
     supported = len(c)==4 and c[1].x>0 and c[2].z>0 and all(abs(a-b)<1e-6 for a,b in
         [(c[0].x,0),(c[0].z,0),(c[1].z,0),(c[2].x,c[1].x),(c[3].x,0),(c[3].z,c[2].z)])
-    custom = os.environ.get('DLI_CALLABLE')
+    custom = get_algorithm_settings().dli_callable
     if not for_lookup and not custom and (not supported or len(room.windows)!=1 or body.sample_height_m!=0):
         raise HTTPException(501, 'Current algorithm supports only axis-aligned rectangular rooms, one window and height 0; set DLI_CALLABLE for the polygon/multi-window implementation')
     if not for_lookup and not custom and not body.accept_provisional_algorithm:
@@ -377,7 +379,7 @@ async def upload_scan(window_id:int,tasks:BackgroundTasks,db:Db,user:CurrentUser
 @router.post('/rooms/{room_id}/direction')
 def direction(room_id:int,db:Db,user:CurrentUser):
     room=owned_room(db,user,room_id)
-    fn=os.environ.get('DIRECTION_CALLABLE')
+    fn=get_algorithm_settings().direction_callable
     if not fn:raise HTTPException(501,'Direction function not supplied; configure DIRECTION_CALLABLE=module:function')
     scans=[]
     for w in room.windows:
@@ -401,13 +403,13 @@ class RecommendationRequest(Input):
     dli_job_id:str
     blocked_cells:list[tuple[int,int]]=Field(default_factory=list,max_length=40000)
 
-@router.post('/rooms/{room_id}/recommendations')
+@router.post('/rooms/{room_id}/recommendations', response_model=RecommendationResponse)
 def recommend(room_id:int,body:RecommendationRequest,db:Db,user:CurrentUser):
     room=owned_room(db,user,room_id)
     result=status(body.dli_job_id,db,user)
     job=db.get(IntegrationJob,body.dli_job_id)
     if job.room_id!=room.id or job.kind!='DLI' or result['status']!='COMPLETED' or result['stale']:raise HTTPException(409,'A current completed DLI job for this room is required')
-    fn=os.environ.get('RECOMMENDATION_CALLABLE')
+    fn=get_algorithm_settings().recommendation_callable
     if not fn:raise HTTPException(501,'Recommendation function not supplied; configure RECOMMENDATION_CALLABLE=module:function')
     plants=[]
     for p in room.plants:
@@ -415,7 +417,14 @@ def recommend(room_id:int,body:RecommendationRequest,db:Db,user:CurrentUser):
         plants.append({'plant_id':p.id,'species_id':species.id,'position':{'x':p.x,'y':p.y,'z':p.z},'min_dli':species.min_dli,'max_dli':species.max_dli})
     spec=job.result['grid']
     if any(not(0<=r<spec['rows'] and 0<=c<spec['cols']) for r,c in body.blocked_cells):raise HTTPException(422,'Blocked cell outside grid')
-    return invoke('custom',{'_callable':fn,'room_id':room.id,'dli_map':job.result,'plants':plants,'blocked_cells':[{'row':r,'col':c} for r,c in body.blocked_cells]})
+    output = invoke('custom',{'_callable':fn,'room_id':room.id,'dli_map':job.result,'plants':plants,'blocked_cells':[{'row':r,'col':c} for r,c in body.blocked_cells]})
+    try:
+        RecommendationResponse.model_validate(output)
+    except ValidationError as exc:
+        raise HTTPException(502, 'Invalid recommendation result') from exc
+    # Return the original JSON, with no envelope, rename, or derived UI metrics.
+    from fastapi.responses import JSONResponse
+    return JSONResponse(output)
 
 
 def light_inputs_changed(job, room, db):

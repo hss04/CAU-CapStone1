@@ -59,8 +59,8 @@ class PlantSpecies:
 class Plant:
     plant_id: int
     species: PlantSpecies
-    row: int
-    col: int
+    row: int | None  # None = 아직 방에 배치 안 함 (백엔드 Plant 위치가 비어 있는 경우)
+    col: int | None
 
 
 def build_mock_room() -> Room:
@@ -110,4 +110,3 @@ def build_mock_plants(species: list[PlantSpecies]) -> list[Plant]:
         Plant(plant_id=2, species=species[1], row=10, col=10),  # 중간 거리 -> LOW 예상
         Plant(plant_id=3, species=species[2], row=18, col=10),  # 창문 바로 앞 -> HIGH 예상
     ]
-

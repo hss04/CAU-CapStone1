@@ -34,7 +34,7 @@ def test_readiness_keeps_database_check(client, monkeypatch):
 def test_readiness_keeps_algorithm_check(client, monkeypatch, tmp_path):
     from app import main
     assert client.get('/ready').status_code == 200
-    monkeypatch.setattr(main, 'ALGORITHM_DIR', tmp_path / 'absent')
+    monkeypatch.setattr(main, 'algorithm_directory', lambda: tmp_path / 'absent')
     result = client.get('/ready')
     assert result.status_code == 503
     assert result.json()['checks']['algorithm_directory'] == 'missing'

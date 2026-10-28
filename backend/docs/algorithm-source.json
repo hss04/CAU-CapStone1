@@ -1,0 +1,90 @@
+{
+  "repository": "hss04/CAU-CapStone1",
+  "commit": "320622063cc465f669b2548ad33f9f487adf51de",
+  "files": [
+    {
+      "path": "algorithm/CLAUDE.md",
+      "git_blob_sha": "63a61a97111a63007ca418d8940e5e1c02e93656"
+    },
+    {
+      "path": "algorithm/README.md",
+      "git_blob_sha": "96ef6435b7cab281dc9d7abadfb3b87c50814572"
+    },
+    {
+      "path": "algorithm/__init__.py",
+      "git_blob_sha": "6faf915da700b3d805cc69914030670bdba6574a"
+    },
+    {
+      "path": "algorithm/a_grid.py",
+      "git_blob_sha": "6eff106cdfcaaf3b3e28f569f42e47cf5c18e542"
+    },
+    {
+      "path": "algorithm/b_solar.py",
+      "git_blob_sha": "eb4d35b33213dd0e11ddc8d7e90b420ba22f12cf"
+    },
+    {
+      "path": "algorithm/c_sky.py",
+      "git_blob_sha": "c943a2b33fcd0abc11d8596386146a6bb901a651"
+    },
+    {
+      "path": "algorithm/d_light.py",
+      "git_blob_sha": "0e5bfc5b17068ebbe774fd1a55f58eab7507b207"
+    },
+    {
+      "path": "algorithm/e_diagnosis.py",
+      "git_blob_sha": "ad27313d595b5c473e0bbf037d2eb9e4a9092f74"
+    },
+    {
+      "path": "algorithm/f_recommendation.py",
+      "git_blob_sha": "c5e23d14e53c5d61415ba4695c741d5933c00b85"
+    },
+    {
+      "path": "algorithm/grid_dli_service.py",
+      "git_blob_sha": "65f6022c661786e0b9ba6d36838d9655c2761c28"
+    },
+    {
+      "path": "algorithm/main.py",
+      "git_blob_sha": "12a33440537c2133337553e8cbb031c409c6c2d0"
+    },
+    {
+      "path": "algorithm/models.py",
+      "git_blob_sha": "aac793113a3775b139ce751cb8541d435990e795"
+    },
+    {
+      "path": "algorithm/recommend_service.py",
+      "git_blob_sha": "d858d40bee8d2662057f1d11f79bec3502230999"
+    },
+    {
+      "path": "algorithm/requirements.txt",
+      "git_blob_sha": "a084b3da7f7d193bd14785ea28300e9e8892eeb2"
+    },
+    {
+      "path": "algorithm/room_geometry.py",
+      "git_blob_sha": "d16fcbf8ca64370d099b98bdcc72a3e415477cc0"
+    },
+    {
+      "path": "algorithm/verify_d_light.py",
+      "git_blob_sha": "c69a7b27329fa5221536c16ce3fef2bc1433c533"
+    },
+    {
+      "path": "algorithm/verify_d_light_virtual_cases.py",
+      "git_blob_sha": "1571b7064366e09b2f419ac755d309ada9dd6c59"
+    },
+    {
+      "path": "algorithm/verify_grid_dli_service.py",
+      "git_blob_sha": "0fc8131c9f7ae64bc782869eec37c4e8e239dc40"
+    },
+    {
+      "path": "algorithm/verify_integration.py",
+      "git_blob_sha": "9620a9b0f35147b4e4b5a024ec196cd2a23f2686"
+    },
+    {
+      "path": "algorithm/verify_roll_sign.py",
+      "git_blob_sha": "f5aa803d295b0989d9b2e006c70f760824c58193"
+    },
+    {
+      "path": "algorithm/visualize_sky_mask.py",
+      "git_blob_sha": "d0813cde62cd117d55f7cdfe49798ae2c1b3cc34"
+    }
+  ]
+}

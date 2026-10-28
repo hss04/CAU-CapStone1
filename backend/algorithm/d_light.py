@@ -1,12 +1,26 @@
-"""d. 직사광(Fdirect) + 1차 산란광(Vwindow_simple) -> PPFD -> DLI (CLAUDE.md 9장 / 알고리즘 문서 4~9장)."""
+"""d. 직사광(Fdirect) + 1차 산란광(Vwindow_simple) -> PPFD -> DLI (CLAUDE.md 9장 / 알고리즘 문서 4~9장).
+
+창문 1개 + 직사각형 방: compute_light_result() (예전 방식, 그대로 유지)
+창문 여러 개 + 다각형 방 + 벽 가림: compute_light_multi() (백엔드 연동용, grid_dli_service.compute_room_dli가 씀)
+  - 직사광: 창문 중 하나라도 [그 창문 SKY에서 해 위치가 하늘 + Ray가 창문 통과 + 다른 벽에 안 막힘]이면 1
+  - 산란광: 창문별 Vwindow(벽에 막힌 샘플 Ray 제외)를 합산
+"""
 
 import math
+from dataclasses import dataclass
 
 import pandas as pd
 
-from a_grid import GridCell
-from c_sky import lookup_sky
-from models import Room, Window
+try:  # 패키지/평면 import 둘 다 지원 - __init__.py 참고
+    from .a_grid import GridCell
+    from .c_sky import lookup_sky
+    from .models import Room, Window
+    from .room_geometry import Wall, blocked_by_other_walls
+except ImportError:
+    from a_grid import GridCell
+    from c_sky import lookup_sky
+    from models import Room, Window
+    from room_geometry import Wall, blocked_by_other_walls
 
 K_PPFD = 2.04  # μmol/J. 순수 변환계수 4.73 x 태양광 중 PAR 비율 약 43~45%
 DT_SEC = 600  # 10분 간격
@@ -42,14 +56,15 @@ def sun_direction(azimuth_deg: float, elevation_deg: float, x_axis_azimuth_deg: 
     return (math.cos(rel) * math.cos(el), math.sin(el), math.sin(rel) * math.cos(el))
 
 
-def ray_window_intersect(p: Vec3, d: Vec3, window: Window) -> bool:
-    """R(u) = P + u*d 가 창문 사각형 내부를 통과하면 True. u = ((C-P)*n) / (d*n).
+def ray_window_hit(p: Vec3, d: Vec3, window: Window) -> Vec3 | None:
+    """R(u) = P + u*d 가 창문 사각형 내부를 통과하면 그 통과점 q, 아니면 None. u = ((C-P)*n) / (d*n).
 
     1) Ray와 창문이 놓인 평면의 교점(u)을 구함 (평면의 법선 n과 내적으로 거리 비율 계산)
     2) denom(d·n)이 0에 가까우면 Ray가 평면과 거의 평행 -> 교점 없음
     3) u<=0이면 교점이 격자 셀 뒤쪽(태양 반대 방향)에 있다는 뜻이라 통과 아님
     4) 교점 q를 창문의 가로(edge_u)/세로(edge_v) 축에 투영한 s, t가 둘 다 [0,1]이면
        사각형(창문) 내부를 실제로 지나간 것
+    통과점 q는 벽 가림 검사(칸 -> q 선분이 다른 벽을 지나는지)에 쓴다.
     """
     edge_u = _sub(window.v1, window.v0)  # 가로
     edge_v = _sub(window.v3, window.v0)  # 세로
@@ -57,17 +72,24 @@ def ray_window_intersect(p: Vec3, d: Vec3, window: Window) -> bool:
 
     denom = _dot(d, n)
     if abs(denom) < 1e-9:
-        return False
+        return None
 
     u = _dot(_sub(window.v0, p), n) / denom
     if u <= 0:
-        return False
+        return None
 
     q = (p[0] + u * d[0], p[1] + u * d[1], p[2] + u * d[2])
     qv = _sub(q, window.v0)
     s = _dot(qv, edge_u) / _dot(edge_u, edge_u)
     t = _dot(qv, edge_v) / _dot(edge_v, edge_v)
-    return 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0
+    if 0.0 <= s <= 1.0 and 0.0 <= t <= 1.0:
+        return q
+    return None
+
+
+def ray_window_intersect(p: Vec3, d: Vec3, window: Window) -> bool:
+    """R(u) = P + u*d 가 창문 사각형 내부를 통과하면 True (판정 공식은 ray_window_hit 참고)."""
+    return ray_window_hit(p, d, window) is not None
 
 
 def vwindow_simple(
@@ -174,6 +196,102 @@ def compute_light_result(
     }
 
 
+# ---------------------------------------------------------------------------
+# 창문 여러 개 + 다각형 방 + 벽 가림 (백엔드 연동용)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class WindowSource:
+    """계산에 쓰는 창문 하나: 꼭짓점 + 붙어 있는 벽 번호 + 그 창문에서 찍은 SKY 지도(-1 처리 끝난 것)."""
+
+    window: Window
+    wall_index: int | None
+    resolved_sky: list[list[int]]
+
+
+def _passes_window(p: Vec3, d: Vec3, source: WindowSource, walls: list[Wall]) -> bool:
+    """칸 p에서 방향 d로 쏜 Ray가 이 창문을 통과하고, 그 사이를 다른 벽이 막지 않으면 True."""
+    q = ray_window_hit(p, d, source.window)
+    if q is None:
+        return False
+    return not blocked_by_other_walls((p[0], p[2]), (q[0], q[2]), walls, source.wall_index)
+
+
+def vwindow_with_walls(
+    cell: GridCell,
+    source: WindowSource,
+    x_axis_azimuth_deg: float,
+    walls: list[Wall],
+    az_step: int = 10,
+    el_step: int = 10,
+) -> float:
+    """vwindow_simple과 같은 샘플링(상반구 az_step x el_step)에 벽 가림만 추가한 창문 하나의 산란광 계수."""
+    p = (cell.x, cell.y, cell.z)
+    total = 0
+    passed = 0
+    for az in range(0, 360, az_step):
+        for el in range(0, 90, el_step):
+            d = sun_direction(az + az_step / 2, el + el_step / 2, x_axis_azimuth_deg)
+            total += 1
+            if _passes_window(p, d, source, walls):
+                passed += 1
+    return passed / total if total else 0.0
+
+
+def compute_light_multi(
+    cells: list[list[GridCell | None]],
+    x_axis_azimuth_deg: float,
+    sources: list[WindowSource],
+    walls: list[Wall],
+    solar_df: pd.DataFrame,
+) -> tuple[list[list[float | None]], list[list[float | None]]]:
+    """격자별 (direct_dli, diffuse_dli). cells[r][c]가 None(방 밖)인 칸은 결과도 None.
+
+    직사광: 시점마다, 창문 중 하나라도 [SKY + 통과 + 벽에 안 막힘]이면 fdirect=1
+            (창문 두 개를 동시에 통과하는 광선은 없으므로 "하나라도"로 충분, 중복 합산 방지)
+    산란광: 창문별 Vwindow 합 x DHI. Vwindow는 시간과 무관하므로 칸마다 1번만 계산하고,
+            DHI 쪽은 하루 합계(Σ DHI x K_PPFD x DT_SEC)를 미리 구해 곱한다.
+    """
+    # 시점별로 칸과 무관한 값(태양 방향, 창문별 SKY 여부, 수평면 직사광 세기)을 먼저 계산
+    timesteps = []
+    for _, t in solar_df.iterrows():
+        az, el = t["azimuth_deg"], t["elevation_deg"]
+        open_sources = [s for s in sources if lookup_sky(s.resolved_sky, az, el) == 1]
+        direct_energy = t["dni"] * math.sin(math.radians(el)) * K_PPFD * DT_SEC  # μmol/m^2 (fdirect=1일 때)
+        if open_sources and direct_energy > 0:
+            timesteps.append((sun_direction(az, el, x_axis_azimuth_deg), open_sources, direct_energy))
+    diffuse_energy_per_vwin = float((solar_df["dhi"] * K_PPFD * DT_SEC).sum())  # μmol/m^2 (vwin=1일 때)
+
+    direct_dli: list[list[float | None]] = []
+    diffuse_dli: list[list[float | None]] = []
+    for row in cells:
+        direct_row: list[float | None] = []
+        diffuse_row: list[float | None] = []
+        for cell in row:
+            if cell is None:
+                direct_row.append(None)
+                diffuse_row.append(None)
+                continue
+            p = (cell.x, cell.y, cell.z)
+
+            acc_direct = 0.0
+            for d, open_sources, energy in timesteps:
+                if any(_passes_window(p, d, s, walls) for s in open_sources):
+                    acc_direct += energy
+
+            vwin = sum(vwindow_with_walls(cell, s, x_axis_azimuth_deg, walls) for s in sources)
+            vwin = min(vwin, 1.0)  # 안전장치 (정상이면 창문끼리 샘플 Ray가 겹치지 않아 1을 넘지 않음)
+            acc_diffuse = diffuse_energy_per_vwin * vwin
+
+            # μmol/m^2 -> mol/m^2(DLI)
+            direct_row.append(round(acc_direct / 1_000_000, 2))
+            diffuse_row.append(round(acc_diffuse / 1_000_000, 2))
+        direct_dli.append(direct_row)
+        diffuse_dli.append(diffuse_row)
+    return direct_dli, diffuse_dli
+
+
 def average_light_results(light_results: list[dict], label: str) -> dict:
     """여러 날짜의 light_result를 칸별로 평균낸 하나의 light_result로 합침 (알고리즘 PDF 9.4장).
 
@@ -203,4 +321,3 @@ def average_light_results(light_results: list[dict], label: str) -> dict:
     result["diffuse_dli"] = diffuse_dli
     result["total_dli"] = total_dli
     return result
-

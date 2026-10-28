@@ -48,3 +48,10 @@ def other_headers(client):
     client.post('/api/v1/auth/register',json={'email':'other@example.com','password':'other-password','nickname':'other'})
     token=client.post('/api/v1/auth/login',json={'email':'other@example.com','password':'other-password'}).json()['access_token']
     return {'Authorization':f'Bearer {token}'}
+
+
+@pytest.fixture(autouse=True)
+def isolated_algorithm_configuration(monkeypatch):
+    # Keep legacy tests deterministic even after init_env.py is run.
+    for key in ('DLI_CALLABLE', 'DIRECTION_CALLABLE', 'RECOMMENDATION_CALLABLE', 'ALGORITHM_DIR'):
+        monkeypatch.setenv(key, '')

@@ -1,3 +1,5 @@
+> v5 현재 설정/응답 계약은 [CHANGES_V5.md](docs/CHANGES_V5.md)를 우선 참고하세요. 아래 구형 fallback 설명은 DLI_CALLABLE을 비웠을 때만 적용됩니다.
+
 > v0.4.0 변경 규격은 [docs/FRONTEND_V4.md](docs/FRONTEND_V4.md)가 우선합니다. `/dli-map`의 기존 형식은 유지됩니다.
 
 # 연동 구현 및 실행 안내
@@ -31,7 +33,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 
 이 구현은 단일 프로세스 개발/연동용입니다. 작업은 DB에 기록하되 FastAPI BackgroundTasks로 실행합니다. 서버 재시작 시 진행 중 작업은 FAILED로 바뀌므로 다시 요청해야 합니다. 여러 worker나 여러 서버 인스턴스로 동시에 실행하지 마세요. 큰 기간·촬영 작업을 운영 서비스에 적용할 때는 별도 작업 큐가 필요합니다.
 
-algorithm 폴더는 저장소 algorithm 브랜치 7a44874bf50e88a5dff4ee5f39cfcf106738ff36의 원본입니다. ZIP에서는 backend 내부 algorithm 폴더를 사용하고, 팀 저장소에서는 backend와 형제 폴더 algorithm을 우선 사용합니다. ALGORITHM_DIR 환경변수로 명시할 수도 있습니다. import가 서버의 models와 충돌하지 않도록 subprocess에서 실행합니다. 한 번의 알고리즘 호출 제한은 15분입니다.
+algorithm 폴더는 저장소 algorithm 브랜치 320622063cc465f669b2548ad33f9f487adf51de의 원본입니다. 기본적으로 backend 내부의 고정 버전 algorithm 폴더를 사용합니다. 형제 algorithm 폴더는 자동 선택하지 않습니다. ALGORITHM_DIR 환경변수로 명시할 수도 있습니다. import가 서버의 models와 충돌하지 않도록 subprocess에서 실행합니다. 한 번의 알고리즘 호출 제한은 15분입니다.
 
 ## DLI 테스트 요청
 로그인 토큰을 Authorization: Bearer 헤더에 넣습니다. 먼저 방·창문과 위경도를 저장합니다.
@@ -55,11 +57,11 @@ algorithm 폴더는 저장소 algorithm 브랜치 7a44874bf50e88a5dff4ee5f39cfcf
 
 또한 upstream의 일사량 보간은 PRECEDING_HOUR_MEAN 처리와 불일치하고 계산 시간이 08~18시로 제한되어 있습니다. 따라서 원본 알고리즘 실행은 accept_provisional_algorithm=true가 필요하며 결과에 경고가 포함됩니다. 이 두 문제는 계산 담당자 검토가 필요합니다. 이 ZIP의 서버 연결 작업으로 계산 모델이 검증된 것은 아닙니다.
 
-다각형 지원 계산 함수가 준비되면 DLI_CALLABLE=module:function을 지정합니다(algorithm 경로 내 모듈). 입력은 dict 하나이며 room_id, room, date, grid(서버의 정확한 원점·inside_mask·높이·행열), windows(각 window_id, wall_index, v0..v3, sky), dni_dhi, time_basis, mock_sky를 전달합니다. 반환은 같은 격자의 direct_dli, diffuse_dli 배열입니다. 외부 셀은 무시하고 null 처리하며 내부는 유한한 음수 아닌 값이어야 합니다. 서버가 total=direct+diffuse를 다시 구성합니다. 이 연결점은 제안 계약이므로 정우씨 최종 함수에 맞는 얇은 래퍼를 만들어 지정하세요.
+다각형 지원 계산 함수가 준비되면 DLI_CALLABLE=module:function을 지정합니다(algorithm 경로 내 모듈). 입력은 dict 하나이며 room_id, room, date, grid(서버의 정확한 원점·inside_mask·높이·행열), windows(각 window_id, wall_index, v0..v3, sky), dni_dhi, time_basis, mock_sky를 전달합니다. 반환은 같은 격자의 direct_dli, diffuse_dli 배열입니다. 외부 셀은 무시하고 null 처리하며 내부는 유한한 음수 아닌 값이어야 합니다. 서버가 total=direct+diffuse를 다시 구성합니다. v5에서는 정우씨 grid_dli_service:compute_room_dli 래퍼를 그대로 지정합니다.
 
-방 방향 함수 DIRECTION_CALLABLE=module:function은 corners와 windows[{wall_index,window_azimuth_deg}]를 받아 {x_axis_azimuth_deg:숫자}를 반환하는 제안 계약입니다. 창문별 방향 계산·원형 평균은 이 함수가 담당합니다. 아직 원본 브랜치에 함수가 없어 기본 응답은 501입니다.
+방 방향 함수 DIRECTION_CALLABLE=module:function은 corners와 windows[{wall_index,window_azimuth_deg}]를 받아 {x_axis_azimuth_deg:숫자}를 반환하는 제안 계약입니다. 창문별 방향 계산·원형 평균은 이 함수가 담당합니다. v5에서는 room_geometry:compute_room_direction을 연결합니다.
 
-추천 함수 RECOMMENDATION_CALLABLE=module:function은 room_id,dli_map,plants[{plant_id,species_id,position,min_dli,max_dli}],blocked_cells[{row,col}]를 받습니다. 서버 요청의 blocked_cells는 [[row,col],...] 형식입니다. 원본 브랜치에 추천 함수가 없어 기본 응답은 501입니다. 추천 결과 계약 확정 후 응답 스키마도 추가해야 합니다.
+추천 함수 RECOMMENDATION_CALLABLE=module:function은 room_id,dli_map,plants[{plant_id,species_id,position,min_dli,max_dli}],blocked_cells[{row,col}]를 받습니다. 서버 요청의 blocked_cells는 [[row,col],...] 형식입니다. v5에서는 recommend_service:recommend_for_room을 연결하고 plants 구조를 그대로 반환합니다. OpenAPI 응답 모델도 추가했습니다.
 
 ## 창밖 스캔
 metadata: 아래 JSON을 문자열로 전달. files: JPEG 13장(파일명과 frames.file 일치).

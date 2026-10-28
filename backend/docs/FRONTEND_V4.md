@@ -1,3 +1,5 @@
+> v4 당시 문서입니다. v5 알고리즘 제한 해제와 확정 추천 응답은 [CHANGES_V5.md](CHANGES_V5.md)를 우선 참고하세요.
+
 # 프론트 요청 반영 v0.4.0 — 2026-10-27
 
 기준: plantlight-backend-integrated.zip. API prefix는 `/api/v1`이며 모든 요청에 기존 Bearer 토큰을 사용합니다. 필수 ①~④, 추가 ⑤~⑥, 선택 ⑦~⑧ 및 위치 수정 시 스캔 무효화 버그를 반영했습니다.

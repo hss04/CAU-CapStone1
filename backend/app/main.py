@@ -11,7 +11,7 @@ from app.weather import router as weather_router
 from app.integration import router as integration_router
 from app.config import get_settings
 from app.database import Base, engine
-from app.algorithm_bridge import ALGORITHM_DIR
+from app.algorithm_bridge import algorithm_directory
 from fastapi.responses import JSONResponse
 
 
@@ -33,7 +33,7 @@ async def lifespan(app:FastAPI):
     yield
 
 
-app=FastAPI(title='PlantLight API',version='0.4.0',lifespan=lifespan,
+app=FastAPI(title='PlantLight API',version='0.5.0',lifespan=lifespan,
             description='JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.')
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,
@@ -58,7 +58,7 @@ def ready():
     except Exception:
         database_status='error'
 
-    algorithm_status='available' if ALGORITHM_DIR.is_dir() else 'missing'
+    algorithm_status='available' if algorithm_directory().is_dir() else 'missing'
     if database_status!='ok' or algorithm_status!='available':
         return JSONResponse(status_code=503,content={
             'status':'not_ready',

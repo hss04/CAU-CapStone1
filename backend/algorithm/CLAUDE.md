@@ -173,4 +173,3 @@
 ## 12. 이름 규칙
 - DB 테이블·컬럼: snake_case (`room_corner`, `order_index`)
 - Python: snake_case / Kotlin·TypeScript: camelCase. API 경계에서는 snake_case JSON으로 통일
-

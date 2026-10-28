@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 import hashlib
 import json
 import math
-import os
+from app.config import get_algorithm_settings
 from sqlalchemy import select
 from app.integration_models import DliDailyCache
 from app.models import Plant
@@ -15,7 +15,7 @@ def fingerprint(payload):
     request = payload['request']
     inputs = {k: payload[k] for k in ('room_id', 'geometry_version', 'room', 'grid', 'windows', 'callable')}
     inputs.update(mock_sky=request['mock_sky'], temporary_direction=request['temporary_x_axis_azimuth_deg'] is not None,
-                  algorithm_revision=os.environ.get('DLI_CACHE_VERSION', '1'))
+                  algorithm_revision=get_algorithm_settings().dli_cache_version)
     return hashlib.sha256(json.dumps(inputs, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
