@@ -75,7 +75,9 @@ export function WeeklyLightPreview({ plants, selectedId, onSelect, forecast, onO
             <DliLegend style={styles.flex} />
           </View>
           <AppText variant="small" color={Colors.textTertiary} style={styles.rangeNote}>
-            {`요구 DLI ${formatDli(series.range.min)}–${formatDli(series.range.max)}${series.range.source === 'example' ? ' (예시 범위)' : ''} · 예상치예요`}
+            {`요구 DLI ${formatDli(series.range.min)}–${formatDli(series.range.max)}${
+              series.range.source === 'example' ? ' (예시 범위)' : series.range.estimated ? ' (추정값)' : ''
+            } · 예상치예요`}
           </AppText>
           {loading ? (
             <AppText variant="small" color={Colors.primary} style={styles.rangeNote}>

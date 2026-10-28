@@ -66,8 +66,10 @@ export default function PlantDetailScreen() {
   const { current, recommended } = plant.analysis;
 
   const handleWater = () => {
-    actions.waterPlants([plant.id]);
     toast.show(`${withEge(plant.name)} 물을 줬어요 💧`, 'water');
+    actions.waterPlants([plant.id]).then((saved) => {
+      if (!saved) toast.show('서버에 저장하지 못했어요 · 앱에만 기록했어요', 'water');
+    });
   };
 
   const openRecommendation = () => router.push({ pathname: '/recommendation/[id]', params: { id: plant.id } });

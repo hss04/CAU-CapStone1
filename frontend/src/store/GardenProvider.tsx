@@ -8,8 +8,10 @@ import * as api from '@/services/api/endpoints';
 import { linkSpecies, plantsFromServer, type SpeciesLinks } from '@/services/api/plantSync';
 import { cellToReal, roomFromServer } from '@/services/api/roomSync';
 import { analyzePlacement } from '@/services/placement/placementEngine';
+import { describeServerError } from '@/services/lightForecast';
 import { buildMockDliMap } from '@/services/space/dliMap';
 import { isBlocked, isInsideRoom, samePosition } from '@/services/space/geometry';
+import { toApiRoom, type ManualRoomInput } from '@/services/space/manualRoom';
 import {
   describeUploadError,
   submitWindowScan,
@@ -64,8 +66,8 @@ export interface GardenState {
   windowScans: Record<string, WindowScan>;
   /** 창문별 스캔 업로드·SKY 분석 상태 (앱 창문 ID 기준) */
   scanUploads: Record<string, ScanUploadState>;
-  /** 서버 방 ID → 사용자가 고른 지역 이름 (서버에 이름 필드가 없어 앱에만 둔다) */
-  locationLabels: Record<number, string>;
+  /** 방 방향 계산(POST /rooms/{id}/direction)이 실패한 이유. 성공하면 null */
+  directionNote: string | null;
   /** 앱 방 ID → 사용자가 지정한 배치 불가 칸 (방을 다시 받아도 유지) */
   blockedCells: Record<string, GridPosition[]>;
   /** 공간 화면 DLI 지도의 계산 기간 */
@@ -111,7 +113,7 @@ type Action =
   | { type: 'resetDemo' }
   | { type: 'saveWindowScan'; scan: WindowScan }
   | { type: 'scanUpload'; windowId: string; upload: ScanUploadState }
-  | { type: 'locationLabel'; roomId: number; label: string }
+  | { type: 'directionNote'; note: string | null }
   | { type: 'toggleBlockedCell'; pos: GridPosition }
   | { type: 'setDliPeriod'; period: DliPeriod }
   | { type: 'syncStart' }
@@ -145,7 +147,7 @@ function createInitialState(hasOnboarded = false): GardenState {
     characterOverride: null,
     windowScans: {},
     scanUploads: {},
-    locationLabels: {},
+    directionNote: null,
     blockedCells: {},
     dliPeriod: 'month',
     serverSpecies: {},
@@ -155,15 +157,9 @@ function createInitialState(hasOnboarded = false): GardenState {
   };
 }
 
-/** 앱에만 있는 방 정보(지역 이름, 배치 불가 칸)를 방에 붙인다 */
-function withRoomExtras(room: Room, state: Pick<GardenState, 'locationLabels' | 'blockedCells'>): Room {
-  const label = room.server ? state.locationLabels[room.server.roomId] : undefined;
-  const blockedCells = state.blockedCells[room.id] ?? [];
-  return {
-    ...room,
-    blockedCells,
-    location: room.location && label ? { ...room.location, label } : room.location,
-  };
+/** 앱에만 있는 방 정보(배치 불가 칸)를 방에 붙인다 */
+function withRoomExtras(room: Room, state: Pick<GardenState, 'blockedCells'>): Room {
+  return { ...room, blockedCells: state.blockedCells[room.id] ?? [] };
 }
 
 /** 방이 바뀌었을 때(배치 불가 칸 등) 로컬 배치 추천을 다시 계산한다 */
@@ -256,8 +252,8 @@ function reducer(state: GardenState, action: Action): GardenState {
     }
     case 'scanUpload':
       return { ...state, scanUploads: { ...state.scanUploads, [action.windowId]: action.upload } };
-    case 'locationLabel':
-      return { ...state, locationLabels: { ...state.locationLabels, [action.roomId]: action.label } };
+    case 'directionNote':
+      return { ...state, directionNote: action.note };
     case 'toggleBlockedCell': {
       const current = state.blockedCells[state.room.id] ?? [];
       const cells = current.some((c) => samePosition(c, action.pos))
@@ -302,6 +298,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         plants: createMockPlants(parseISODate(state.today)),
         serverSpecies: {},
         scanUploads: {},
+        directionNote: null,
         sync: DEMO_SYNC,
         dliMap: null,
         dliCheck: IDLE_CHECK,
@@ -314,7 +311,8 @@ function reducer(state: GardenState, action: Action): GardenState {
 interface GardenActions {
   completeOnboarding: () => void;
   restartOnboarding: () => void;
-  waterPlants: (plantIds: string[]) => void;
+  /** 앱에 바로 기록하고, 서버 식물은 서버에도 저장한다. 서버 저장에 실패하면 false */
+  waterPlants: (plantIds: string[]) => Promise<boolean>;
   /** 로그인 상태면 서버에 먼저 등록한다. 새 식물 id를 돌려준다 */
   createPlant: (input: Omit<NewPlantInput, 'id' | 'serverId'>) => Promise<string>;
   /** 로그인 상태면 서버에서도 삭제한다 */
@@ -331,8 +329,10 @@ interface GardenActions {
   saveWindowScan: (scan: WindowScan) => void;
   /** 창밖 스캔을 서버에 올리고 SKY 분석이 끝날 때까지 상태를 갱신한다 (실패는 scanUploads에 기록) */
   uploadWindowScan: (windowId: string) => Promise<void>;
-  /** 서버 방 위치 저장 후 방을 다시 받는다 (서버가 방 구조 버전을 올린다) */
+  /** 서버 방 위치·지역 이름 저장 후 방을 다시 받는다 (창밖 스캔은 유지된다) */
   saveRoomLocation: (location: { latitude: number; longitude: number; label: string }) => Promise<void>;
+  /** ARCore 없이 직접 입력한 방을 서버에 만들고 그 방으로 바꾼다 */
+  createManualRoom: (input: ManualRoomInput) => Promise<void>;
   /** 배치 불가 칸 지정/해제. 식물이 있는 칸·방 밖은 바꾸지 않는다 */
   toggleBlockedCell: (pos: GridPosition) => 'blocked' | 'unblocked' | 'occupied' | 'outside';
   setDliPeriod: (period: DliPeriod) => void;
@@ -355,15 +355,80 @@ export function GardenProvider({ children }: { children: ReactNode }) {
   const signedInRef = useRef(authStatus === 'signedIn');
   /** 창문별 업로드 요청 번호 — 다시 보내거나 로그아웃하면 이전 대기를 멈춘다 */
   const uploadRuns = useRef<Record<string, number>>({});
+  /** 방 방향 자동 계산을 이미 시도한 방 (roomId:geometryVersion) — 실패해도 동기화마다 반복하지 않는다 */
+  const directionTried = useRef(new Set<string>());
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
   const actions = useMemo<GardenActions>(() => {
+    const reportScan = (windowId: string, phase: ScanUploadPhase, jobId: string | null, error: string | null, geometryVersion: number) =>
+      dispatch({ type: 'scanUpload', windowId, upload: { phase, jobId, error, geometryVersion, updatedAt: Date.now() } });
+
+    /** 창밖 스캔 분석이 끝나면 서버가 방 방향을 계산한다 (창문 방위각 기준). 성공하면 방을 다시 받는다 */
+    const updateDirection = async () => {
+      const { room } = stateRef.current;
+      if (!signedInRef.current || !room.server) return;
+      directionTried.current.add(`${room.server.roomId}:${room.server.geometryVersion}`);
+      try {
+        await api.computeRoomDirection(room.server.roomId);
+        dispatch({ type: 'directionNote', note: null });
+        await reloadFromServer();
+      } catch (e) {
+        dispatch({ type: 'directionNote', note: describeServerError(e) });
+      }
+    };
+
+    /** SKY 분석 작업이 끝날 때까지 기다린다 (업로드 직후, 또는 앱을 다시 켰을 때 진행 중이던 작업) */
+    const watchScanJob = async (windowId: string, jobId: string, geometryVersion: number) => {
+      const run = (uploadRuns.current[windowId] ?? 0) + 1;
+      uploadRuns.current[windowId] = run;
+      const cancelled = () => uploadRuns.current[windowId] !== run || !signedInRef.current;
+      reportScan(windowId, 'analyzing', jobId, null, geometryVersion);
+      try {
+        const result = await waitForScanJob(jobId, cancelled);
+        if (!result || cancelled()) return;
+        reportScan(windowId, result.ok ? 'done' : 'failed', jobId, result.ok ? null : result.error, geometryVersion);
+        if (result.ok) await updateDirection();
+      } catch (e) {
+        if (!cancelled()) reportScan(windowId, 'failed', jobId, describeUploadError(e), geometryVersion);
+      }
+    };
+
+    /** 창문별 서버 스캔 상태 복원 — 앱을 다시 켜도 '분석 완료'가 보이고, 진행 중이던 분석은 이어서 기다린다 */
+    const restoreScanStatus = async (room: Room) => {
+      if (!room.server) return;
+      const { geometryVersion, roomId, xAxisAzimuthDeg } = room.server;
+      const windows = room.windows.filter((w) => w.serverId !== undefined);
+      const statuses = await Promise.all(windows.map((w) => api.fetchWindowScans(w.serverId!).catch(() => null)));
+      let anyDone = false;
+      statuses.forEach((s, i) => {
+        const w = windows[i];
+        if (!s) return;
+        const local = stateRef.current.scanUploads[w.id];
+        // 앱에서 지금 보내고 있는 창문은 건드리지 않는다
+        if (local && local.geometryVersion === geometryVersion && ['preparing', 'uploading', 'analyzing'].includes(local.phase)) return;
+        if (s.scanCompleted) {
+          anyDone = true;
+          reportScan(w.id, 'done', s.latestCompleted?.jobId ?? null, null, geometryVersion);
+          return;
+        }
+        const latest = s.latest;
+        if (!latest || latest.stale) return;
+        if (latest.status === 'PENDING' || latest.status === 'RUNNING') void watchScanJob(w.id, latest.jobId, geometryVersion);
+        else if (latest.status === 'FAILED') reportScan(w.id, 'failed', latest.jobId, latest.error ?? 'SKY 분석에 실패했어요', geometryVersion);
+      });
+      // 분석된 스캔이 있는데 방 방향이 비어 있으면 한 번 계산 (성공하면 방향이 채워져 다시 부르지 않는다)
+      if (anyDone && xAxisAzimuthDeg === null && !directionTried.current.has(`${roomId}:${geometryVersion}`)) {
+        await updateDirection();
+      }
+    };
+
     const reloadFromServer = async () => {
       if (!signedInRef.current) return;
       dispatch({ type: 'syncStart' });
       let dliMap: ApiDliMap | null = null;
+      let syncedRoom: Room | null = null;
       try {
         const [species, serverPlants, rooms] = await Promise.all([
           api.fetchAllSpecies(),
@@ -387,10 +452,13 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         room = withRoomExtras(room, stateRef.current);
         const result = plantsFromServer(serverPlants, links, room, plants, today);
         dispatch({ type: 'syncSuccess', links, plants: result.plants, skipped: result.skipped, room, dliMap });
+        syncedRoom = room;
       } catch (e) {
         dispatch({ type: 'syncError', message: errorMessage(e) });
         return;
       }
+
+      if (syncedRoom.server) await restoreScanStatus(syncedRoom);
 
       // DLI 지도 JSON이 서버 규격(dli_map_v2)과 맞는지 서버에 검증 요청
       if (dliMap) {
@@ -407,7 +475,14 @@ export function GardenProvider({ children }: { children: ReactNode }) {
     return {
       completeOnboarding: () => dispatch({ type: 'completeOnboarding' }),
       restartOnboarding: () => dispatch({ type: 'restartOnboarding' }),
-      waterPlants: (plantIds) => dispatch({ type: 'waterPlants', plantIds, at: Date.now() }),
+      waterPlants: async (plantIds) => {
+        dispatch({ type: 'waterPlants', plantIds, at: Date.now() });
+        if (!signedInRef.current) return true;
+        const { plants, today } = stateRef.current;
+        const serverIds = plants.filter((p) => plantIds.includes(p.id) && p.serverId !== undefined).map((p) => p.serverId!);
+        const results = await Promise.allSettled(serverIds.map((id) => api.waterPlant(id, today)));
+        return results.every((r) => r.status === 'fulfilled');
+      },
       createPlant: async (input) => {
         if (!signedInRef.current) {
           const id = `p-${Date.now().toString(36)}`;
@@ -424,6 +499,8 @@ export function GardenProvider({ children }: { children: ReactNode }) {
           nickname: input.name,
           roomId: position ? room.server!.roomId : null,
           position,
+          wateringIntervalDays: input.wateringIntervalDays,
+          lastWateredAt: stateRef.current.today,
         });
         const id = `s-${created.id}`;
         dispatch({ type: 'addPlant', input: { ...input, id, serverId: created.id } });
@@ -468,26 +545,36 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         uploadRuns.current[windowId] = run;
         const cancelled = () => uploadRuns.current[windowId] !== run || !signedInRef.current;
         const geometryVersion = room.server.geometryVersion;
-        let jobId: string | null = null;
-        const report = (phase: ScanUploadPhase, error: string | null = null) => {
-          if (cancelled()) return;
-          dispatch({ type: 'scanUpload', windowId, upload: { phase, jobId, error, geometryVersion, updatedAt: Date.now() } });
-        };
 
+        let jobId: string;
         try {
-          jobId = await submitWindowScan(scan, serverWindowId, (phase) => report(phase));
-          report('analyzing');
-          const result = await waitForScanJob(jobId, cancelled);
-          if (result) report(result.ok ? 'done' : 'failed', result.ok ? null : result.error);
+          jobId = await submitWindowScan(scan, serverWindowId, (phase) => {
+            if (!cancelled()) reportScan(windowId, phase, null, null, geometryVersion);
+          });
         } catch (e) {
-          report('failed', describeUploadError(e));
+          if (!cancelled()) reportScan(windowId, 'failed', null, describeUploadError(e), geometryVersion);
+          return;
         }
+        if (!cancelled()) await watchScanJob(windowId, jobId, geometryVersion);
       },
       saveRoomLocation: async ({ latitude, longitude, label }) => {
         const { room } = stateRef.current;
         if (!signedInRef.current || !room.server) throw new Error('로그인하고 서버에 저장된 방에서만 설정할 수 있어요');
-        await api.updateRoomLocation(room.server.roomId, { latitude, longitude });
-        dispatch({ type: 'locationLabel', roomId: room.server.roomId, label });
+        await api.updateRoomLocation(room.server.roomId, { latitude, longitude, locationName: label });
+        await reloadFromServer();
+      },
+      createManualRoom: async (input) => {
+        if (!signedInRef.current) throw new Error('로그인하면 방을 저장할 수 있어요');
+        const { room, windows } = toApiRoom(input);
+        const created = await api.createRoom(room);
+        try {
+          for (const w of windows) await api.createWindow(created.id, w);
+        } catch (e) {
+          // 창문 저장에 실패하면 방도 지워서 창문 없는 방이 남지 않게 한다
+          await api.deleteRoom(created.id).catch(() => undefined);
+          throw e;
+        }
+        // 가장 최근 방을 쓰므로 새 방으로 바뀐다
         await reloadFromServer();
       },
       toggleBlockedCell: (pos) => {

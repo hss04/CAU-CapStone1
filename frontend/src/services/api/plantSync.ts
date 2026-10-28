@@ -11,7 +11,7 @@ import { realToCell } from './roomSync';
  *
  * 식물 종: 서버 카탈로그(PlantSpecies)와 앱의 종 정보(그림·물주기 등)를 학명으로 연결한다.
  *   학명이 없으면 한글 이름으로 연결하고, 앱에 없는 서버 종은 아직 표시하지 않는다.
- * 식물: 서버에는 종·이름·방·실제 좌표(m)만 저장된다. 물주기 기록은 아직 앱에만 있다.
+ * 식물: 서버에는 종·이름·방·실제 좌표(m)·물주기(간격, 마지막 물준 날)가 저장된다.
  *   서버 방과 연결돼 있으면 실제 좌표 → 격자 칸으로 바꿔 지도에 표시하고,
  *   서버 방이 없거나 미배치 식물이면 빈 칸에 '위치 미지정'으로 임시 표시한다.
  */
@@ -93,6 +93,9 @@ export function plantsFromServer(
         lastWateredAt: today,
         addedAt: today,
       }),
+      // 물주기는 서버 기록이 기준 (v0.4.0). 기록이 없는 식물만 앱 값·오늘로 시작한다
+      wateringIntervalDays: api.wateringIntervalDays ?? known?.wateringIntervalDays ?? species.wateringIntervalDays,
+      lastWateredAt: api.lastWateredAt ?? known?.lastWateredAt ?? today,
       id: known?.id ?? `s-${api.id}`,
       serverId: api.id,
       name: api.nickname,

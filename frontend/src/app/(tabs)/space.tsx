@@ -65,12 +65,13 @@ function dliCheckText(check: DliCheck): string | null {
 
 /** 창문 목록의 스캔·업로드 상태 칩 */
 function windowScanChip(room: Room, scan: WindowScan | undefined, upload: ScanUploadState | undefined) {
-  if (!scan) return { label: '스캔 전', tone: 'neutral' as const };
+  // 서버 상태가 먼저 (사진이 이 기기에 없어도 서버에 분석된 스캔이 있을 수 있다)
   if (upload && !isUploadStale(room, upload)) {
     if (upload.phase === 'done') return { label: '분석 완료', tone: 'green' as const };
     if (upload.phase === 'failed') return { label: '보내기 실패', tone: 'clay' as const };
     return { label: upload.phase === 'analyzing' ? '분석 중' : '보내는 중', tone: 'water' as const };
   }
+  if (!scan) return { label: '스캔 전', tone: 'neutral' as const };
   return { label: `${scan.scannedAngle.toFixed(0)}° · ${scan.captures.length}장`, tone: 'green' as const };
 }
 
@@ -410,6 +411,7 @@ export default function SpaceScreen() {
             scan={state.windowScans[selectedWindow.id]}
             upload={state.scanUploads[selectedWindow.id]}
             uploadBlocked={uploadBlockedReason(signedIn, room, selectedWindow)}
+            directionNote={state.directionNote}
             onUpload={() => actions.uploadWindowScan(selectedWindow.id)}
             onScan={() =>
               goAfterClose(() =>

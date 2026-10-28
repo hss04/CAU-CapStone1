@@ -43,6 +43,10 @@ export interface ApiPlant {
   nickname: string;
   /** 방에 배치되지 않았으면 null (roomId도 null) */
   position: ApiPosition | null;
+  /** 물주기 간격 (일, 서버 기본 7) */
+  wateringIntervalDays: number;
+  /** 마지막 물준 날 YYYY-MM-DD. 기록이 없으면 null */
+  lastWateredAt: string | null;
 }
 
 /** POST /plants, PUT /plants/{id} — roomId와 position은 둘 다 있거나 둘 다 null */
@@ -51,6 +55,9 @@ export interface ApiPlantInput {
   nickname: string;
   roomId: number | null;
   position: ApiPosition | null;
+  /** PUT에서 생략하면 서버에 저장된 값을 유지한다 */
+  wateringIntervalDays?: number;
+  lastWateredAt?: string | null;
 }
 
 /* ---------------- Room / Window / Grid (ARCore 좌표계, m) ---------------- */
@@ -70,11 +77,26 @@ export interface ApiRoom {
   xAxisAzimuthDeg: number | null;
   latitude: number | null;
   longitude: number | null;
+  /** 지역 이름 (예: 서울 마포구). 위치를 저장할 때 같이 저장 */
+  locationName: string | null;
   timezone: string;
   geometryVersion: number;
   /** 바닥 모서리 (y = 0), 둘레 순서 */
   corners: ApiCorner[];
   floorAreaM2: number;
+}
+
+/** POST /rooms — 첫 모서리가 원점(0,0,0), 바닥 y = 0, 둘레 순서 */
+export interface ApiRoomInput {
+  name: string;
+  corners: ApiCorner[];
+  xAxisAzimuthDeg?: number | null;
+}
+
+/** POST /rooms/{id}/windows — 방 안에서 볼 때 0 좌하, 1 우하, 2 우상, 3 좌상 */
+export interface ApiWindowInput {
+  name: string;
+  corners: ApiCorner[];
 }
 
 export interface ApiWindow {
@@ -150,6 +172,54 @@ export interface ApiDliJobResult extends ApiDliMap {
   mockSky: boolean;
   temporaryDirection: boolean;
   warnings: string[];
+}
+
+/* ---------------- 날짜별 DLI (POST·GET /rooms/{id}/dli-series) ---------------- */
+
+export interface ApiDliDay {
+  date: string;
+  /** 지난 날짜 ERA5, 최근·오늘·미래 BEST_MATCH_FORECAST (Open-Meteo 데이터셋) */
+  dataset: 'ERA5' | 'BEST_MATCH_FORECAST';
+  totalDli: DliGrid;
+  directDli: DliGrid;
+  diffuseDli: DliGrid;
+}
+
+export interface ApiDliSeries {
+  roomId: number;
+  geometryVersion: number;
+  grid: ApiGrid;
+  timezone: string;
+  unit: 'mol/m2/day';
+  mockSky: boolean;
+  temporaryDirection: boolean;
+  /** PROVISIONAL(임시 알고리즘), 식물 생략 사유 등 */
+  warnings: string[];
+  days: ApiDliDay[];
+  /** 아직 계산되지 않았거나 예보가 만료된 날짜 */
+  missingDates: string[];
+}
+
+/* ---------------- 창문별 스캔 상태 (GET /windows/{id}/scans) ---------------- */
+
+export interface ApiScanSummary {
+  jobId: string;
+  status: ApiJobStatus;
+  error: string | null;
+  createdAt: string;
+  capturedAt: string | null;
+  geometryVersion: number;
+  /** 지금 방 구조와 버전이 달라 쓰지 않는 스캔 */
+  stale: boolean;
+}
+
+export interface ApiWindowScans {
+  windowId: number;
+  geometryVersion: number;
+  /** 지금 방 구조에서 쓸 수 있는 완료 스캔이 있는지 */
+  scanCompleted: boolean;
+  latest: ApiScanSummary | null;
+  latestCompleted: ApiScanSummary | null;
 }
 
 /** GET /locations/search 결과 한 건 (Open-Meteo 지오코딩) */

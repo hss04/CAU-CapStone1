@@ -191,7 +191,8 @@ export default function LightForecastScreen() {
 }
 
 function rangeText(range: DliRange): string {
-  const source = range.source === 'example' ? '앱 예시 범위 (데모용)' : '식물 종 카탈로그';
+  const source =
+    range.source === 'example' ? '앱 예시 범위 (데모용)' : range.estimated ? '식물 종 카탈로그 · 추정값' : '식물 종 카탈로그';
   return `요구 DLI ${formatDli(range.min)}–${formatDli(range.max)} mol/m²/day · ${source}`;
 }
 

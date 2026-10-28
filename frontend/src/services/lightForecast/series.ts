@@ -8,7 +8,9 @@ import { classifyDli, periodStatus } from './dliStatus';
 /** 식물 요구 DLI 범위 — 서버 종 카탈로그가 연결돼 있으면 그 값, 아니면 앱의 예시 범위 */
 export function dliRangeFor(plant: Plant, serverSpecies: SpeciesLinks): DliRange {
   const server = serverSpecies[plant.speciesId];
-  if (server) return { min: server.minDli, max: server.maxDli, source: 'server' };
+  if (server) {
+    return { min: server.minDli, max: server.maxDli, source: 'server', estimated: /ESTIMATED/i.test(server.sourceNote ?? '') };
+  }
   const { min, max } = getSpecies(plant.speciesId).exampleDliRange;
   return { min, max, source: 'example' };
 }

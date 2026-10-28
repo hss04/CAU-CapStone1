@@ -98,7 +98,9 @@ export function roomFromServer(api: ApiRoom, windows: ApiWindow[], grid: ApiGrid
       xAxisAzimuthDeg: api.xAxisAzimuthDeg,
     },
     location:
-      api.latitude !== null && api.longitude !== null ? { latitude: api.latitude, longitude: api.longitude } : undefined,
+      api.latitude !== null && api.longitude !== null
+        ? { latitude: api.latitude, longitude: api.longitude, label: api.locationName ?? undefined }
+        : undefined,
   };
 }
 

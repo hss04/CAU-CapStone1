@@ -24,6 +24,8 @@ export interface DliRange {
   max: number;
   /** server: 서버 식물 종 카탈로그 · example: 앱에 넣어 둔 예시 범위 */
   source: 'server' | 'example';
+  /** 근거 자료 없이 정한 추정값 (서버 source_note에 ESTIMATED) */
+  estimated?: boolean;
 }
 
 /** 방 하나의 하루치 계산 결과 */
@@ -65,7 +67,7 @@ export type LightStage = 'request' | 'dli' | 'plants';
 
 export interface LightProgress {
   stage: LightStage;
-  /** dli 단계: 계산이 끝난 날짜 수 / 전체 날짜 수 (실제 완료 개수) */
+  /** dli 단계: 계산 요청 전에 서버에 이미 저장돼 있던 날짜 수 / 전체 날짜 수 */
   done?: number;
   total?: number;
 }

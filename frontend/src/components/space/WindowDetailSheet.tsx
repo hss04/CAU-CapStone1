@@ -21,6 +21,8 @@ export interface WindowDetailSheetProps {
   upload?: ScanUploadState;
   /** 업로드할 수 없는 이유 (로그인 전, 데모 방 등). null이면 업로드 가능 */
   uploadBlocked: string | null;
+  /** 방 방향 계산이 실패한 이유 (분석은 끝났는데 방향을 못 구한 경우) */
+  directionNote?: string | null;
   onScan: () => void;
   onUpload: () => void;
   onViewResult: () => void;
@@ -42,12 +44,24 @@ export function isUploadStale(room: Room, upload: ScanUploadState | undefined): 
 }
 
 /** 평면도에서 창문을 선택했을 때의 간단한 상세 */
-export function WindowDetailSheet({ room, roomWindow: w, scan, upload, uploadBlocked, onScan, onUpload, onViewResult }: WindowDetailSheetProps) {
+export function WindowDetailSheet({
+  room,
+  roomWindow: w,
+  scan,
+  upload,
+  uploadBlocked,
+  directionNote,
+  onScan,
+  onUpload,
+  onViewResult,
+}: WindowDetailSheetProps) {
   const problem = scan ? checkScanForUpload(scan) : null;
   const stale = isUploadStale(room, upload);
   const busy = !!upload && !stale && (BUSY as readonly string[]).includes(upload.phase);
   const done = !!upload && !stale && upload.phase === 'done';
   const canUpload = !!scan && !uploadBlocked && !problem && !busy && !done;
+  /** 사진은 이 기기에 없지만 서버에 분석된 스캔이 있는 경우 (앱을 다시 설치했거나 다른 기기에서 스캔) */
+  const serverOnly = !scan && (done || busy);
 
   return (
     <View>
@@ -86,7 +100,7 @@ export function WindowDetailSheet({ room, roomWindow: w, scan, upload, uploadBlo
             </AppText>
           </View>
         </View>
-      ) : (
+      ) : serverOnly ? null : (
         <View style={styles.status}>
           <Camera size={20} color={Colors.textTertiary} strokeWidth={1.8} />
           <View style={styles.flex}>
@@ -99,7 +113,7 @@ export function WindowDetailSheet({ room, roomWindow: w, scan, upload, uploadBlo
       )}
 
       {/* 서버 업로드 · SKY 분석 */}
-      {scan ? (
+      {scan || serverOnly ? (
         <View style={styles.upload}>
           {busy && upload ? (
             <AnalysisSteps title="창밖 사진을 분석하고 있어요" caption="분석은 서버에서 진행돼요. 다른 화면으로 가도 계속돼요." steps={uploadSteps(upload.phase)} />
@@ -113,6 +127,11 @@ export function WindowDetailSheet({ room, roomWindow: w, scan, upload, uploadBlo
                 <AppText variant="caption" color={Colors.textSecondary}>
                   이 창문의 하늘·가림 정보가 서버 광환경 계산에 쓰여요.
                 </AppText>
+                {room.orientationUnknown && directionNote ? (
+                  <AppText variant="small" color={Colors.clayDeep} style={styles.directionNote}>
+                    {`방 방향은 아직 못 구했어요 · ${directionNote}`}
+                  </AppText>
+                ) : null}
               </View>
             </View>
           ) : (
@@ -195,6 +214,9 @@ const styles = StyleSheet.create({
   },
   upload: {
     marginTop: Spacing.md,
+  },
+  directionNote: {
+    marginTop: Spacing.xs,
   },
   note: {
     flexDirection: 'row',

@@ -94,8 +94,10 @@ export default function HomeScreen() {
 
   const handleWater = () => {
     const names = due.map((p) => p.name).join(', ');
-    actions.waterPlants(due.map((p) => p.id));
     toast.show(`${withEge(names)} 물을 줬어요 💧`, 'water');
+    actions.waterPlants(due.map((p) => p.id)).then((saved) => {
+      if (!saved) toast.show('서버에 저장하지 못했어요 · 앱에만 기록했어요', 'water');
+    });
   };
 
   const openLight = (plantId: string) => router.push({ pathname: '/light/[plantId]', params: { plantId } });

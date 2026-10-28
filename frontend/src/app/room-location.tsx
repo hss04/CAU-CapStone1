@@ -140,7 +140,8 @@ export default function RoomLocationScreen() {
         </View>
       </Card>
 
-      <FormField label="지역 검색" hint="시·구·동 이름으로 검색해요 (예: 마포구, 흑석동)">
+      {/* 서버가 쓰는 Open-Meteo 지오코딩은 한글 시·구 이름(서울, 마포구)을 거의 못 찾고, 영문 도시명·동 이름은 찾는다 */}
+      <FormField label="지역 검색" hint="도시는 영문(예: Seoul, Busan), 동네는 동 이름(예: 흑석동)으로 찾으면 잘 나와요">
         <View style={styles.searchRow}>
           <TextField
             value={query}
@@ -171,7 +172,7 @@ export default function RoomLocationScreen() {
       {candidates && !searching ? (
         candidates.length === 0 ? (
           <AppText variant="caption" color={Colors.textSecondary} style={styles.section}>
-            검색 결과가 없어요. 다른 이름으로 검색해 보세요.
+            검색 결과가 없어요. &apos;Seoul&apos;처럼 영문 도시 이름이나 &apos;흑석동&apos;처럼 동 이름으로 찾아보세요.
           </AppText>
         ) : (
           <Card padding={0} radius={Radius.lg} style={styles.section}>
@@ -202,13 +203,13 @@ export default function RoomLocationScreen() {
         )
       ) : null}
 
-      {/* 백엔드는 위치를 저장하면 방 구조 버전을 올려서, 이전 창밖 스캔을 계산에 쓰지 않는다 */}
+      {/* 서버 v0.4.0: 위치를 바꿔도 창밖 스캔은 유지되고, 광환경 결과만 새 위치로 다시 계산한다 */}
       <View style={[styles.section, styles.row, styles.warn]}>
-        <TriangleAlert size={16} color={Colors.clayDeep} strokeWidth={2} />
-        <AppText variant="caption" color={Colors.clayDeep} style={styles.flex}>
+        <TriangleAlert size={16} color={Colors.textTertiary} strokeWidth={2} />
+        <AppText variant="caption" color={Colors.textSecondary} style={styles.flex}>
           {hasScans
-            ? '위치를 바꾸면 서버가 방 정보를 새 버전으로 바꿔서, 이미 보낸 창밖 스캔을 다시 보내야 해요.'
-            : '위치는 창밖 스캔을 보내기 전에 먼저 저장하는 게 좋아요. 위치를 바꾸면 이미 보낸 스캔을 다시 보내야 해요.'}
+            ? '위치를 바꾸면 광환경을 새 위치 기준으로 다시 계산해요. 보낸 창밖 스캔은 그대로 써요.'
+            : '위치를 바꾸면 광환경을 새 위치 기준으로 다시 계산해요.'}
         </AppText>
       </View>
     </ScreenContainer>

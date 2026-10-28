@@ -67,6 +67,7 @@ function RootNavigator() {
         <Stack.Screen name="recommendation/[id]" />
         <Stack.Screen name="light/[plantId]" />
         <Stack.Screen name="room-location" />
+        <Stack.Screen name="room-new" />
         <Stack.Screen name="add-plant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="room-scan" />

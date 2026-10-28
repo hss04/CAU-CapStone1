@@ -2,6 +2,7 @@ import type {
   ApiDliJobResult,
   ApiDliMap,
   ApiDliRequest,
+  ApiDliSeries,
   ApiGrid,
   ApiJob,
   ApiJobCreated,
@@ -9,10 +10,13 @@ import type {
   ApiPlant,
   ApiPlantInput,
   ApiRoom,
+  ApiRoomInput,
   ApiSpecies,
   ApiToken,
   ApiUser,
   ApiWindow,
+  ApiWindowInput,
+  ApiWindowScans,
 } from '@/types/api';
 
 import { apiRequest } from './client';
@@ -131,6 +135,75 @@ export function searchLocations(q: string) {
   return apiRequest<{ results: ApiLocationResult[] }>('/locations/search', { query: { q } });
 }
 
-export function updateRoomLocation(roomId: number, location: { latitude: number; longitude: number }) {
-  return apiRequest<{ latitude: number; longitude: number }>(`/rooms/${roomId}/location`, { method: 'PUT', body: location });
+/** 위치 저장 — 서버는 방 구조 버전을 올리지 않아 창밖 스캔이 유지된다 (v0.4.0) */
+export function updateRoomLocation(roomId: number, location: { latitude: number; longitude: number; locationName: string | null }) {
+  return apiRequest<ApiRoom>(`/rooms/${roomId}/location`, { method: 'PUT', body: location });
+}
+
+/* ---------------- 방 직접 입력 ---------------- */
+
+export function createRoom(input: ApiRoomInput) {
+  return apiRequest<ApiRoom>('/rooms', { method: 'POST', body: input });
+}
+
+export function deleteRoom(roomId: number) {
+  return apiRequest<void>(`/rooms/${roomId}`, { method: 'DELETE' });
+}
+
+export function createWindow(roomId: number, input: ApiWindowInput) {
+  return apiRequest<ApiWindow>(`/rooms/${roomId}/windows`, { method: 'POST', body: input });
+}
+
+/* ---------------- 방 방향 · 창문 스캔 상태 · 물주기 ---------------- */
+
+/** 창문별 최신 스캔의 창문 방위각으로 방 방향(x_axis_azimuth_deg)을 계산해 저장 (구조 버전은 그대로) */
+export function computeRoomDirection(roomId: number) {
+  return apiRequest<{ xAxisAzimuthDeg: number }>(`/rooms/${roomId}/direction`, { method: 'POST' });
+}
+
+export function fetchWindowScans(windowId: number) {
+  return apiRequest<ApiWindowScans>(`/windows/${windowId}/scans`, { query: { limit: 5 } });
+}
+
+/** 물 준 날 기록 — 같은 날 다시 보내도 되고, 늦게 도착한 옛 날짜가 마지막 물주기를 되돌리지 않는다 */
+export function waterPlant(plantId: number, wateredAt: string) {
+  return apiRequest<ApiPlant>(`/plants/${plantId}/waterings`, { method: 'POST', body: { wateredAt } });
+}
+
+/* ---------------- 날짜별 DLI ---------------- */
+
+/** 계산 옵션 — GET 조회에도 POST와 같은 옵션을 보내야 같은 결과를 찾는다 */
+export interface DliSeriesOptions {
+  cellSizeM: number;
+  mockSky?: boolean;
+  temporaryXAxisAzimuthDeg?: number;
+}
+
+/** 저장된 날짜별 결과 조회 (계산 안 함). 없는 날짜는 missingDates */
+export function fetchDliSeries(roomId: number, startDate: string, endDate: string, options: DliSeriesOptions) {
+  return apiRequest<ApiDliSeries>(`/rooms/${roomId}/dli-series`, {
+    query: {
+      start_date: startDate,
+      end_date: endDate,
+      cell_size_m: options.cellSizeM,
+      sample_height_m: 0,
+      mock_sky: options.mockSky ? 'true' : undefined,
+      temporary_x_axis_azimuth_deg: options.temporaryXAxisAzimuthDeg,
+    },
+  });
+}
+
+/** 날짜별 계산 요청 — 이미 저장된 날짜는 서버가 건너뛴다 */
+export function requestDliSeries(roomId: number, startDate: string, endDate: string, options: DliSeriesOptions) {
+  return apiRequest<ApiJobCreated>(`/rooms/${roomId}/dli-series`, {
+    method: 'POST',
+    body: {
+      startDate,
+      endDate,
+      cellSizeM: options.cellSizeM,
+      sampleHeightM: 0,
+      ...(options.mockSky ? { mockSky: true } : {}),
+      ...(options.temporaryXAxisAzimuthDeg !== undefined ? { temporaryXAxisAzimuthDeg: options.temporaryXAxisAzimuthDeg } : {}),
+    },
+  });
 }

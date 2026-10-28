@@ -1,5 +1,15 @@
 import { router } from 'expo-router';
-import { CloudDownload, LogIn, Map as MapIcon, Ruler, Send, Smartphone, TriangleAlert, type LucideIcon } from 'lucide-react-native';
+import {
+  CloudDownload,
+  LogIn,
+  Map as MapIcon,
+  PencilRuler,
+  Ruler,
+  Send,
+  Smartphone,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
@@ -123,6 +133,27 @@ export default function RoomScanScreen() {
         </AppText>
       </Card>
 
+      {/* ARCore를 쓸 수 없는 폰(아이폰 등)은 줄자로 잰 값으로 직접 입력 */}
+      <Card padding={Spacing.lg} radius={Radius.lg} style={styles.section}>
+        <View style={styles.manualRow}>
+          <Ruler size={18} color={Colors.primary} strokeWidth={1.9} />
+          <View style={styles.flex}>
+            <AppText variant="bodyStrong">ARCore를 쓸 수 없나요?</AppText>
+            <AppText variant="caption" color={Colors.textSecondary}>
+              줄자로 잰 방 크기와 창문 위치로 직접 입력할 수 있어요. 직사각형·ㄱ자 방을 지원해요.
+            </AppText>
+          </View>
+        </View>
+        <SecondaryButton
+          title="직접 입력하기"
+          icon={PencilRuler}
+          variant="outline"
+          size="md"
+          onPress={() => router.push(signedIn ? '/room-new' : '/login')}
+          style={styles.manualButton}
+        />
+      </Card>
+
       <View style={[styles.section, styles.note]}>
         <TriangleAlert size={15} color={Colors.textTertiary} strokeWidth={1.9} />
         <AppText variant="small" color={Colors.textTertiary} style={styles.flex}>
@@ -189,5 +220,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.xs,
+  },
+  manualRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  manualButton: {
+    marginTop: Spacing.md,
   },
 });
