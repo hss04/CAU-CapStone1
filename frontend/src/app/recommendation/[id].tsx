@@ -1,8 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowDown, Check, CircleCheck, Clock, Map as MapIcon, Ruler, ShieldCheck, Sun } from 'lucide-react-native';
+import {
+  ArrowDown,
+  CalendarDays,
+  Check,
+  CircleCheck,
+  Clock,
+  type LucideIcon,
+  Map as MapIcon,
+  Ruler,
+  ShieldCheck,
+  Sun,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AnalysisSteps } from '@/components/common/AnalysisSteps';
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -12,49 +24,199 @@ import { ProgressBar } from '@/components/common/ProgressBar';
 import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { SecondaryButton } from '@/components/common/SecondaryButton';
 import { SectionHeader } from '@/components/common/SectionHeader';
-import { StatusChip } from '@/components/common/StatusChip';
+import { type ChipTone, StatusChip } from '@/components/common/StatusChip';
 import { useToast } from '@/components/common/Toast';
 import { TopBar, goBackOrHome } from '@/components/common/TopBar';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
 import { FloorPlanGrid, type FloorPlanMarker } from '@/components/space/FloorPlanGrid';
 import { LightLegend } from '@/components/space/LightLegend';
+import { ANALYSIS_STEP_LABEL, DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
+import { useServerRecommendation } from '@/hooks/useServerRecommendation';
+import { formatDli } from '@/services/lightForecast';
 import { lightLabelFor } from '@/services/placement/placementEngine';
+import { type ServerPlacement, toPlacementRecommendation } from '@/services/placement/serverRecommendation';
 import { useGarden, usePlant } from '@/store/GardenProvider';
-import type { PlacementAnalysis } from '@/types';
+import type { GridPosition, PlacementAnalysis, Plant } from '@/types';
 import { withIga, withRo } from '@/utils/korean';
 
+/**
+ * 배치 추천.
+ * 로그인 + 서버 DLI 지도가 있으면 서버 추천(POST /rooms/{id}/recommendations), 아니면 앱 예시 추천.
+ */
 export default function RecommendationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const plant = usePlant(id);
-  const { state, actions } = useGarden();
-  const toast = useToast();
+  const server = useServerRecommendation(plant);
 
-  // 적용 후에도 비교 화면을 유지하기 위해 진입 시점의 분석 결과를 보관
-  const [snapshot] = useState<PlacementAnalysis | null>(() => plant?.analysis ?? null);
-  const [applied, setApplied] = useState(false);
+  // 적용 후에도 비교 화면을 유지하기 위해 처음 받은 결과를 보관
+  const [localSnap] = useState<PlacementAnalysis | null>(() => plant?.analysis ?? null);
+  const [serverSnap, setServerSnap] = useState<ServerPlacement | null>(null);
+  if (server.status === 'ready' && server.placement && !serverSnap) setServerSnap(server.placement);
 
-  const rec = snapshot?.recommended;
-
-  if (!plant || !snapshot || !rec) {
-    return (
-      <ScreenContainer header={<TopBar title="배치 추천" />}>
-        <EmptyState
-          style={styles.section}
-          title="지금 위치가 가장 좋아요"
-          description="이 식물은 이미 가장 잘 맞는 자리에 있어요."
-          actionLabel="돌아가기"
-          onAction={goBackOrHome}
-        />
-      </ScreenContainer>
-    );
+  if (!plant) {
+    return <NoChange title="식물을 찾을 수 없어요" description="목록에서 다시 선택해 주세요." />;
   }
+  if (serverSnap) return <ServerResult plant={plant} placement={serverSnap} />;
+  if (server.status === 'waitingMap' || server.status === 'loading' || server.status === 'ready') {
+    return <Waiting mapReady={server.status !== 'waitingMap'} />;
+  }
+  const note = server.status === 'error' ? `서버 추천을 불러오지 못해 예시 추천을 보여드려요 · ${server.error}` : null;
+  return <LocalResult plant={plant} snapshot={localSnap} note={note} />;
+}
 
-  const species = getSpecies(plant.speciesId);
+function NoChange({ title, description }: { title: string; description: string }) {
+  return (
+    <ScreenContainer header={<TopBar title="배치 추천" />}>
+      <EmptyState style={styles.section} title={title} description={description} actionLabel="돌아가기" onAction={goBackOrHome} />
+    </ScreenContainer>
+  );
+}
+
+function Waiting({ mapReady }: { mapReady: boolean }) {
+  return (
+    <ScreenContainer header={<TopBar title="배치 추천" />}>
+      <AnalysisSteps
+        style={styles.section}
+        title="추천 위치를 찾고 있어요"
+        caption="공간 화면에서 고른 기간의 일조 환경으로 계산해요."
+        steps={[
+          { key: 'dli', label: ANALYSIS_STEP_LABEL.dli, status: mapReady ? 'done' : 'active' },
+          { key: 'recommend', label: ANALYSIS_STEP_LABEL.recommend, status: mapReady ? 'active' : 'pending' },
+        ]}
+      />
+    </ScreenContainer>
+  );
+}
+
+/** 앱 예시 추천 (로그인 전·서버 DLI 지도 없음) */
+function LocalResult({ plant, snapshot, note }: { plant: Plant; snapshot: PlacementAnalysis | null; note: string | null }) {
+  const { state, actions } = useGarden();
+  const rec = snapshot?.recommended;
+  if (!snapshot || !rec) {
+    return <NoChange title="지금 위치가 가장 좋아요" description="이 식물은 이미 가장 잘 맞는 자리에 있어요." />;
+  }
   const current = snapshot.current;
   const gain = rec.score - current.score;
   const sunGain = Math.round((rec.expectedSunHours - current.expectedSunHours) * 10) / 10;
+
+  return (
+    <ResultLayout
+      plant={plant}
+      source={{ label: '예시 데이터', tone: 'neutral' }}
+      note={note}
+      title="더 좋은 자리를 찾았어요"
+      planChip={{ label: `적합도 +${gain}%p`, tone: 'green' }}
+      deltaLabel={`+${gain}%p`}
+      current={{ place: current.label, position: current.position, progress: current.score, value: `${current.score}%`, light: lightLabelFor(current.lightLevel) }}
+      recommended={{ place: rec.label, position: rec.position, progress: rec.score, value: `${rec.score}%`, light: rec.lightLabel }}
+      metrics={[
+        { icon: Clock, label: '예상 일조', value: `${rec.expectedSunHours}h`, sub: sunGain > 0 ? `+${sunGain}h` : `${sunGain}h` },
+        { icon: Ruler, label: '창문까지', value: `${rec.distanceFromWindowM}m`, sub: '적당한 거리' },
+        { icon: ShieldCheck, label: '직사광선', value: rec.lightValue > 86 ? '강함' : '낮음', sub: rec.lightValue > 86 ? '주의' : '안전' },
+      ]}
+      reasons={rec.reasons}
+      basis={`${state.room.orientationLabel} 창문 ${state.room.windows.length}개 기준 하루 평균 빛 분석 결과예요.`}
+      successText={`이제 ${withIga(plant.name)} ${rec.label}에서 하루 약 ${rec.expectedSunHours}시간 빛을 받아요.`}
+      onApply={() => actions.applyRecommendation(plant.id)}
+    />
+  );
+}
+
+/** 서버 추천 (칸별 예상 DLI와 식물 요구 DLI 범위 비교) */
+function ServerResult({ plant, placement }: { plant: Plant; placement: ServerPlacement }) {
+  const { state, actions } = useGarden();
+  const { required, current, recommended: rec, noFitCell, period, warnings } = placement;
+  const range = `${required.min}–${required.max}`;
+
+  if (!rec) {
+    return current ? (
+      <NoChange
+        title="지금 위치가 잘 맞아요"
+        description={`예상 DLI ${formatDli(current.dli)} · 요구 ${range} mol/m²/day 범위 안이에요. (LUMAP 계산)`}
+      />
+    ) : (
+      <NoChange title="추천할 빈 칸이 없어요" description="다른 식물이나 배치 불가 칸을 빼면 남는 칸이 없어요." />
+    );
+  }
+
+  const progress = (dli: number) => Math.min(100, Math.round((dli / Math.max(required.max, 0.1)) * 100));
+  const delta = rec.dli - (current?.dli ?? 0);
+  const deltaLabel = `DLI ${delta >= 0 ? '+' : ''}${formatDli(delta)}`;
+  const periodText = period ? `${period.startDate} ~ ${period.endDate} 하루 평균` : '선택한 기간 하루 평균';
+
+  const reasons = [
+    `${getSpecies(plant.speciesId).name} 요구 DLI ${range} mol/m²/day와 칸별 예상 DLI를 비교했어요.`,
+    current
+      ? `지금 자리의 예상 DLI는 ${formatDli(current.dli)}(${DLI_STATUS_COPY[current.status].label})예요.`
+      : '아직 자리를 정하지 않은 식물이에요.',
+    noFitCell
+      ? `방 안에 요구 범위에 드는 빈 칸이 없어요. 추천 칸의 예상 DLI도 ${formatDli(rec.dli)}(${DLI_STATUS_COPY[rec.status].label})예요.`
+      : `추천 칸의 예상 DLI는 ${formatDli(rec.dli)}로 요구 범위 안이에요.`,
+    '다른 식물이 있는 칸과 배치 불가 칸은 빼고 골랐어요.',
+    ...warnings,
+  ];
+
+  return (
+    <ResultLayout
+      plant={plant}
+      source={{ label: 'LUMAP 계산', tone: 'green' }}
+      note={noFitCell ? '요구 범위에 드는 빈 칸이 없어 서버가 고른 칸을 참고로만 보여드려요.' : null}
+      title={noFitCell ? '요구 범위에 맞는 칸이 없어요' : '더 좋은 자리를 찾았어요'}
+      planChip={noFitCell ? { label: '범위에 맞는 칸 없음', tone: 'dusk' } : { label: deltaLabel, tone: 'green' }}
+      deltaLabel={deltaLabel}
+      current={
+        current
+          ? { place: current.label, position: current.position, progress: progress(current.dli), value: formatDli(current.dli), light: `mol/m²/day · ${DLI_STATUS_COPY[current.status].label}` }
+          : { place: '자리 없음', position: null, progress: 0, value: '—', light: '' }
+      }
+      recommended={{ place: rec.label, position: rec.position, progress: progress(rec.dli), value: formatDli(rec.dli), light: `mol/m²/day · ${DLI_STATUS_COPY[rec.status].label}` }}
+      metrics={[
+        { icon: Sun, label: '요구 DLI', value: range, sub: 'mol/m²/day' },
+        { icon: MapIcon, label: '추천 칸', value: formatDli(rec.dli), sub: DLI_STATUS_COPY[rec.status].label },
+        { icon: CalendarDays, label: '계산 기간', value: period ? `${period.dayCount}일` : '—', sub: '하루 평균' },
+      ]}
+      reasons={reasons}
+      basis={`${periodText} · LUMAP 계산 · 실제 측정값이 아니에요.`}
+      successText={`이제 ${withIga(plant.name)} ${rec.label}에서 하루 약 ${formatDli(rec.dli)} mol/m²/day 빛을 받을 것으로 예상돼요.`}
+      onApply={noFitCell ? null : () => actions.applyRecommendation(plant.id, toPlacementRecommendation(state.room, placement) ?? undefined)}
+    />
+  );
+}
+
+interface CompareData {
+  place: string;
+  position: GridPosition | null;
+  /** 0~100 막대 길이 */
+  progress: number;
+  value: string;
+  light: string;
+}
+
+interface ResultLayoutProps {
+  plant: Plant;
+  source: { label: string; tone: ChipTone };
+  note: string | null;
+  title: string;
+  planChip: { label: string; tone: ChipTone };
+  deltaLabel: string;
+  current: CompareData;
+  recommended: CompareData & { position: GridPosition };
+  metrics: { icon: LucideIcon; label: string; value: string; sub: string }[];
+  reasons: string[];
+  basis: string;
+  successText: string;
+  /** null이면 '이 위치로 설정' 없이 둘러보기만 */
+  onApply: (() => Promise<void>) | null;
+}
+
+function ResultLayout(props: ResultLayoutProps) {
+  const { plant, current, recommended: rec, onApply } = props;
+  const { state } = useGarden();
+  const toast = useToast();
+  const [applied, setApplied] = useState(false);
+  const species = getSpecies(plant.speciesId);
 
   const others: FloorPlanMarker[] = state.plants
     .filter((p) => p.id !== plant.id)
@@ -64,13 +226,16 @@ export default function RecommendationScreen() {
     ? [...others, { id: 'moved', position: rec.position, variant: 'plant', label: '새 위치', showLabel: true }]
     : [
         ...others,
-        { id: 'current', position: current.position, variant: 'current', label: '현재 위치', showLabel: true },
+        ...(current.position
+          ? [{ id: 'current', position: current.position, variant: 'current' as const, label: '현재 위치', showLabel: true }]
+          : []),
         { id: 'rec', position: rec.position, variant: 'recommended', label: '추천 위치', showLabel: true },
       ];
 
   const handleApply = async () => {
+    if (!onApply) return;
     try {
-      await actions.applyRecommendation(plant.id);
+      await onApply();
       setApplied(true);
       toast.show('추천 위치로 변경했어요 🌿', 'leaf');
     } catch (e) {
@@ -78,36 +243,39 @@ export default function RecommendationScreen() {
     }
   };
 
-  const metrics = [
-    { icon: Clock, label: '예상 일조', value: `${rec.expectedSunHours}h`, sub: sunGain > 0 ? `+${sunGain}h` : `${sunGain}h` },
-    { icon: Ruler, label: '창문까지', value: `${rec.distanceFromWindowM}m`, sub: '적당한 거리' },
-    { icon: ShieldCheck, label: '직사광선', value: rec.lightValue > 86 ? '강함' : '낮음', sub: rec.lightValue > 86 ? '주의' : '안전' },
-  ];
+  const footer = applied ? (
+    <View style={styles.footerRow}>
+      <SecondaryButton
+        title="공간 보기"
+        icon={MapIcon}
+        fullWidth={false}
+        style={styles.flex}
+        onPress={() => {
+          router.dismissAll();
+          router.navigate('/space');
+        }}
+      />
+      <PrimaryButton title="완료" tone="deep" fullWidth={false} style={styles.flex} onPress={goBackOrHome} />
+    </View>
+  ) : onApply ? (
+    <PrimaryButton title="이 위치로 설정" icon={Check} onPress={handleApply} />
+  ) : (
+    <PrimaryButton title="돌아가기" tone="deep" onPress={goBackOrHome} />
+  );
 
   return (
-    <ScreenContainer
-      header={<TopBar title="배치 추천" />}
-      footer={
-        applied ? (
-          <View style={styles.footerRow}>
-            <SecondaryButton title="공간 보기" icon={MapIcon} fullWidth={false} style={styles.flex} onPress={() => {
-              router.dismissAll();
-              router.navigate('/space');
-            }} />
-            <PrimaryButton title="완료" tone="deep" fullWidth={false} style={styles.flex} onPress={goBackOrHome} />
-          </View>
-        ) : (
-          <PrimaryButton title="이 위치로 설정" icon={Check} onPress={handleApply} />
-        )
-      }>
+    <ScreenContainer header={<TopBar title="배치 추천" />} footer={footer}>
       {/* Title */}
       <View style={styles.titleRow}>
         <View style={styles.flex}>
-          <AppText variant="label" color={Colors.primary}>
-            Placement result
-          </AppText>
+          <View style={styles.eyebrowRow}>
+            <AppText variant="label" color={Colors.primary}>
+              Placement result
+            </AppText>
+            <StatusChip label={props.source.label} tone={props.source.tone} size="sm" />
+          </View>
           <AppText variant="title" style={styles.title}>
-            {applied ? `${withRo(rec.label)} 옮겼어요` : '더 좋은 자리를 찾았어요'}
+            {applied ? `${withRo(rec.place)} 옮겼어요` : props.title}
           </AppText>
           <AppText variant="caption" color={Colors.textSecondary} style={styles.subtitle}>
             {plant.name} · <AppText variant="caption" color={Colors.textSecondary} style={styles.italic}>{species.scientificName}</AppText>
@@ -118,13 +286,21 @@ export default function RecommendationScreen() {
         </View>
       </View>
 
+      {props.note ? (
+        <Card padding={Spacing.md} radius={Radius.md} style={styles.sectionSm}>
+          <AppText variant="small" color={Colors.textSecondary}>
+            {props.note}
+          </AppText>
+        </Card>
+      ) : null}
+
       {/* Floor plan */}
       <Card padding={Spacing.lg} radius={Radius.xl} style={styles.section}>
         <View style={styles.planHeader}>
           <AppText variant="h3">{state.room.name}</AppText>
           <StatusChip
-            label={applied ? '위치 변경 완료' : `적합도 +${gain}%p`}
-            tone={applied ? 'deep' : 'green'}
+            label={applied ? '위치 변경 완료' : props.planChip.label}
+            tone={applied ? 'deep' : props.planChip.tone}
             size="sm"
             icon={applied ? CircleCheck : undefined}
           />
@@ -134,7 +310,7 @@ export default function RecommendationScreen() {
             room={state.room}
             showFurnitureLabels
             markers={markers}
-            path={applied ? null : { from: current.position, to: rec.position }}
+            path={applied || !current.position ? null : { from: current.position, to: rec.position }}
           />
         </View>
         <LightLegend showPlant={false} showWindow={false} showRecommendation style={styles.legend} />
@@ -142,23 +318,16 @@ export default function RecommendationScreen() {
 
       {/* Compare */}
       <Card padding={Spacing.xl} radius={Radius.xl} style={styles.sectionSm}>
-        <CompareRow
-          kind="current"
-          title="현재 위치"
-          place={current.label}
-          score={current.score}
-          light={lightLabelFor(current.lightLevel)}
-          dimmed={applied}
-        />
+        <CompareRow kind="current" title="현재 위치" data={current} dimmed={applied} />
         <View style={styles.arrowRow}>
           <View style={styles.arrowLine} />
           <View style={styles.arrowCircle}>
             <ArrowDown size={16} color={Colors.primary} strokeWidth={2.2} />
           </View>
-          <StatusChip label={`+${gain}%p`} tone="green" size="sm" />
+          <StatusChip label={props.deltaLabel} tone="green" size="sm" />
           <View style={styles.arrowLine} />
         </View>
-        <CompareRow kind="recommended" title="추천 위치" place={rec.label} score={rec.score} light={rec.lightLabel} />
+        <CompareRow kind="recommended" title="추천 위치" data={rec} />
       </Card>
 
       {applied ? (
@@ -172,7 +341,7 @@ export default function RecommendationScreen() {
                 추천 위치로 변경했어요 🌿
               </AppText>
               <AppText variant="caption" color={Colors.textSecondary}>
-                이제 {withIga(plant.name)} {rec.label}에서 하루 약 {rec.expectedSunHours}시간 빛을 받아요.
+                {props.successText}
               </AppText>
             </View>
           </Card>
@@ -181,7 +350,7 @@ export default function RecommendationScreen() {
 
       {/* Metrics */}
       <View style={[styles.metrics, styles.sectionSm]}>
-        {metrics.map((m) => (
+        {props.metrics.map((m) => (
           <Card key={m.label} padding={Spacing.md} radius={Radius.md} style={styles.metric}>
             <m.icon size={16} color={Colors.primary} strokeWidth={1.8} />
             <AppText variant="small" color={Colors.textSecondary} style={styles.metricLabel}>
@@ -201,8 +370,8 @@ export default function RecommendationScreen() {
       <View style={styles.section}>
         <SectionHeader eyebrow="Why here" title="추천 이유" />
         <Card padding={Spacing.xl} radius={Radius.xl}>
-          {rec.reasons.map((r, i) => (
-            <View key={r} style={[styles.reason, i < rec.reasons.length - 1 && styles.reasonDivider]}>
+          {props.reasons.map((r, i) => (
+            <View key={r} style={[styles.reason, i < props.reasons.length - 1 && styles.reasonDivider]}>
               <View style={styles.check}>
                 <Check size={13} color={Colors.white} strokeWidth={3} />
               </View>
@@ -214,7 +383,7 @@ export default function RecommendationScreen() {
           <View style={styles.basis}>
             <Sun size={14} color={Colors.sunlightDeep} strokeWidth={1.9} />
             <AppText variant="small" color={Colors.textSecondary} style={styles.flex}>
-              {state.room.orientationLabel} 창문 {state.room.windows.length}개 기준 하루 평균 빛 분석 결과예요.
+              {props.basis}
             </AppText>
           </View>
         </Card>
@@ -226,16 +395,12 @@ export default function RecommendationScreen() {
 function CompareRow({
   kind,
   title,
-  place,
-  score,
-  light,
+  data,
   dimmed,
 }: {
   kind: 'current' | 'recommended';
   title: string;
-  place: string;
-  score: number;
-  light: string;
+  data: CompareData;
   dimmed?: boolean;
 }) {
   const rec = kind === 'recommended';
@@ -247,9 +412,9 @@ function CompareRow({
         <AppText variant="small" color={rec ? Colors.primary : Colors.textSecondary}>
           {title}
         </AppText>
-        <AppText variant="h2">{place}</AppText>
+        <AppText variant="h2">{data.place}</AppText>
         <ProgressBar
-          value={score}
+          value={data.progress}
           height={6}
           color={color}
           trackColor={rec ? Colors.lightGreen : '#EEEFE9'}
@@ -258,10 +423,10 @@ function CompareRow({
       </View>
       <View style={styles.compareScore}>
         <AppText variant="valueLarge" color={rec ? Colors.deepGreen : Colors.textSecondary}>
-          {`${score}%`}
+          {data.value}
         </AppText>
         <AppText variant="small" color={Colors.textSecondary}>
-          {light}
+          {data.light}
         </AppText>
       </View>
     </View>
@@ -276,6 +441,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     marginTop: Spacing.sm,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   title: {
     marginTop: Spacing.sm,

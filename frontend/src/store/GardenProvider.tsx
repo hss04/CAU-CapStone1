@@ -26,6 +26,7 @@ import type {
   GridPosition,
   LightPreference,
   NotificationSettings,
+  PlacementRecommendation,
   Plant,
   PlantSpeciesId,
   Room,
@@ -104,7 +105,7 @@ type Action =
   | { type: 'restartOnboarding' }
   | { type: 'waterPlants'; plantIds: string[]; at: number }
   | { type: 'addPlant'; input: NewPlantInput }
-  | { type: 'applyRecommendation'; plantId: string }
+  | { type: 'applyRecommendation'; plantId: string; recommendation?: PlacementRecommendation }
   | { type: 'setRoom'; room: Room }
   | { type: 'toggleNotification'; key: keyof NotificationSettings }
   | { type: 'cycleCharacter' }
@@ -213,8 +214,10 @@ function reducer(state: GardenState, action: Action): GardenState {
       return {
         ...state,
         plants: state.plants.map((p) => {
-          const rec = p.analysis.recommended;
-          if (p.id !== action.plantId || !rec) return p;
+          if (p.id !== action.plantId) return p;
+          // 서버 추천이 있으면 그 칸, 없으면 앱 예시 추천
+          const rec = action.recommendation ?? p.analysis.recommended;
+          if (!rec) return p;
           return {
             ...p,
             location: { position: rec.position, label: rec.label },
@@ -320,7 +323,8 @@ interface GardenActions {
   /** 서버에서 식물·식물 종·방을 다시 받아온다 (로그인 상태에서만) */
   reloadFromServer: () => Promise<void>;
   /** 로그인 상태이고 서버 방이면 서버 위치도 바꾼다 */
-  applyRecommendation: (plantId: string) => Promise<void>;
+  /** recommendation을 넘기면(서버 추천) 그 칸으로, 없으면 앱 예시 추천 칸으로 옮긴다 */
+  applyRecommendation: (plantId: string, recommendation?: PlacementRecommendation) => Promise<void>;
   setRoom: (room: Room) => void;
   toggleNotification: (key: keyof NotificationSettings) => void;
   cycleCharacter: () => void;
@@ -513,17 +517,17 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'removePlant', plantId });
       },
       reloadFromServer,
-      applyRecommendation: async (plantId) => {
+      applyRecommendation: async (plantId, recommendation) => {
         const { plants, room, serverSpecies } = stateRef.current;
         const plant = plants.find((p) => p.id === plantId);
-        const rec = plant?.analysis.recommended;
+        const rec = recommendation ?? plant?.analysis.recommended;
         const species = plant ? serverSpecies[plant.speciesId] : undefined;
         const position = rec ? cellToReal(room, rec.position) : null;
         // 서버 방에 있는 서버 식물이면 서버 위치도 바꾼다 (PUT은 전체 교체라 모든 필드를 보낸다)
         if (signedInRef.current && plant?.serverId !== undefined && species && position) {
           await api.updatePlant(plant.serverId, { speciesId: species.id, nickname: plant.name, roomId: room.server!.roomId, position });
         }
-        dispatch({ type: 'applyRecommendation', plantId });
+        dispatch({ type: 'applyRecommendation', plantId, recommendation });
       },
       setRoom: (room) => dispatch({ type: 'setRoom', room }),
       toggleNotification: (key) => dispatch({ type: 'toggleNotification', key }),
