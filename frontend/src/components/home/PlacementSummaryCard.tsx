@@ -7,9 +7,12 @@ import { PrimaryButton } from '@/components/common/PrimaryButton';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { StatusChip } from '@/components/common/StatusChip';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
+import { DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
-import type { Plant } from '@/types';
+import { dliValueText, rangeText, usePlantDli } from '@/hooks/usePlantDli';
+import { formatDli } from '@/services/lightForecast';
+import type { DliStatus, Plant } from '@/types';
 import { withRo } from '@/utils/korean';
 
 export interface PlacementSummaryCardProps {
@@ -17,13 +20,16 @@ export interface PlacementSummaryCardProps {
   onPress: () => void;
 }
 
-/** HOME "오늘의 배치 추천" — 현재 위치 vs 추천 위치 */
+/** HOME "오늘의 배치 추천" — 현재 위치 vs 추천 위치 (예상 DLI와 요구 범위로 비교) */
 export function PlacementSummaryCard({ plant, onPress }: PlacementSummaryCardProps) {
-  const rec = plant.analysis.recommended;
-  if (!rec) return null;
+  const light = usePlantDli(plant);
+  if (!light || light.source === 'pending') return null;
+  const { current, recommended: rec, range } = light;
+  // 서버 방은 앱 예시 추천 칸이 없다 → 지금 자리가 범위 밖일 때만 서버 추천을 보러 가게 한다
+  if (!rec && current.status === 'ok') return null;
   const species = getSpecies(plant.speciesId);
-  const current = plant.analysis.current;
-  const gain = rec.score - current.score;
+  const progress = (dli: number | null) => (dli === null ? 0 : Math.min(100, Math.round((dli / Math.max(range.max, 0.1)) * 100)));
+  const delta = rec && rec.dli !== null && current.dli !== null ? rec.dli - current.dli : null;
 
   return (
     <Card padding={Spacing.xl} radius={Radius.xl}>
@@ -37,19 +43,30 @@ export function PlacementSummaryCard({ plant, onPress }: PlacementSummaryCardPro
             {species.scientificName}
           </AppText>
         </View>
-        <StatusChip label={`+${gain}%p`} tone="green" icon={Sparkles} size="sm" />
+        <StatusChip
+          label={delta !== null ? `DLI ${delta >= 0 ? '+' : ''}${formatDli(delta)}` : rangeText(range)}
+          tone="green"
+          icon={Sparkles}
+          size="sm"
+        />
       </View>
 
       <View style={styles.compare}>
-        <SpotBox kind="current" label="현재 위치" place={current.label} score={current.score} />
-        <View style={styles.arrow}>
-          <ArrowRight size={16} color={Colors.primary} strokeWidth={2} />
-        </View>
-        <SpotBox kind="recommended" label="추천 위치" place={rec.label} score={rec.score} />
+        <SpotBox kind="current" label="현재 위치" place={current.label} dli={current.dli} status={current.status} progress={progress(current.dli)} />
+        {rec ? (
+          <>
+            <View style={styles.arrow}>
+              <ArrowRight size={16} color={Colors.primary} strokeWidth={2} />
+            </View>
+            <SpotBox kind="recommended" label="추천 위치" place={rec.label} dli={rec.dli} status={rec.status} progress={progress(rec.dli)} />
+          </>
+        ) : null}
       </View>
 
       <AppText variant="caption" color={Colors.textSecondary} style={styles.message}>
-        {withRo(rec.label)} 옮기면 빛 적합도가 {gain}%p 올라가요.
+        {rec
+          ? `${withRo(rec.label)} 옮기면 예상 DLI가 ${dliValueText(current.dli)} → ${dliValueText(rec.dli)} mol/m²/day가 돼요 (${rangeText(range)}).`
+          : `지금 자리는 ${rangeText(range)} 범위 밖이에요. 서버가 계산한 추천 위치를 확인해 보세요.`}
       </AppText>
 
       <PrimaryButton title="추천 위치 보기" icon={ArrowRight} iconPosition="right" size="md" onPress={onPress} />
@@ -61,12 +78,16 @@ function SpotBox({
   kind,
   label,
   place,
-  score,
+  dli,
+  status,
+  progress,
 }: {
   kind: 'current' | 'recommended';
   label: string;
   place: string;
-  score: number;
+  dli: number | null;
+  status: DliStatus | null;
+  progress: number;
 }) {
   const rec = kind === 'recommended';
   return (
@@ -82,14 +103,14 @@ function SpotBox({
       </AppText>
       <View style={styles.scoreRow}>
         <AppText variant="small" color={Colors.textSecondary}>
-          적합도
+          {status ? `DLI · ${DLI_STATUS_COPY[status].label}` : 'DLI'}
         </AppText>
         <AppText variant="value" color={rec ? Colors.deepGreen : Colors.textSecondary} style={styles.score}>
-          {`${score}%`}
+          {dliValueText(dli)}
         </AppText>
       </View>
       <ProgressBar
-        value={score}
+        value={progress}
         height={5}
         color={rec ? Colors.primary : Colors.markerGray}
         trackColor={rec ? '#DCE6D3' : '#E6E8E1'}

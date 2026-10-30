@@ -19,6 +19,8 @@ export interface ScreenContainerProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** 탭 화면처럼 하단 safe area를 다른 곳(탭바)이 처리하는 경우 false */
   bottomSafeArea?: boolean;
+  /** false면 잠깐 스크롤을 막는다 (평면도에서 식물을 끄는 동안 등) */
+  scrollEnabled?: boolean;
 }
 
 export function ScreenContainer({
@@ -31,6 +33,7 @@ export function ScreenContainer({
   background = Colors.background,
   contentContainerStyle,
   bottomSafeArea = false,
+  scrollEnabled = true,
 }: ScreenContainerProps) {
   const insets = useSafeAreaInsets();
   const bottomPad = bottomSafeArea && !footer ? insets.bottom : 0;
@@ -38,6 +41,7 @@ export function ScreenContainer({
   const content = scroll ? (
     <ScrollView
       style={styles.flex}
+      scrollEnabled={scrollEnabled}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[

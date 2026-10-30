@@ -136,29 +136,31 @@ export function lightOverlayColor(value: number): string {
 }
 
 /**
- * DLI(mol/m²/day) 지도 색. 실내 창가는 대략 0~20 범위라 이 구간을 촘촘하게 나눈다.
- * 구간 경계는 표시용이며, 식물별 적정 여부(OK/LOW/HIGH)는 종별 min/max DLI로 따로 판정한다.
+ * DLI(mol/m²/day) 지도 색 — 실내 기준 구간.
+ * 실내 바닥은 창가도 대략 0~5라 온실 기준(<2·2–7·7–15·15+)으로 칠하면 방이 거의 한 색이 된다.
+ * 그래서 0~4를 촘촘하게 나눈다. 값은 그대로이고 색 구간만 표시용이며,
+ * 식물별 적정 여부(OK/LOW/HIGH)는 종별 min/max DLI로 따로 판정한다.
  */
 export function dliOverlayColor(dli: number): string {
   return colorScale(
     [
-      [0, '#E3EBE0'],
-      [2, '#E6EDDB'],
-      [4, '#EEF1D2'],
-      [7, '#F4EFC4'],
-      [10, '#F9E6A9'],
-      [15, '#F7DA8C'],
-      [20, '#F4CD70'],
+      [0, '#DCE7DA'],
+      [1, '#E6EECF'],
+      [2, '#F2F0C0'],
+      [4, '#F8E197'],
+      [8, '#F3C55E'],
+      [12, '#ECB043'],
     ],
     dli,
   );
 }
 
 export const DLI_LEGEND: { label: string; color: string }[] = [
-  { label: '<2', color: dliOverlayColor(1) },
-  { label: '2–7', color: dliOverlayColor(4.5) },
-  { label: '7–15', color: dliOverlayColor(11) },
-  { label: '15+', color: dliOverlayColor(18) },
+  { label: '<1', color: dliOverlayColor(0.5) },
+  { label: '1–2', color: dliOverlayColor(1.5) },
+  { label: '2–4', color: dliOverlayColor(3) },
+  { label: '4–8', color: dliOverlayColor(6) },
+  { label: '8+', color: dliOverlayColor(10) },
 ];
 
 export const LIGHT_LEGEND: { level: LightLevel; label: string; labelKo: string; color: string }[] = [

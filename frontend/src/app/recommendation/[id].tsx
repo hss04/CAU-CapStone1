@@ -4,11 +4,9 @@ import {
   CalendarDays,
   Check,
   CircleCheck,
-  Clock,
   type LucideIcon,
   Map as MapIcon,
   Ruler,
-  ShieldCheck,
   Sun,
 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -34,8 +32,9 @@ import { ANALYSIS_STEP_LABEL, DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
 import { useServerRecommendation } from '@/hooks/useServerRecommendation';
-import { formatDli } from '@/services/lightForecast';
-import { lightLabelFor } from '@/services/placement/placementEngine';
+import { dliValueText, usePlantsDli } from '@/hooks/usePlantDli';
+import { classifyDli, formatDli } from '@/services/lightForecast';
+import { dliAt } from '@/services/space/dliMap';
 import { type ServerPlacement, toPlacementRecommendation } from '@/services/placement/serverRecommendation';
 import { useGarden, usePlant } from '@/store/GardenProvider';
 import type { GridPosition, PlacementAnalysis, Plant } from '@/types';
@@ -90,16 +89,28 @@ function Waiting({ mapReady }: { mapReady: boolean }) {
   );
 }
 
-/** 앱 예시 추천 (로그인 전·서버 DLI 지도 없음) */
+/** 앱 예시 추천 (로그인 전·서버 DLI 지도 없음) — 값은 예시 DLI 지도에서 읽는다 */
 function LocalResult({ plant, snapshot, note }: { plant: Plant; snapshot: PlacementAnalysis | null; note: string | null }) {
   const { state, actions } = useGarden();
+  const { byId, map } = usePlantsDli();
+  const light = byId[plant.id];
   const rec = snapshot?.recommended;
-  if (!snapshot || !rec) {
+  if (!snapshot || !rec || !light) {
     return <NoChange title="지금 위치가 가장 좋아요" description="이 식물은 이미 가장 잘 맞는 자리에 있어요." />;
   }
   const current = snapshot.current;
-  const gain = rec.score - current.score;
-  const sunGain = Math.round((rec.expectedSunHours - current.expectedSunHours) * 10) / 10;
+  const range = light.range;
+  // 진입 시점 자리 기준 값 (적용 후에도 비교 화면 유지)
+  const curDli = dliAt(map.map, current.position.x, current.position.y)?.total ?? null;
+  const recDli = dliAt(map.map, rec.position.x, rec.position.y)?.total ?? null;
+  const status = (dli: number | null) => (dli === null ? null : classifyDli(dli, range));
+  const progress = (dli: number | null) => (dli === null ? 0 : Math.min(100, Math.round((dli / Math.max(range.max, 0.1)) * 100)));
+  const delta = curDli !== null && recDli !== null ? recDli - curDli : null;
+  const deltaLabel = delta === null ? 'DLI' : `DLI ${delta >= 0 ? '+' : ''}${formatDli(delta)}`;
+  const statusLabel = (dli: number | null) => {
+    const s = status(dli);
+    return s ? DLI_STATUS_COPY[s].label : '—';
+  };
 
   return (
     <ResultLayout
@@ -107,18 +118,18 @@ function LocalResult({ plant, snapshot, note }: { plant: Plant; snapshot: Placem
       source={{ label: '예시 데이터', tone: 'neutral' }}
       note={note}
       title="더 좋은 자리를 찾았어요"
-      planChip={{ label: `적합도 +${gain}%p`, tone: 'green' }}
-      deltaLabel={`+${gain}%p`}
-      current={{ place: current.label, position: current.position, progress: current.score, value: `${current.score}%`, light: lightLabelFor(current.lightLevel) }}
-      recommended={{ place: rec.label, position: rec.position, progress: rec.score, value: `${rec.score}%`, light: rec.lightLabel }}
+      planChip={{ label: deltaLabel, tone: 'green' }}
+      deltaLabel={deltaLabel}
+      current={{ place: current.label, position: current.position, progress: progress(curDli), value: dliValueText(curDli), light: `mol/m²/day · ${statusLabel(curDli)}` }}
+      recommended={{ place: rec.label, position: rec.position, progress: progress(recDli), value: dliValueText(recDli), light: `mol/m²/day · ${statusLabel(recDli)}` }}
       metrics={[
-        { icon: Clock, label: '예상 일조', value: `${rec.expectedSunHours}h`, sub: sunGain > 0 ? `+${sunGain}h` : `${sunGain}h` },
-        { icon: Ruler, label: '창문까지', value: `${rec.distanceFromWindowM}m`, sub: '적당한 거리' },
-        { icon: ShieldCheck, label: '직사광선', value: rec.lightValue > 86 ? '강함' : '낮음', sub: rec.lightValue > 86 ? '주의' : '안전' },
+        { icon: Sun, label: '요구 DLI', value: `${range.min}–${range.max}`, sub: 'mol/m²/day' },
+        { icon: MapIcon, label: '추천 칸', value: dliValueText(recDli), sub: statusLabel(recDli) },
+        { icon: Ruler, label: '창문까지', value: `${rec.distanceFromWindowM}m`, sub: '추천 칸 기준' },
       ]}
-      reasons={rec.reasons}
-      basis={`${state.room.orientationLabel} 창문 ${state.room.windows.length}개 기준 하루 평균 빛 분석 결과예요.`}
-      successText={`이제 ${withIga(plant.name)} ${rec.label}에서 하루 약 ${rec.expectedSunHours}시간 빛을 받아요.`}
+      reasons={[`요구 DLI ${range.min}–${range.max} mol/m²/day와 칸별 예상 DLI를 비교했어요.`, ...rec.reasons]}
+      basis={`${state.room.orientationLabel} 창문 ${state.room.windows.length}개 기준 예시 지도예요. 실제 계산값이 아니에요.`}
+      successText={`이제 ${withIga(plant.name)} ${rec.label}에서 하루 약 ${dliValueText(recDli)} mol/m²/day 빛을 받을 것으로 예상돼요.`}
       onApply={() => actions.applyRecommendation(plant.id)}
     />
   );

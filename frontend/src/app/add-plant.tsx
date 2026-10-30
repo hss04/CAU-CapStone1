@@ -136,7 +136,7 @@ export default function AddPlantScreen() {
 
         {preview ? (
           <View style={styles.preview}>
-            <PlacementPreview analysis={preview} />
+            <PlacementPreview analysis={preview} speciesId={speciesId} />
           </View>
         ) : null}
       </ScreenContainer>

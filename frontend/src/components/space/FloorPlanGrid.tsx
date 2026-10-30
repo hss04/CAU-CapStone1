@@ -1,5 +1,13 @@
 import { useState, type ReactElement } from 'react';
-import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { FACING_AZIMUTH, FACING_KO } from '@/constants/labels';
@@ -52,6 +60,12 @@ export interface FloorPlanGridProps {
   selectedWindowId?: string | null;
   /** 창밖 스캔을 마친 창문 — 체크 배지 표시 */
   scannedWindowIds?: string[];
+  /** 끌어서 옮길 수 있는 마커 (공간 화면의 식물) */
+  draggableMarkerIds?: string[];
+  /** 마커를 끌어다 놓은 칸 (방 밖이면 호출하지 않는다) */
+  onMarkerDrop?: (id: string, pos: GridPosition) => void;
+  /** 마커를 누르고 있는 동안 true — 화면 스크롤을 막는 데 쓴다 (iOS는 스크롤이 네이티브로 먼저 움직임) */
+  onMarkerDragChange?: (dragging: boolean) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -399,6 +413,9 @@ export function FloorPlanGrid({
   onWindowPress,
   selectedWindowId,
   scannedWindowIds = [],
+  draggableMarkerIds = [],
+  onMarkerDrop,
+  onMarkerDragChange,
   style,
 }: FloorPlanGridProps) {
   const [width, setWidth] = useState(0);
@@ -662,6 +679,34 @@ export function FloorPlanGrid({
 
           {markers.map((m) => {
             const [cx, cy] = center(m.position);
+            if (onMarkerDrop && draggableMarkerIds.includes(m.id)) {
+              return (
+                <DraggableMarker
+                  key={m.id}
+                  testID={`drag-marker-${m.id}`}
+                  left={cx - markerSize / 2}
+                  top={cy - markerSize / 2}
+                  zIndex={m.id === selectedMarkerId ? 3 : 1}
+                  onTap={onMarkerPress ? () => onMarkerPress(m.id) : undefined}
+                  onDragChange={onMarkerDragChange}
+                  onDrop={(dx, dy) => {
+                    const x = Math.floor((cx + dx - g.ox) / g.cell);
+                    const y = Math.floor((cy + dy - g.oy) / g.cell);
+                    const inBounds = x >= 0 && y >= 0 && x < room.cols && y < room.rows;
+                    if (inBounds && (x !== m.position.x || y !== m.position.y)) onMarkerDrop(m.id, { x, y });
+                  }}>
+                  <PlantMarker
+                    variant={m.variant}
+                    size={markerSize}
+                    compact={compact}
+                    selected={m.id === selectedMarkerId}
+                    label={m.label}
+                    showLabel={m.showLabel}
+                    status={m.status}
+                  />
+                </DraggableMarker>
+              );
+            }
             return (
               <View
                 key={m.id}
@@ -688,6 +733,82 @@ export function FloorPlanGrid({
           })}
         </>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * 끌어서 옮기는 식물 마커. 손가락(마우스)을 따라 움직이고, 놓으면 이동 거리(px)를 onDrop으로 넘긴다.
+ * 거의 안 움직이고 떼면 탭으로 본다. 마커가 터치를 먼저 잡아서 화면 스크롤과 겹치지 않는다.
+ */
+function DraggableMarker({
+  testID,
+  left,
+  top,
+  zIndex,
+  onTap,
+  onDrop,
+  onDragChange,
+  children,
+}: {
+  testID?: string;
+  left: number;
+  top: number;
+  zIndex: number;
+  onTap?: () => void;
+  onDrop: (dx: number, dy: number) => void;
+  onDragChange?: (dragging: boolean) => void;
+  children: ReactElement;
+}) {
+  // 끌기 시작점(px)과 이동량. 손을 떼면 null
+  const [drag, setDrag] = useState<{ x0: number; y0: number; dx: number; dy: number } | null>(null);
+  const point = (e: GestureResponderEvent) => ({ x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
+
+  return (
+    <View
+      testID={testID}
+      // 마커 안쪽(PlantMarker)보다 먼저 터치를 잡는다
+      onStartShouldSetResponderCapture={() => true}
+      onMoveShouldSetResponderCapture={() => true}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      onResponderTerminationRequest={() => false}
+      onResponderGrant={(e) => {
+        const p = point(e);
+        setDrag({ x0: p.x, y0: p.y, dx: 0, dy: 0 });
+        onDragChange?.(true);
+      }}
+      onResponderMove={(e) => {
+        const p = point(e);
+        setDrag((d) => (d ? { ...d, dx: p.x - d.x0, dy: p.y - d.y0 } : d));
+      }}
+      onResponderRelease={(e) => {
+        const p = point(e);
+        const dx = drag ? p.x - drag.x0 : 0;
+        const dy = drag ? p.y - drag.y0 : 0;
+        setDrag(null);
+        onDragChange?.(false);
+        if (Math.abs(dx) + Math.abs(dy) < 6) onTap?.();
+        else onDrop(dx, dy);
+      }}
+      onResponderTerminate={() => {
+        setDrag(null);
+        onDragChange?.(false);
+      }}
+      accessibilityRole="button"
+      accessibilityHint="끌어서 다른 칸으로 옮길 수 있어요"
+      style={[
+        styles.marker,
+        styles.draggable,
+        {
+          left: left + (drag?.dx ?? 0),
+          top: top + (drag?.dy ?? 0),
+          zIndex: drag ? 5 : zIndex,
+          opacity: drag ? 0.85 : 1,
+          transform: [{ scale: drag ? 1.15 : 1 }],
+        },
+      ]}>
+      {children}
     </View>
   );
 }
@@ -837,5 +958,9 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
     position: 'absolute',
     overflow: 'visible',
+  },
+  /** 끌 수 있는 마커는 마커 자체가 터치를 받는다 */
+  draggable: {
+    pointerEvents: 'auto',
   },
 });

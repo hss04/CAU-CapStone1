@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Ban, Check, ChevronRight, Compass, Hand, MapPin, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
+import { Ban, Check, ChevronRight, Compass, Hand, MapPin, Move, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -21,17 +21,19 @@ import { LightLegend } from '@/components/space/LightLegend';
 import { LightSummaryCard } from '@/components/space/LightSummaryCard';
 import { PlantInfoSheet } from '@/components/space/PlantInfoSheet';
 import { isUploadStale, WindowDetailSheet } from '@/components/space/WindowDetailSheet';
-import { DLI_PERIOD, LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
+import { DLI_PERIOD, DLI_STATUS_COPY, LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { usePeriodDliMap, type PeriodDliMap } from '@/hooks/usePeriodDliMap';
+import { dliValueText, type PlantDli, rangeText, usePlantsDli } from '@/hooks/usePlantDli';
 import { dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
-import { describePosition, roomSizeLabel, samePosition } from '@/services/space/geometry';
+import { describePosition, isPlaceable, roomSizeLabel, samePosition } from '@/services/space/geometry';
 import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/services/space/lightAnalysis';
 import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
 import type { ScanUploadState } from '@/services/windowScan/uploadService';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type DliCheck } from '@/store/GardenProvider';
 import { getPlantStatus } from '@/store/selectors';
+import { withEulReul, withRo } from '@/utils/korean';
 import type { DliPeriod, GridPosition, Plant, Room, RoomWindow, TimeOfDay, WindowScan } from '@/types';
 
 /** 'dli' = 격자별 DLI 지도 (dli_map_v2), 나머지는 창문 기반 시간대별 추정 광량 */
@@ -54,6 +56,22 @@ function dliNoteText(m: PeriodDliMap, checkText: string | null): string {
   }
   const reason = m.note && m.status === 'ready' ? ` · ${m.note}` : '';
   return `${MOCK_DLI_NOTE} · 예시 지도는 기간과 관계없이 같아요${reason}${checkText ? ` · ${checkText}` : ''}`;
+}
+
+/** 식물 목록 칩: 'DLI 1.2 · 부족' (계산 전이면 '계산 전') */
+function plantChipLabel(d: PlantDli | undefined): string {
+  if (!d || d.current.dli === null) return '계산 전';
+  return `DLI ${dliValueText(d.current.dli)}${d.current.status ? ` · ${DLI_STATUS_COPY[d.current.status].label}` : ''}`;
+}
+
+/**
+ * 서버 방(ARCore·직접 입력)에서 빛 지도가 아직 없을 때 다음에 할 일.
+ * 서버 방은 앱 추정 지도를 보여주지 않고, 실제 계산 결과가 나와야 값을 보여준다.
+ */
+function serverMapGuide(room: Room, m: PeriodDliMap): string {
+  if (room.windows.length === 0) return '창문을 측정하면 빛 지도를 계산해요 · ARCore 앱에서 창문 꼭짓점을 측정해 다시 보내 주세요';
+  if (!room.location) return '방 위치를 정하면 빛 지도를 계산해요 · 위의 위치 설정을 눌러 주세요';
+  return `빛 지도를 아직 계산하지 못했어요 · 창문을 눌러 창밖 스캔을 해 주세요${m.note ? ` · ${m.note}` : ''}`;
 }
 
 function dliCheckText(check: DliCheck): string | null {
@@ -94,14 +112,23 @@ export default function SpaceScreen() {
   const toast = useToast();
   const { room, plants } = state;
   const [view, setView] = useState<MapView>('dli');
-  const showDli = view === 'dli';
+  // 서버 방은 서버 DLI만 보여준다 (오전·정오·오후 등은 앱 추정값이라 숨김)
+  const serverRoom = !!room.server;
+  const showDli = serverRoom || view === 'dli';
   const time: TimeOfDay = showDli ? 'average' : view;
-  // 선택한 기간의 DLI 지도 — 서버 계산이 되면 그 결과, 아니면 예시 지도
+  // 선택한 기간의 DLI 지도 — 서버 계산이 되면 그 결과, 아니면 예시 지도(예시 방만)
   const period = usePeriodDliMap(state.dliPeriod);
   const dliMap = period.map;
+  const plantsDli = usePlantsDli().byId;
+  const lightReady = !serverRoom || period.source === 'calculated';
   const checkText = state.dliMap && period.source === 'mock' ? dliCheckText(state.dliCheck) : null;
   /** 배치 불가 칸 편집 모드 */
   const [editBlocked, setEditBlocked] = useState(false);
+  /** '자리 옮기기'를 누른 식물 — 다음에 누른 칸으로 옮긴다 */
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const moving = plants.find((p) => p.id === movingId) ?? null;
+  /** 식물 마커를 누르고 있는 동안 화면 스크롤을 막는다 */
+  const [draggingPlant, setDraggingPlant] = useState(false);
   const blockedCount = room.blockedCells?.length ?? 0;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -136,7 +163,36 @@ export default function SpaceScreen() {
     setTimeout(fn, 160);
   };
 
+  /** 끌어다 놓거나 '자리 옮기기' 후 칸을 눌러 식물을 옮긴다 */
+  const movePlantTo = (plantId: string, pos: GridPosition) => {
+    const plant = plants.find((p) => p.id === plantId);
+    if (!plant) return;
+    if (!isPlaceable(room, pos)) {
+      toast.show('여기는 식물을 둘 수 없는 칸이에요', 'leaf');
+      return;
+    }
+    if (plants.some((p) => p.id !== plantId && samePosition(p.location.position, pos))) {
+      toast.show('다른 식물이 있는 칸이에요', 'leaf');
+      return;
+    }
+    const cell = lightReady && showDli ? dliAt(dliMap, pos.x, pos.y) : null;
+    actions
+      .movePlant(plantId, pos)
+      .then(() =>
+        toast.show(
+          `${withEulReul(plant.name)} ${withRo(describePosition(room, pos))} 옮겼어요${cell ? ` · 예상 DLI ${cell.total.toFixed(1)}` : ''}`,
+          'leaf',
+        ),
+      )
+      .catch((e: unknown) => toast.show(`자리를 옮기지 못했어요 · ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'leaf'));
+  };
+
   const handleCellPress = (pos: GridPosition) => {
+    if (movingId) {
+      movePlantTo(movingId, pos);
+      setMovingId(null);
+      return;
+    }
     if (editBlocked) {
       const result = actions.toggleBlockedCell(pos);
       if (result === 'occupied') toast.show('식물이 있는 칸은 배치 불가로 지정할 수 없어요', 'leaf');
@@ -162,7 +218,7 @@ export default function SpaceScreen() {
 
   return (
     <>
-      <ScreenContainer>
+      <ScreenContainer scrollEnabled={!draggingPlant}>
         <PageHeader
           eyebrow="Light map"
           title="My Space"
@@ -212,7 +268,9 @@ export default function SpaceScreen() {
             />
           </View>
 
-          <SegmentedControl options={TIME_OPTIONS} value={view} onChange={setView} size="sm" style={styles.segment} />
+          {serverRoom ? null : (
+            <SegmentedControl options={TIME_OPTIONS} value={view} onChange={setView} size="sm" style={styles.segment} />
+          )}
           {showDli ? (
             <SegmentedControl
               options={PERIOD_OPTIONS}
@@ -227,7 +285,8 @@ export default function SpaceScreen() {
             <FloorPlanGrid
               room={room}
               timeOfDay={time}
-              dli={showDli ? dliMap.totalDli : null}
+              showLight={lightReady}
+              dli={showDli && lightReady ? dliMap.totalDli : null}
               markers={markers}
               selectedMarkerId={editBlocked ? null : selectedId}
               onMarkerPress={editBlocked ? undefined : openPlant}
@@ -236,23 +295,42 @@ export default function SpaceScreen() {
               onWindowPress={editBlocked ? undefined : openWindow}
               selectedWindowId={windowSheetOpen ? windowId : null}
               scannedWindowIds={scannedWindowIds}
+              draggableMarkerIds={editBlocked ? [] : plants.map((p) => p.id)}
+              onMarkerDrop={movePlantTo}
+              onMarkerDragChange={setDraggingPlant}
             />
           </View>
 
-          <LightLegend style={styles.legend} dli={showDli} />
+          {lightReady ? <LightLegend style={styles.legend} dli={showDli} /> : null}
           {showDli ? (
             period.status === 'loading' ? (
               <View style={styles.calcRow}>
                 <ActivityIndicator size="small" color={Colors.primary} />
                 <AppText variant="small" color={Colors.textSecondary}>
-                  {`${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중 · 지금은 예시 지도를 보여드려요`}
+                  {serverRoom
+                    ? `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중`
+                    : `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중 · 지금은 예시 지도를 보여드려요`}
                 </AppText>
               </View>
+            ) : !lightReady ? (
+              <AppText variant="small" color={Colors.textSecondary} style={styles.dliNote}>
+                {serverMapGuide(room, period)}
+              </AppText>
             ) : (
               <AppText variant="small" color={Colors.textTertiary} style={styles.dliNote}>
                 {dliNoteText(period, checkText)}
               </AppText>
             )
+          ) : null}
+
+          {moving ? (
+            <View style={[styles.blockedBar, styles.blockedBarActive]}>
+              <Move size={15} color={Colors.clayDeep} strokeWidth={1.9} />
+              <AppText variant="small" color={Colors.clayDeep} style={styles.flex}>
+                {`${withEulReul(moving.name)} 옮길 칸을 눌러 주세요`}
+              </AppText>
+              <SecondaryButton title="취소" size="sm" fullWidth={false} onPress={() => setMovingId(null)} />
+            </View>
           ) : null}
 
           {/* 배치 불가 칸 — 가구·통로 등 식물을 둘 수 없는 칸을 직접 지정 */}
@@ -286,9 +364,11 @@ export default function SpaceScreen() {
                 <View style={styles.flex}>
                   <AppText variant="bodyStrong">{describePosition(room, selectedCell)}</AppText>
                   <AppText variant="caption" color={Colors.textSecondary}>
-                    {showDli && cellDli
-                      ? `DLI ${cellDli.total.toFixed(2)} mol/m²/day · 직사 ${cellDli.direct.toFixed(2)} · 산란 ${cellDli.diffuse.toFixed(2)}`
-                      : `빛 ${LIGHT_LEVEL_LABEL[lightLevelOf(cellValue)]} · 예상 일조 ${expectedSunHours(cellValue)}시간 · 광량 지수 ${cellValue}`}
+                    {!lightReady
+                      ? '빛 지도 계산 전이에요'
+                      : showDli && cellDli
+                        ? `DLI ${cellDli.total.toFixed(2)} mol/m²/day · 직사 ${cellDli.direct.toFixed(2)} · 산란 ${cellDli.diffuse.toFixed(2)}`
+                        : `빛 ${LIGHT_LEVEL_LABEL[lightLevelOf(cellValue)]} · 예상 일조 ${expectedSunHours(cellValue)}시간 · 광량 지수 ${cellValue}`}
                   </AppText>
                 </View>
                 <Pressable hitSlop={10} onPress={() => setSelectedCell(null)} accessibilityLabel="선택 해제">
@@ -337,9 +417,12 @@ export default function SpaceScreen() {
           </Card>
         </View>
 
-        <View style={styles.section}>
-          <LightSummaryCard summary={summary} timeLabel={TIME_OF_DAY_LABEL[time]} />
-        </View>
+        {/* 빛 분포 요약은 앱 추정값이라 예시 방에서만 */}
+        {serverRoom ? null : (
+          <View style={styles.section}>
+            <LightSummaryCard summary={summary} timeLabel={TIME_OF_DAY_LABEL[time]} />
+          </View>
+        )}
 
         <View style={styles.section}>
           <SectionHeader eyebrow="Plants" title="이 공간의 식물" subtitle="적합도가 낮은 식물은 추천 위치를 확인해보세요" />
@@ -366,12 +449,12 @@ export default function SpaceScreen() {
                   <View style={styles.flex}>
                     <AppText variant="bodyStrong">{p.name}</AppText>
                     <AppText variant="caption" color={Colors.textSecondary}>
-                      {p.location.label} · {LIGHT_LEVEL_LABEL[p.analysis.current.lightLevel]} light
+                      {p.location.label} · {plantsDli[p.id] ? rangeText(plantsDli[p.id].range) : ''}
                     </AppText>
                   </View>
                   <StatusChip
-                    label={`${p.analysis.current.score}%`}
-                    tone={p.analysis.recommended ? 'sun' : 'green'}
+                    label={plantChipLabel(plantsDli[p.id])}
+                    tone={plantsDli[p.id]?.current.status === 'ok' ? 'green' : plantsDli[p.id]?.current.status ? 'sun' : 'neutral'}
                     size="sm"
                   />
                   <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
@@ -399,6 +482,12 @@ export default function SpaceScreen() {
               goAfterClose(() => router.push({ pathname: '/recommendation/[id]', params: { id: selected.id } }))
             }
             onDetail={() => goAfterClose(() => router.push({ pathname: '/plant/[id]', params: { id: selected.id } }))}
+            onMove={() => {
+              setSheetOpen(false);
+              setSelectedCell(null);
+              setEditBlocked(false);
+              setMovingId(selected.id);
+            }}
           />
         ) : null}
       </BottomSheet>

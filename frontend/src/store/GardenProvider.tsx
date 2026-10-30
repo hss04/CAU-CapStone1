@@ -10,7 +10,7 @@ import { cellToReal, roomFromServer } from '@/services/api/roomSync';
 import { analyzePlacement } from '@/services/placement/placementEngine';
 import { describeServerError } from '@/services/lightForecast';
 import { buildMockDliMap } from '@/services/space/dliMap';
-import { isBlocked, isInsideRoom, samePosition } from '@/services/space/geometry';
+import { describePosition, isBlocked, isInsideRoom, samePosition } from '@/services/space/geometry';
 import { toApiRoom, type ManualRoomInput } from '@/services/space/manualRoom';
 import {
   describeUploadError,
@@ -110,6 +110,7 @@ type Action =
   | { type: 'toggleNotification'; key: keyof NotificationSettings }
   | { type: 'cycleCharacter' }
   | { type: 'removePlant'; plantId: string }
+  | { type: 'movePlant'; plantId: string; position: GridPosition; label: string }
   | { type: 'clearPlants' }
   | { type: 'resetDemo' }
   | { type: 'saveWindowScan'; scan: WindowScan }
@@ -274,6 +275,12 @@ function reducer(state: GardenState, action: Action): GardenState {
       return { ...state, dliPeriod: action.period };
     case 'removePlant':
       return { ...state, plants: state.plants.filter((p) => p.id !== action.plantId) };
+    case 'movePlant': {
+      const moved = state.plants.map((p) =>
+        p.id === action.plantId ? { ...p, location: { position: action.position, label: action.label } } : p,
+      );
+      return { ...state, plants: reanalyzePlants(state.room, moved) };
+    }
     case 'clearPlants':
       return { ...state, plants: [] };
     case 'resetDemo':
@@ -323,6 +330,8 @@ interface GardenActions {
   /** 서버에서 식물·식물 종·방을 다시 받아온다 (로그인 상태에서만) */
   reloadFromServer: () => Promise<void>;
   /** 로그인 상태이고 서버 방이면 서버 위치도 바꾼다 */
+  /** 사용자가 고른 칸으로 식물을 옮긴다 (공간 화면 드래그·탭). 서버 식물이면 서버 위치도 바꾼다 */
+  movePlant: (plantId: string, position: GridPosition) => Promise<void>;
   /** recommendation을 넘기면(서버 추천) 그 칸으로, 없으면 앱 예시 추천 칸으로 옮긴다 */
   applyRecommendation: (plantId: string, recommendation?: PlacementRecommendation) => Promise<void>;
   setRoom: (room: Room) => void;
@@ -517,6 +526,22 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'removePlant', plantId });
       },
       reloadFromServer,
+      movePlant: async (plantId, position) => {
+        const { plants, room, serverSpecies } = stateRef.current;
+        const plant = plants.find((p) => p.id === plantId);
+        if (!plant) return;
+        const species = serverSpecies[plant.speciesId];
+        // 서버 방에 있는 서버 식물이면 서버 위치도 바꾼다 (PUT은 전체 교체라 모든 필드를 보낸다)
+        if (signedInRef.current && plant.serverId !== undefined && species && room.server) {
+          await api.updatePlant(plant.serverId, {
+            speciesId: species.id,
+            nickname: plant.name,
+            roomId: room.server.roomId,
+            position: cellToReal(room, position),
+          });
+        }
+        dispatch({ type: 'movePlant', plantId, position, label: describePosition(room, position) });
+      },
       applyRecommendation: async (plantId, recommendation) => {
         const { plants, room, serverSpecies } = stateRef.current;
         const plant = plants.find((p) => p.id === plantId);

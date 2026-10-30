@@ -39,6 +39,8 @@ interface Done {
 
 /** 같은 방·기간·날짜는 다시 계산하지 않는다 (앱 실행 중) */
 const cache = new Map<string, Done>();
+/** 여러 화면이 같은 지도를 동시에 요청하면 계산 작업 하나를 같이 기다린다 */
+const inflight = new Map<string, Promise<Done | null>>();
 
 export function periodRange(period: DliPeriod, today: string): { startDate: string; endDate: string } {
   const end = parseISODate(today);
@@ -60,14 +62,22 @@ export function usePeriodDliMap(period: DliPeriod): PeriodDliMap {
   useEffect(() => {
     if (!serverReady || cache.has(key)) return;
     let cancelled = false;
-    runPeriodDliJob(room, startDate, endDate, () => cancelled).then((r) => {
-      if (cancelled || r === null) return;
-      const result: Done = r.ok
-        ? { key, ok: true, map: r.result, jobId: r.jobId, provisional: r.provisional, error: null }
-        : { key, ok: false, map: null, jobId: null, provisional: false, error: r.error };
-      // 실패는 캐시하지 않는다 (스캔·위치가 준비되면 다시 시도)
-      if (r.ok) cache.set(key, result);
-      setDone(result);
+    let job = inflight.get(key);
+    if (!job) {
+      job = runPeriodDliJob(room, startDate, endDate, () => false).then((r): Done | null => {
+        inflight.delete(key);
+        if (r === null) return null;
+        const result: Done = r.ok
+          ? { key, ok: true, map: r.result, jobId: r.jobId, provisional: r.provisional, error: null }
+          : { key, ok: false, map: null, jobId: null, provisional: false, error: r.error };
+        // 실패는 캐시하지 않는다 (스캔·위치가 준비되면 다시 시도)
+        if (r.ok) cache.set(key, result);
+        return result;
+      });
+      inflight.set(key, job);
+    }
+    job.then((result) => {
+      if (!cancelled && result) setDone(result);
     });
     return () => {
       cancelled = true;

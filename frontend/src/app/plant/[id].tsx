@@ -32,9 +32,10 @@ import { TopBar, goBackOrHome } from '@/components/common/TopBar';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
 import { WaterCycle } from '@/components/plants/WaterCycle';
 import { FloorPlanGrid } from '@/components/space/FloorPlanGrid';
-import { DLI_STATUS_COPY, LIGHT_LEVEL_LABEL, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
+import { DLI_STATUS_COPY, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
+import { dliValueText, rangeText, usePlantDli } from '@/hooks/usePlantDli';
 import { recentStatusOf } from '@/services/lightForecast';
 import { useGarden, usePlant } from '@/store/GardenProvider';
 import { useLightForecast } from '@/store/LightForecastProvider';
@@ -50,6 +51,7 @@ export default function PlantDetailScreen() {
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const light = usePlantDli(plant);
 
   if (!plant) {
     return (
@@ -63,7 +65,14 @@ export default function PlantDetailScreen() {
   const status = getPlantStatus(plant, today);
   const water = getWateringInfo(plant, today);
   const health = getHealthLabel(plant, today);
-  const { current, recommended } = plant.analysis;
+  const current = plant.analysis.current;
+  // 예상 DLI 기준 (예시 방: 앱 예시 추천 칸 · 서버 방: 범위 밖이면 추천 화면에서 서버 추천)
+  const recommended = light?.recommended ?? null;
+  const pending = !light || light.source === 'pending';
+  const outOfRange = !pending && !recommended && !!light?.current.status && light.current.status !== 'ok';
+  const ringProgress = (dli: number | null) =>
+    dli === null || !light ? 0 : Math.min(100, Math.round((dli / Math.max(light.range.max, 0.1)) * 100));
+  const statusText = (s: DliStatus | null) => (s ? DLI_STATUS_COPY[s].label : '계산 전');
 
   const handleWater = () => {
     toast.show(`${withEge(plant.name)} 물을 줬어요 💧`, 'water');
@@ -129,7 +138,14 @@ export default function PlantDetailScreen() {
         <SectionHeader eyebrow="Status" title="현재 상태" />
         <View style={styles.grid}>
           <View style={styles.gridRow}>
-            <InfoCard compact label="Light" value={LIGHT_LEVEL_LABEL[current.lightLevel]} caption={`예상 일조 ${current.expectedSunHours}h`} icon={Sun} tone="sun" />
+            <InfoCard
+              compact
+              label="DLI"
+              value={light ? dliValueText(light.current.dli) : '—'}
+              caption={light ? `${statusText(light.current.status)} · ${rangeText(light.range)}` : '계산 전'}
+              icon={Sun}
+              tone="sun"
+            />
             <InfoCard compact label="Water" value={water.label} caption={`${plant.wateringIntervalDays}일마다`} icon={Droplet} tone="water" />
           </View>
           <View style={styles.gridRow}>
@@ -207,39 +223,51 @@ export default function PlantDetailScreen() {
 
           <View style={styles.rings}>
             <View style={styles.ringItem}>
-              <ScoreRing value={current.score} color={recommended ? Colors.sunlight : Colors.primary} trackColor="#F1F1EA" />
+              <ScoreRing
+                value={ringProgress(light?.current.dli ?? null)}
+                label={light ? dliValueText(light.current.dli) : '—'}
+                caption="DLI"
+                color={recommended || outOfRange ? Colors.sunlight : Colors.primary}
+                trackColor="#F1F1EA"
+              />
               <AppText variant="captionStrong" style={styles.ringLabel}>
-                현재 위치 적합도
+                현재 위치 예상 DLI
               </AppText>
               <AppText variant="small" color={Colors.textSecondary}>
-                {current.label} · {LIGHT_LEVEL_LABEL[current.lightLevel]}
+                {current.label} · {statusText(light?.current.status ?? null)}
               </AppText>
             </View>
             {recommended ? (
               <>
                 <ArrowRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
                 <View style={styles.ringItem}>
-                  <ScoreRing value={recommended.score} />
+                  <ScoreRing value={ringProgress(recommended.dli)} label={dliValueText(recommended.dli)} caption="DLI" />
                   <AppText variant="captionStrong" style={styles.ringLabel}>
-                    추천 위치 적합도
+                    추천 위치 예상 DLI
                   </AppText>
                   <AppText variant="small" color={Colors.textSecondary}>
-                    {recommended.label} · {recommended.lightLabel}
+                    {recommended.label} · {statusText(recommended.status)}
                   </AppText>
                 </View>
               </>
             ) : null}
           </View>
 
-          <View style={[styles.note, !recommended && styles.noteOk]}>
-            <Sparkles size={16} color={recommended ? Colors.sunlightDeep : Colors.primary} strokeWidth={1.9} />
+          <View style={[styles.note, !(recommended || outOfRange) && styles.noteOk]}>
+            <Sparkles size={16} color={recommended || outOfRange ? Colors.sunlightDeep : Colors.primary} strokeWidth={1.9} />
             <AppText variant="bodyStrong" style={styles.flex}>
-              {recommended ? '현재 위치보다 더 잘 맞는 장소가 있어요.' : '지금 위치가 가장 잘 맞아요.'}
+              {pending
+                ? '빛 지도를 계산하면 예상 DLI가 나와요.'
+                : recommended
+                  ? `요구 범위(${light?.range.min}–${light?.range.max})에 더 가까운 자리가 있어요.`
+                  : outOfRange
+                    ? `지금 자리는 요구 범위(${light?.range.min}–${light?.range.max}) 밖이에요.`
+                    : '지금 자리가 요구 범위 안이에요.'}
             </AppText>
           </View>
 
-          {recommended ? (
-            <PrimaryButton title="더 좋은 위치 찾아보기" icon={ArrowRight} iconPosition="right" onPress={openRecommendation} />
+          {recommended || outOfRange ? (
+            <PrimaryButton title="추천 위치 보기" icon={ArrowRight} iconPosition="right" onPress={openRecommendation} />
           ) : (
             <SecondaryButton title="공간에서 보기" onPress={() => router.navigate('/space')} />
           )}

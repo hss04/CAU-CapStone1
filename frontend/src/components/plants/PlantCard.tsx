@@ -4,12 +4,12 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/common/AppText';
 import { Card } from '@/components/common/Card';
 import { StatusChip } from '@/components/common/StatusChip';
-import { LIGHT_LEVEL_LABEL, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
+import { LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
+import { dliValueText, placementLine, usePlantDli } from '@/hooks/usePlantDli';
 import { getPlantStatus, getWateringInfo } from '@/store/selectors';
 import type { Plant } from '@/types';
-import { withRo } from '@/utils/korean';
 
 import { PlantIllustration } from './PlantIllustration';
 
@@ -23,7 +23,8 @@ export function PlantCard({ plant, today, onPress }: PlantCardProps) {
   const species = getSpecies(plant.speciesId);
   const status = getPlantStatus(plant, today);
   const water = getWateringInfo(plant, today);
-  const rec = plant.analysis.recommended;
+  const light = usePlantDli(plant);
+  const line = light ? placementLine(light) : null;
 
   return (
     <Card onPress={onPress} padding={0} radius={Radius.xl} accessibilityLabel={`${plant.name} 상세 보기`}>
@@ -50,29 +51,29 @@ export function PlantCard({ plant, today, onPress }: PlantCardProps) {
       </View>
 
       <View style={styles.stats}>
-        <Stat label="Light" value={LIGHT_LEVEL_LABEL[plant.analysis.current.lightLevel]} />
+        <Stat label="DLI" value={light ? dliValueText(light.current.dli) : '—'} />
         <View style={styles.statDivider} />
         <Stat label="Water" value={water.label} highlight={water.isDue} />
         <View style={styles.statDivider} />
         <Stat label="Location" value={plant.location.label} />
       </View>
 
-      {rec ? (
+      {line?.tone === 'move' ? (
         <View style={styles.recStrip}>
           <Sparkles size={14} color={Colors.primary} strokeWidth={1.9} />
           <AppText variant="captionStrong" color={Colors.deepGreen} style={styles.recText} numberOfLines={1}>
-            {withRo(rec.label)} 옮기면 {plant.analysis.current.score}% → {rec.score}%
+            {line.text}
           </AppText>
           <ArrowRight size={15} color={Colors.primary} strokeWidth={1.9} />
         </View>
-      ) : (
+      ) : line ? (
         <View style={[styles.recStrip, styles.okStrip]}>
           <View style={styles.okDot} />
           <AppText variant="caption" color={Colors.textSecondary} style={styles.recText} numberOfLines={1}>
-            지금 자리가 잘 맞아요 · 적합도 {plant.analysis.current.score}%
+            {line.text}
           </AppText>
         </View>
-      )}
+      ) : null}
     </Card>
   );
 }

@@ -20,15 +20,14 @@ import { lightSourceLabel } from '@/components/light/lightUi';
 import { SpacePreview } from '@/components/space/SpacePreview';
 import { DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePlantsDli } from '@/hooks/usePlantDli';
 import { recentStatusOf, todayPointOf } from '@/services/lightForecast';
 import { useGarden, useRecentFlag } from '@/store/GardenProvider';
 import { useLightForecast, type LightForecastValue } from '@/store/LightForecastProvider';
 import {
   getCharacterMood,
   getDuePlants,
-  getFeaturedRecommendation,
   getNextWatering,
-  getPlantsWithRecommendation,
   getWateringInfo,
   type PlantLightState,
 } from '@/store/selectors';
@@ -86,8 +85,14 @@ export default function HomeScreen() {
   const due = getDuePlants(plants, today);
   const next = getNextWatering(plants, today);
   const wateredToday = plants.some((p) => getWateringInfo(p, today).wateredToday);
-  const featured = getFeaturedRecommendation(plants);
-  const moreRecs = Math.max(0, getPlantsWithRecommendation(plants).length - 1);
+  // 예상 DLI 기준: 옮길 칸이 있거나(예시 방) 지금 자리가 요구 범위 밖인(서버 방) 식물
+  const plantsDli = usePlantsDli().byId;
+  const needsMove = plants.filter((p) => {
+    const d = plantsDli[p.id];
+    return d && d.source !== 'pending' && (d.recommended !== null || (d.current.status !== null && d.current.status !== 'ok'));
+  });
+  const featured = needsMove[0] ?? null;
+  const moreRecs = Math.max(0, needsMove.length - 1);
   const previewPlantId = plants.some((p) => p.id === previewId) ? previewId! : plants[0]?.id;
   const sourceLabel = lightSourceLabel(forecast);
   const sourceTag = sourceLabel === 'LUMAP 계산' ? null : sourceLabel;

@@ -31,6 +31,7 @@ import { useToast } from '@/components/common/Toast';
 import { APP_NAME, APP_VERSION } from '@/constants/app';
 import { CHARACTER_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePlantsDli } from '@/hooks/usePlantDli';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type SyncState } from '@/store/GardenProvider';
 import { diffInDays, parseISODate } from '@/utils/date';
@@ -62,9 +63,10 @@ export default function MyPageScreen() {
   const { user, plants, room, notifications } = state;
 
   const days = diffInDays(today, parseISODate(user.joinedAt));
-  const avgScore = plants.length
-    ? Math.round(plants.reduce((sum, p) => sum + p.analysis.current.score, 0) / plants.length)
-    : 0;
+  // 예상 DLI가 요구 범위 안인 식물 수 (계산 전인 식물은 빼고 센다)
+  const plantsDli = usePlantsDli().byId;
+  const judged = plants.filter((p) => plantsDli[p.id]?.current.status);
+  const inRange = judged.filter((p) => plantsDli[p.id]?.current.status === 'ok').length;
   const soon = () => toast.show('다음 업데이트에서 만나요 🌱', 'leaf');
 
   return (
@@ -90,7 +92,7 @@ export default function MyPageScreen() {
         <View style={styles.stats}>
           <Stat label="Plants" value={`${plants.length}`} />
           <View style={styles.statDivider} />
-          <Stat label="Avg. fit" value={`${avgScore}%`} />
+          <Stat label="Light OK" value={judged.length ? `${inRange}/${judged.length}` : '—'} />
           <View style={styles.statDivider} />
           <Stat label="Days" value={`${days}`} />
         </View>

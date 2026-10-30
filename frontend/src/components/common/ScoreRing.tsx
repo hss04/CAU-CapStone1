@@ -14,9 +14,11 @@ export interface ScoreRingProps {
   trackColor?: string;
   caption?: string;
   animateFrom?: number;
+  /** 가운데 글자를 % 대신 이 값으로 (예: DLI '3.8'). value는 링 채움 비율(0~100)로만 쓴다 */
+  label?: string;
 }
 
-/** 배치 적합도(%)를 보여주는 원형 게이지 */
+/** 원형 게이지 — 기본은 %, label을 주면 그 값을 가운데에 표시 */
 export function ScoreRing({
   value,
   size = 84,
@@ -25,6 +27,7 @@ export function ScoreRing({
   trackColor = Colors.lightGreen,
   caption,
   animateFrom = 0,
+  label,
 }: ScoreRingProps) {
   const animated = useTween(value, { from: animateFrom, duration: 900 });
   const r = (size - strokeWidth) / 2;
@@ -50,7 +53,7 @@ export function ScoreRing({
       </Svg>
       <View style={[StyleSheet.absoluteFill, styles.center]}>
         <AppText variant="value" style={{ fontSize: size * 0.3, lineHeight: size * 0.34 }}>
-          {`${Math.round(animated)}%`}
+          {label ?? `${Math.round(animated)}%`}
         </AppText>
         {caption ? (
           <AppText variant="small" color={Colors.textSecondary} style={styles.caption}>

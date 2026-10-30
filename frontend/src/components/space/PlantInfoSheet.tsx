@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from 'lucide-react-native';
+import { ArrowRight, Move, Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
@@ -7,9 +7,10 @@ import { ProgressBar } from '@/components/common/ProgressBar';
 import { SecondaryButton } from '@/components/common/SecondaryButton';
 import { StatusChip } from '@/components/common/StatusChip';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
-import { LIGHT_LEVEL_LABEL } from '@/constants/labels';
+import { DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
+import { dliValueText, placementLine, rangeText, usePlantDli } from '@/hooks/usePlantDli';
 import { getPlantStatus } from '@/store/selectors';
 import type { Plant } from '@/types';
 
@@ -18,13 +19,21 @@ export interface PlantInfoSheetProps {
   today: Date;
   onRecommendation: () => void;
   onDetail: () => void;
+  /** 평면도에서 칸을 눌러 자리 옮기기 */
+  onMove?: () => void;
 }
 
 /** SPACE에서 식물 마커를 눌렀을 때 뜨는 바텀시트 내용 */
-export function PlantInfoSheet({ plant, today, onRecommendation, onDetail }: PlantInfoSheetProps) {
+export function PlantInfoSheet({ plant, today, onRecommendation, onDetail, onMove }: PlantInfoSheetProps) {
   const species = getSpecies(plant.speciesId);
   const status = getPlantStatus(plant, today);
-  const { current, recommended, message } = plant.analysis;
+  const current = plant.analysis.current;
+  const light = usePlantDli(plant);
+  const line = light ? placementLine(light) : null;
+  const recommended = line?.tone === 'move';
+  const message = line?.text ?? '빛 지도를 계산하면 예상 DLI가 나와요';
+  const progress =
+    light && light.current.dli !== null ? Math.min(100, Math.round((light.current.dli / Math.max(light.range.max, 0.1)) * 100)) : 0;
 
   return (
     <View>
@@ -44,13 +53,16 @@ export function PlantInfoSheet({ plant, today, onRecommendation, onDetail }: Pla
       <View style={styles.grid}>
         <Cell label="현재 위치" value={current.label} />
         <View style={styles.divider} />
-        <Cell label="빛 환경" value={LIGHT_LEVEL_LABEL[current.lightLevel]} />
+        <Cell label="예상 DLI" value={light ? dliValueText(light.current.dli) : '—'} />
         <View style={styles.divider} />
-        <Cell label="현재 적합도" value={`${current.score}%`} />
+        <Cell
+          label={light ? rangeText(light.range) : '요구 범위'}
+          value={light?.current.status ? DLI_STATUS_COPY[light.current.status].label : '계산 전'}
+        />
       </View>
       <ProgressBar
-        value={current.score}
-        color={current.score >= 75 ? Colors.primary : Colors.sunlight}
+        value={progress}
+        color={light?.current.status === 'ok' ? Colors.primary : Colors.sunlight}
         trackColor="#EEF0E8"
         height={6}
         style={styles.bar}
@@ -67,6 +79,7 @@ export function PlantInfoSheet({ plant, today, onRecommendation, onDetail }: Pla
         {recommended ? (
           <PrimaryButton title="추천 위치 확인" icon={ArrowRight} iconPosition="right" onPress={onRecommendation} />
         ) : null}
+        {onMove ? <SecondaryButton title="자리 옮기기" icon={Move} variant="soft" onPress={onMove} size="md" /> : null}
         <SecondaryButton title="식물 상세 보기" variant={recommended ? 'ghost' : 'soft'} onPress={onDetail} size="md" />
       </View>
     </View>

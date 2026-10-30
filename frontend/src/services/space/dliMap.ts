@@ -15,8 +15,11 @@ import { getLightMap } from './lightAnalysis';
 
 export const MOCK_DLI_NOTE = '예시 값 · 알고리즘 연동 전';
 
-/** 광량 지수 100 ≈ 15 mol/m²/day 로 환산 (예시 값 전용) */
-const INDEX_TO_DLI = 0.15;
+/**
+ * 광량 지수 100 ≈ 8 mol/m²/day 로 환산 (예시 값 전용).
+ * 실내 범례(<1 · 1–2 · 2–4 · 4–8 · 8+)에서 창가 → 안쪽이 여러 색으로 나뉘도록 실내 수준(약 1~8)에 맞춘다.
+ */
+const INDEX_TO_DLI = 0.08;
 /** 예시 값에서 산란광이 차지하는 비율 */
 const DIFFUSE_SHARE = 0.35;
 
