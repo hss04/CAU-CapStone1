@@ -123,11 +123,24 @@ def _load_segformer():
     return _segformer_cache["processor"], _segformer_cache["model"], _segformer_cache["sky_label_id"]
 
 
-def classify_sky_mask_segformer(image_bgr: np.ndarray) -> np.ndarray:
+# build_scan_from_frames 기본: 판정 마스크를 원본 크기 그대로 투영 (1 = 축소 안 함).
+# 2~4로 줄여도 0.4초 정도밖에 안 빨라지고 경계 칸 판정이 1~2% 달라져서(verify_sky_fast.py 측정) 쓰지 않음.
+SKY_MASK_DOWNSCALE = 1
+
+
+def classify_sky_mask_segformer(
+    image_bgr: np.ndarray, out_size: tuple[int, int] | None = None
+) -> np.ndarray:
     """SegFormer(ADE20K, nvidia/segformer-b0-finetuned-ade-512-512)로 SKY 판정.
 
-    입출력은 BGR 이미지 -> (H,W) bool 마스크. build_scan_from_frames()의 classify_fn 기본값으로 쓰임.
+    입력: BGR 이미지. 출력: (H, W) bool 마스크 (out_size=(h, w)를 주면 그 크기, 없으면 원본 크기).
     모델은 첫 호출 때 1회만 로드해서 재사용(_segformer_cache).
+
+    모델은 입력을 512x512로 줄여서 보고, 128x128 크기의 150개 분류 점수를 낸다. 예전에는 150개 점수를
+    전부 원본 크기(예: 1280x720)로 늘린 뒤 가장 높은 분류를 골랐는데, 이 확대가 판정 시간의 절반 이상을
+    차지했다. 지금은 128x128에서 "하늘 점수 - 하늘 외 최고 점수"(1개 채널)만 구해 그것만 늘리고,
+    0보다 크면 하늘로 본다. 모델이 본 정보는 같고, 결과는 하늘/비하늘 경계의 픽셀만 조금 달라질 수 있다
+    (verify_sky_fast.py에서 차이를 측정함).
     """
     processor, model, sky_label_id = _load_segformer()
 
@@ -135,14 +148,16 @@ def classify_sky_mask_segformer(image_bgr: np.ndarray) -> np.ndarray:
 
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     inputs = processor(images=image_rgb, return_tensors="pt")
-    with torch.no_grad():
-        logits = model(**inputs).logits  # (1, num_labels, H/4, W/4) 저해상도 출력
-
-    upsampled = torch.nn.functional.interpolate(
-        logits, size=image_bgr.shape[:2], mode="bilinear", align_corners=False
-    )
-    pred = upsampled.argmax(dim=1)[0].numpy()
-    return pred == sky_label_id
+    with torch.inference_mode():
+        logits = model(**inputs).logits[0]  # (num_labels, 128, 128) 저해상도 출력
+        sky = logits[sky_label_id]
+        others = logits.clone()
+        others[sky_label_id] = float("-inf")
+        margin = (sky - others.max(dim=0).values)[None, None]  # (1, 1, 128, 128), >0 이면 하늘이 1등
+        upsampled = torch.nn.functional.interpolate(
+            margin, size=out_size or image_bgr.shape[:2], mode="bilinear", align_corners=False
+        )
+    return (upsampled[0, 0] > 0).numpy()
 
 
 def pixel_to_azimuth_elevation(
@@ -202,21 +217,38 @@ def pixel_to_azimuth_elevation(
 def build_scan_from_frames(
     frames: list[ScanFrame],
     camera: CameraParams,
-    classify_fn: Callable[[np.ndarray], np.ndarray] = classify_sky_mask_segformer,
+    classify_fn: Callable[[np.ndarray], np.ndarray] | None = None,
+    mask_downscale: int = SKY_MASK_DOWNSCALE,
 ) -> dict:
     """사진 N장 -> generate_mock_scan()과 같은 형식의 raw scan. 그대로 resolve_unscanned()에 넘기면 된다.
 
     사진끼리 겹치는 (azimuth, elevation) 칸은 다수결(SKY 비율 0.5 이상이면 SKY)로 합친다.
-    분류는 기본적으로 SegFormer(classify_sky_mask_segformer)를 씀 — classify_fn 인자로 다른 분류
-    함수(BGR 이미지 -> (H,W) bool)로 교체 가능.
+    분류는 기본적으로 SegFormer(classify_sky_mask_segformer)를 쓴다. mask_downscale로 마스크를 원본의
+    1/n 크기로 만들어 투영할 수도 있지만, 기본(1)은 원본 크기라 예전 방식과 결과가 완전히 같다.
+    classify_fn을 주면 그 함수(BGR 이미지 -> bool 마스크)를 쓴다. 마스크 크기는 원본과 달라도 되고,
+    마스크 칸의 중심을 원본 픽셀 좌표로 바꿔서 투영한다.
+    칸별 투표는 np.add.at 대신 np.bincount로 합산한다(결과 같음, 훨씬 빠름).
     """
-    sky_votes = np.zeros((EL_STEPS, AZ_STEPS), dtype=np.float32)
-    total_votes = np.zeros((EL_STEPS, AZ_STEPS), dtype=np.float32)
+    if classify_fn is None:
+        out_size = (max(1, camera.height // mask_downscale), max(1, camera.width // mask_downscale))
+        classify_fn = lambda image: classify_sky_mask_segformer(image, out_size=out_size)  # noqa: E731
 
-    py_grid, px_grid = np.mgrid[0 : camera.height, 0 : camera.width]
+    n_cells = EL_STEPS * AZ_STEPS
+    sky_votes = np.zeros(n_cells, dtype=np.float64)
+    total_votes = np.zeros(n_cells, dtype=np.float64)
+    grids: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
 
     for frame in frames:
         mask = classify_fn(frame.image)
+        mh, mw = mask.shape[:2]
+        if (mh, mw) not in grids:
+            # 마스크 칸 (i, j)의 중심을 원본 픽셀 좌표로: 원본 크기와 같으면 그대로 j, i
+            ys = (np.arange(mh) + 0.5) * (camera.height / mh) - 0.5
+            xs = (np.arange(mw) + 0.5) * (camera.width / mw) - 0.5
+            py_grid, px_grid = np.meshgrid(ys, xs, indexing="ij")
+            grids[(mh, mw)] = (px_grid, py_grid)
+        px_grid, py_grid = grids[(mh, mw)]
+
         az, el = pixel_to_azimuth_elevation(
             px_grid, py_grid, camera, frame.azimuth_deg, frame.pitch_deg, frame.roll_deg
         )
@@ -224,11 +256,13 @@ def build_scan_from_frames(
         valid = el >= 0  # 고도 0 이하(바닥 방향)는 스캔 격자(0~90) 밖이라 제외
         az_idx = np.round(az[valid]).astype(int) % AZ_STEPS
         el_idx = np.clip(np.round(el[valid]).astype(int), 0, EL_STEPS - 1)
-        sky_flag = mask[valid].astype(np.float32)
+        cell = el_idx * AZ_STEPS + az_idx
+        # np.add.at보다 훨씬 빠른 칸별 합계
+        sky_votes += np.bincount(cell, weights=mask[valid].astype(np.float64), minlength=n_cells)
+        total_votes += np.bincount(cell, minlength=n_cells)
 
-        np.add.at(sky_votes, (el_idx, az_idx), sky_flag)
-        np.add.at(total_votes, (el_idx, az_idx), 1.0)
-
+    sky_votes = sky_votes.reshape(EL_STEPS, AZ_STEPS)
+    total_votes = total_votes.reshape(EL_STEPS, AZ_STEPS)
     captured = total_votes > 0
     raw_sky = np.full((EL_STEPS, AZ_STEPS), -1, dtype=int)
     raw_sky[captured] = (sky_votes[captured] / total_votes[captured] >= 0.5).astype(int)
