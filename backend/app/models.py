@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -96,6 +96,55 @@ class Plant(Base):
     z: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     room: Mapped[Room | None] = relationship(back_populates='plants')
+    waterings: Mapped[list['WateringRecord']] = relationship(cascade='all, delete-orphan')
+    care_schedules: Mapped[list['CareSchedule']] = relationship(cascade='all, delete-orphan')
+
+
+class WateringRecord(Base):
+    __tablename__ = 'watering_records'
+    __table_args__ = (UniqueConstraint('plant_id', 'watered_at'),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plant_id: Mapped[int] = mapped_column(ForeignKey('plants.id', ondelete='CASCADE'), index=True)
+    watered_at: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CareSchedule(Base):
+    __tablename__ = 'care_schedules'
+    __table_args__ = (
+        CheckConstraint("task_type IN ('FERTILIZING','REPOTTING','PRUNING','MISTING','OTHER')"),
+        CheckConstraint('interval_days IS NULL OR interval_days BETWEEN 1 AND 3650'),
+        CheckConstraint('end_date IS NULL OR end_date >= start_date'),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plant_id: Mapped[int] = mapped_column(ForeignKey('plants.id', ondelete='CASCADE'), index=True)
+    task_type: Mapped[str] = mapped_column(String(20))
+    title: Mapped[str] = mapped_column(String(100))
+    start_date: Mapped[date] = mapped_column(Date)
+    interval_days: Mapped[int | None] = mapped_column(Integer)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    note: Mapped[str | None] = mapped_column(String(1000))
+    occurrences: Mapped[list['CareOccurrence']] = relationship(cascade='all, delete-orphan')
+
+
+class CareOccurrence(Base):
+    __tablename__ = 'care_occurrences'
+    __table_args__ = (
+        UniqueConstraint('schedule_id', 'scheduled_date'),
+        CheckConstraint("status IN ('COMPLETED','SKIPPED')"),
+        CheckConstraint("(status = 'COMPLETED' AND completed_on IS NOT NULL) OR "
+                        "(status = 'SKIPPED' AND completed_on IS NULL)"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    schedule_id: Mapped[int] = mapped_column(ForeignKey('care_schedules.id', ondelete='CASCADE'), index=True)
+    scheduled_date: Mapped[date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String(16))
+    completed_on: Mapped[date | None] = mapped_column(Date)
+    # Keep the meaning of past records when the repeat rule or title is edited.
+    task_type: Mapped[str] = mapped_column(String(20))
+    title: Mapped[str] = mapped_column(String(100))
+    note: Mapped[str | None] = mapped_column(String(1000))
 
 
 class IdempotencyRecord(Base):

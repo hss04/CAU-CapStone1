@@ -11,6 +11,7 @@ from sqlalchemy import select, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import models as m, schemas as s
+from app.calendar_service import record_watering, remember_watering
 from app.geometry import contains, grid, validate_window
 from app.security import CurrentUser, Db, DUMMY_HASH, create_token, password_hasher, unauthorized
 
@@ -340,6 +341,9 @@ def create_plant(body:s.PlantInput,db:Db,user:CurrentUser):
     plant=m.Plant(user_id=user.id)
     set_plant(plant,body,db,user)
     db.add(plant)
+    db.flush()
+    if plant.last_watered_at is not None:
+        remember_watering(db,plant,plant.last_watered_at)
     commit(db)
     return plant
 
@@ -361,7 +365,11 @@ def get_plant(plant_id:int,db:Db,user:CurrentUser):
 @router.put('/plants/{plant_id}',response_model=s.PlantOut,tags=['Plants'])
 def update_plant(plant_id:int,body:s.PlantInput,db:Db,user:CurrentUser):
     plant=owned_plant(db,user,plant_id)
+    if plant.last_watered_at is not None:
+        remember_watering(db,plant,plant.last_watered_at)
     set_plant(plant,body,db,user)
+    if plant.last_watered_at is not None:
+        remember_watering(db,plant,plant.last_watered_at)
     commit(db)
     return plant
 
@@ -376,11 +384,7 @@ def delete_plant(plant_id:int,db:Db,user:CurrentUser):
 @router.post('/plants/{plant_id}/waterings',response_model=s.PlantOut,tags=['Plants'])
 def water_plant(plant_id:int,body:s.WateringInput,db:Db,user:CurrentUser):
     plant=owned_plant(db,user,plant_id)
-    # Older/offline events must not move the latest watering date backwards.
-    from sqlalchemy import update, or_
-    db.execute(update(m.Plant).where(m.Plant.id==plant.id,
-        or_(m.Plant.last_watered_at.is_(None),m.Plant.last_watered_at<body.watered_at))
-        .values(last_watered_at=body.watered_at))
+    record_watering(db,plant,body.watered_at)
     commit(db)
     db.refresh(plant)
     return plant

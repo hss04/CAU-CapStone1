@@ -10,6 +10,7 @@ from app.database import Base, build_engine
 from app import models
 from app.integration_models import IntegrationJob, DliDailyCache
 from app.species_seed import seed_species
+from app.calendar_service import backfill_waterings
 
 ADDITIONS = [('rooms','saved_at','VARCHAR(50)'), ('windows','measurement','JSON'),
              ('rooms','location_name','VARCHAR(100)'),
@@ -33,6 +34,7 @@ def migrate(path):
     Base.metadata.create_all(engine)
     with Session(engine) as db:
         seed_species(db)
+        backfill_waterings(db)
         db.commit()
     engine.dispose()
     print('v4 ready. Existing rooms, scans, plants and IDs preserved; six species seeded.')

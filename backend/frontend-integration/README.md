@@ -44,3 +44,12 @@ frontend는 위 커밋을 사용하세요. 옛 형제 algorithm 폴더를 자동
 자동화된 백엔드/실제 알고리즘 검증: `python -m pytest -q tests/test_algorithm_v5.py`.
 테스트는 외부 날씨를 고정 데이터로 대체하며 mock_sky를 사용합니다.
 따라서 이 테스트 통과는 프론트 전체 E2E 통과를 의미하지 않습니다.
+
+## 식물 관리 캘린더 (v0.6.0)
+
+API와 화면 연결 방법은 [CALENDAR_API.md](../docs/CALENDAR_API.md)를 확인하세요.
+월·주 표시 기간을 `GET /api/v1/calendar`로 조회한 뒤 `days`로 날짜별 점을,
+`events`로 선택한 날짜의 식물 목록을 표시합니다. 물주기 완료는 기존 waterings API,
+기타 관리 일정은 care-schedules API에 연결합니다. 변경 성공 후 같은 기간을 다시 조회합니다.
+원본 HTTP는 snake_case이며 기존 camelize 이후에는 `pendingCount`, `plantId`, `taskType`,
+`scheduleId`, `completedOn`으로 접근합니다. 사진·캘린더 UI와 푸시 발송은 프론트/별도 작업입니다.
