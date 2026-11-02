@@ -53,3 +53,11 @@ API와 화면 연결 방법은 [CALENDAR_API.md](../docs/CALENDAR_API.md)를 확
 기타 관리 일정은 care-schedules API에 연결합니다. 변경 성공 후 같은 기간을 다시 조회합니다.
 원본 HTTP는 snake_case이며 기존 camelize 이후에는 `pendingCount`, `plantId`, `taskType`,
 `scheduleId`, `completedOn`으로 접근합니다. 사진·캘린더 UI와 푸시 발송은 프론트/별도 작업입니다.
+
+## 개별 식물 생장 사진 (v0.7.0)
+
+사진 업로드·날짜순 타임라인·비공개 이미지 조회는 [GROWTH_PHOTOS_API.md](../docs/GROWTH_PHOTOS_API.md)를 확인하세요.
+선택한 실제 서버 식물 ID로 `/api/v1/plants/{id}/growth-photos`를 조회합니다.
+업로드는 JSON이 아닌 FormData로 전송하고 사진 조회에도 Bearer 헤더를 붙입니다.
+사진 화면에는 썸네일과 촬영일·메모를 표시하고, 성공한 변경 뒤 해당 식물의 목록을 갱신합니다.
+캘린더 관리 API와 별도로 식물 상세 화면에서 사용할 수 있으며, 프론트 UI 변경은 이 코드에 포함되지 않습니다.

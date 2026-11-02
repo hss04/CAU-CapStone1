@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import router
 from app.calendar_api import router as calendar_router
 from app.calendar_service import backfill_waterings
+from app.growth_api import router as growth_router
 from app.weather import router as weather_router
 from app.integration import router as integration_router
 from app.config import get_settings
@@ -36,14 +37,15 @@ async def lifespan(app:FastAPI):
     yield
 
 
-app=FastAPI(title='PlantLight API',version='0.6.0',lifespan=lifespan,
+app=FastAPI(title='PlantLight API',version='0.7.0',lifespan=lifespan,
             description='JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.')
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,
-                       allow_credentials=False,allow_methods=['GET','POST','PUT','DELETE'],
+                       allow_credentials=False,allow_methods=['GET','POST','PUT','PATCH','DELETE'],
                        allow_headers=['Authorization','Content-Type','Idempotency-Key'])
 app.include_router(router)
 app.include_router(calendar_router)
+app.include_router(growth_router)
 app.include_router(weather_router)
 app.include_router(integration_router)
 

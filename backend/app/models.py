@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, LargeBinary, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -98,6 +98,31 @@ class Plant(Base):
     room: Mapped[Room | None] = relationship(back_populates='plants')
     waterings: Mapped[list['WateringRecord']] = relationship(cascade='all, delete-orphan')
     care_schedules: Mapped[list['CareSchedule']] = relationship(cascade='all, delete-orphan')
+    growth_photos: Mapped[list['GrowthPhoto']] = relationship(cascade='all, delete-orphan')
+
+
+class GrowthPhoto(Base):
+    __tablename__ = 'growth_photos'
+    __table_args__ = (
+        UniqueConstraint('plant_id', 'upload_key'),
+        Index('ix_growth_photos_plant_taken', 'plant_id', 'taken_at', 'id'),
+        CheckConstraint('width > 0 AND height > 0 AND byte_size > 0'),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plant_id: Mapped[int] = mapped_column(ForeignKey('plants.id', ondelete='CASCADE'), index=True)
+    taken_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    taken_on: Mapped[date] = mapped_column(Date)
+    note: Mapped[str | None] = mapped_column(String(2000))
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    byte_size: Mapped[int] = mapped_column(Integer)
+    # Timeline/list queries do not load image bytes. Keeping the bytes in the DB
+    # makes uploads, deletion and the existing SQLite backup atomic in this MVP.
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    thumbnail_data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    upload_key: Mapped[str | None] = mapped_column(String(128))
+    request_hash: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class WateringRecord(Base):
