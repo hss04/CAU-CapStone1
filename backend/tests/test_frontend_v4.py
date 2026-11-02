@@ -170,7 +170,7 @@ def test_species_seed_idempotent(context,headers):
     with factory() as db:
         seed_species(db);db.commit()
         rows=db.scalars(select(PlantSpecies).where(PlantSpecies.scientific_name.is_not(None))).all()
-        assert len(rows)==6
+        assert len(rows)==106
         ids=[r.id for r in rows]; rows[0].min_dli=3;db.commit()
         seed_species(db);db.commit()
         assert [r.id for r in db.scalars(select(PlantSpecies).where(PlantSpecies.scientific_name.is_not(None)))]==ids
@@ -194,7 +194,7 @@ def test_migration_keeps_records_and_is_repeatable(tmp_path):
     migrate(target); migrate(target)
     with sqlite3.connect(target) as conn:
         assert conn.execute('SELECT id,nickname,watering_interval_days,last_watered_at FROM plants').fetchone()==(42,'existing',7,None)
-        assert conn.execute('SELECT count(*) FROM plant_species').fetchone()[0]==6
+        assert conn.execute('SELECT count(*) FROM plant_species').fetchone()[0]==106
         assert conn.execute("SELECT count(*) FROM sqlite_master WHERE name='dli_daily_cache'").fetchone()[0]==1
     assert len(list(tmp_path.glob('*.bak')))==2
 

@@ -1,0 +1,1349 @@
+{
+  "checked_at": "2026-11-02",
+  "sources": [
+    {
+      "scientific_name": "Monstera deliciosa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/monstera-deliciosa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/monstera-deliciosa/",
+      "status": 200,
+      "title": "Monstera deliciosa Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Epipremnum aureum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/epipremnum-aureum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/epipremnum-aureum/",
+      "status": 200,
+      "title": "Epipremnum aureum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Olea europaea",
+      "source_url": "https://plants.ces.ncsu.edu/plants/olea-europaea/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/olea-europaea/",
+      "status": 200,
+      "title": "Olea europaea Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dracaena trifasciata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dracaena-trifasciata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dracaena-trifasciata/",
+      "status": 200,
+      "title": "Dracaena trifasciata Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ficus lyrata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ficus-lyrata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ficus-lyrata/",
+      "status": 200,
+      "title": "Ficus lyrata Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Pilea peperomioides",
+      "source_url": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/",
+      "status": 200,
+      "title": "Pilea peperomioides Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Monstera adansonii",
+      "source_url": "https://plants.ces.ncsu.edu/plants/monstera-adansonii/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/monstera-adansonii/",
+      "status": 200,
+      "title": "Monstera adansonii Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Rhaphidophora tetrasperma",
+      "source_url": "https://plants.ces.ncsu.edu/plants/rhaphidophora-tetrasperma/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/rhaphidophora-tetrasperma/",
+      "status": 200,
+      "title": "Rhaphidophora tetrasperma Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Scindapsus pictus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/scindapsus-pictus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/scindapsus-pictus/",
+      "status": 200,
+      "title": "Scindapsus pictus Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Epipremnum pinnatum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/epipremnum-pinnatum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/epipremnum-pinnatum/",
+      "status": 200,
+      "title": "Epipremnum pinnatum Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Philodendron hederaceum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/philodendron-hederaceum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/philodendron-hederaceum/",
+      "status": 200,
+      "title": "Philodendron hederaceum Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Philodendron erubescens",
+      "source_url": "https://plants.ces.ncsu.edu/plants/philodendron-erubescens/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/philodendron-erubescens/",
+      "status": 200,
+      "title": "Philodendron erubescens Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dracaena stuckyi",
+      "source_url": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77183329-1",
+      "checked_at": "2026-11-02",
+      "status": "VERIFIED_VIA_WEB_SEARCH",
+      "direct_http_error": "HTTP Error 403: Forbidden",
+      "verification_method": "web_search",
+      "title": "Dracaena stuckyi (God.-Leb.) Byng & Christenh. | Plants of the World Online | Kew Science",
+      "scientific_name_present": true,
+      "note": "Kew accepted name and Sansevieria stuckyi synonym verified through web retrieval; direct HTTP returned 403."
+    },
+    {
+      "scientific_name": "Strelitzia reginae",
+      "source_url": "https://plants.ces.ncsu.edu/plants/strelitzia-reginae/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/strelitzia-reginae/",
+      "status": 200,
+      "title": "Strelitzia reginae Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Thaumatophyllum bipinnatifidum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/thaumatophyllum-bipinnatifidum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/philodendron-bipinnatifidum/",
+      "status": 200,
+      "title": "Philodendron bipinnatifidum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Thaumatophyllum xanadu",
+      "source_url": "https://plants.ces.ncsu.edu/plants/thaumatophyllum-xanadu/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/philodendron-xanadu/",
+      "status": 200,
+      "title": "Philodendron xanadu Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ficus elastica",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ficus-elastica/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ficus-elastica/",
+      "status": 200,
+      "title": "Ficus elastica Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ficus benjamina",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ficus-benjamina/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ficus-benjamina/",
+      "status": 200,
+      "title": "Ficus benjamina Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ficus microcarpa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ficus-microcarpa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ficus-microcarpa/",
+      "status": 200,
+      "title": "Ficus microcarpa Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ficus benghalensis",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ficus-benghalensis/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ficus-benghalensis/",
+      "status": 200,
+      "title": "Ficus benghalensis Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Pachira aquatica",
+      "source_url": "https://plants.ces.ncsu.edu/plants/pachira-aquatica/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/pachira-aquatica/",
+      "status": 200,
+      "title": "Pachira aquatica Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Zamioculcas zamiifolia",
+      "source_url": "https://plants.ces.ncsu.edu/plants/zamioculcas-zamiifolia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/zamioculcas-zamiifolia/",
+      "status": 200,
+      "title": "Zamioculcas zamiifolia Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dracaena fragrans",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dracaena-fragrans/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dracaena-fragrans/",
+      "status": 200,
+      "title": "Dracaena fragrans Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dracaena reflexa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dracaena-reflexa-var-reflexa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dracaena-reflexa-var-reflexa/",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Dracaena reflexa var. reflexa",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Dracaena sanderiana",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dracaena-sanderiana/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dracaena-sanderiana/",
+      "status": 200,
+      "title": "Dracaena sanderiana Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dracaena angolensis",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dracaena-angolensis/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dracaena-angolensis/",
+      "status": 200,
+      "title": "Dracaena angolensis Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Cordyline fruticosa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/cordyline-fruticosa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/cordyline-fruticosa/",
+      "status": 200,
+      "title": "Cordyline fruticosa Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Beaucarnea recurvata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/beaucarnea-recurvata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/beaucarnea-recurvata/",
+      "status": 200,
+      "title": "Beaucarnea recurvata Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Yucca gigantea",
+      "source_url": "https://plants.ces.ncsu.edu/plants/yucca-gigantea/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/yucca-gigantea/",
+      "status": 200,
+      "title": "Yucca gigantea Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Heptapleurum arboricola",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2432",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2432",
+      "status": 200,
+      "title": "Heptapleurum arboricola Heptapleurum arboricola Hayata Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Coffea arabica",
+      "source_url": "https://plants.ces.ncsu.edu/plants/coffea-arabica/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/coffea-arabica/",
+      "status": 200,
+      "title": "Coffea arabica Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Chamaedorea elegans",
+      "source_url": "https://plants.ces.ncsu.edu/plants/chamaedorea-elegans/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/chamaedorea-elegans/",
+      "status": 200,
+      "title": "Chamaedorea elegans Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Chrysalidocarpus lutescens",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dypsis-lutescens/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/chrysalidocarpus-lutescens/",
+      "status": 200,
+      "title": "Chrysalidocarpus lutescens Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Howea forsteriana",
+      "source_url": "https://plants.ces.ncsu.edu/plants/howea-forsteriana/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/howea-forsteriana/",
+      "status": 200,
+      "title": "Howea forsteriana Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Rhapis excelsa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/rhapis-excelsa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/rhapis-excelsa/",
+      "status": 200,
+      "title": "Rhapis excelsa Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Araucaria heterophylla",
+      "source_url": "https://plants.ces.ncsu.edu/plants/araucaria-heterophylla/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/araucaria-heterophylla/",
+      "status": 200,
+      "title": "Araucaria heterophylla Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Spathiphyllum wallisii",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2465",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2465",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Spathiphyllum wallisii Spathiphyllum wallisii Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Anthurium andraeanum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/anthurium-andraeanum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/anthurium-andraeanum/",
+      "status": 200,
+      "title": "Anthurium andraeanum Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Aglaonema commutatum",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1611",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1611",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Aglaonema commutatum Aglaonema commutatum Schott Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Dieffenbachia seguine",
+      "source_url": "https://plants.ces.ncsu.edu/plants/dieffenbachia-seguine/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/dieffenbachia-seguine/",
+      "status": 200,
+      "title": "Dieffenbachia seguine",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Syngonium podophyllum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/syngonium-podophyllum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/syngonium-podophyllum/",
+      "status": 200,
+      "title": "Syngonium podophyllum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Alocasia macrorrhizos",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1636",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1636",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Alocasia macrorrhizos Alocasia macrorrhizos (L.) G.Don Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Alocasia zebrina",
+      "source_url": "https://www.rhs.org.uk/plants/136827/alocasia-zebrina/details",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.rhs.org.uk/plants/136827/alocasia-zebrina/details",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Alocasia zebrina",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Alocasia micholitziana",
+      "source_url": "https://www.rhs.org.uk/plants/131678/alocasia-micholitziana/details",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.rhs.org.uk/plants/131678/alocasia-micholitziana/details",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Alocasia micholitziana",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Goeppertia orbifolia",
+      "source_url": "https://plants.ces.ncsu.edu/plants/goeppertia-orbifolia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/goeppertia-orbifolia/",
+      "status": 200,
+      "title": "Goeppertia orbifolia Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Goeppertia makoyana",
+      "source_url": "https://plants.ces.ncsu.edu/plants/goeppertia-makoyana/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/goeppertia-makoyana/",
+      "status": 200,
+      "title": "Goeppertia makoyana Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Goeppertia insignis",
+      "source_url": "https://plants.ces.ncsu.edu/plants/goeppertia-insignis/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/goeppertia-insignis/",
+      "status": 200,
+      "title": "Goeppertia insignis Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Goeppertia roseopicta",
+      "source_url": "https://plants.ces.ncsu.edu/plants/goeppertia-roseopicta/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/goeppertia-roseopicta/",
+      "status": 200,
+      "title": "Goeppertia roseopicta Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Maranta leuconeura",
+      "source_url": "https://plants.ces.ncsu.edu/plants/maranta-leuconeura/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/maranta-leuconeura/",
+      "status": 200,
+      "title": "Maranta leuconeura Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ctenanthe burle-marxii",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/6/1/6101",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/6/1/6101",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Ctenanthe burle-marxii 'Amagris' Ctenanthe burle-marxii 'Amagris' Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Stromanthe thalia",
+      "source_url": "https://plants.ces.ncsu.edu/plants/stromanthe-thalia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/stromanthe-thalia/",
+      "status": 200,
+      "title": "Stromanthe thalia Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Peperomia obtusifolia",
+      "source_url": "https://plants.ces.ncsu.edu/plants/peperomia-obtusifolia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/peperomia-obtusifolia/",
+      "status": 200,
+      "title": "Peperomia obtusifolia Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Peperomia argyraea",
+      "source_url": "https://plants.ces.ncsu.edu/plants/peperomia-argyreia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/peperomia-argyraea/",
+      "status": 200,
+      "title": "Peperomia argyraea Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Peperomia caperata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/peperomia-caperata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/peperomia-caperata/",
+      "status": 200,
+      "title": "Peperomia caperata Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Peperomia prostrata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/peperomia-prostrata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/peperomia-prostrata/",
+      "status": 200,
+      "title": "Peperomia prostrata Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Chlorophytum comosum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/chlorophytum-comosum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/chlorophytum-comosum/",
+      "status": 200,
+      "title": "Chlorophytum comosum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Hedera helix",
+      "source_url": "https://plants.ces.ncsu.edu/plants/hedera-helix/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/hedera-helix/",
+      "status": 200,
+      "title": "Hedera helix Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Fatsia japonica",
+      "source_url": "https://plants.ces.ncsu.edu/plants/fatsia-japonica/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/fatsia-japonica/",
+      "status": 200,
+      "title": "Fatsia japonica Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Aspidistra elatior",
+      "source_url": "https://plants.ces.ncsu.edu/plants/aspidistra-elatior/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/aspidistra-elatior/",
+      "status": 200,
+      "title": "Aspidistra elatior Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Tradescantia zebrina",
+      "source_url": "https://plants.ces.ncsu.edu/plants/tradescantia-zebrina/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/tradescantia-zebrina/",
+      "status": 200,
+      "title": "Tradescantia zebrina Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Codiaeum variegatum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/codiaeum-variegatum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/codiaeum-variegatum/",
+      "status": 200,
+      "title": "Codiaeum variegatum Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Callisia repens",
+      "source_url": "https://plants.ces.ncsu.edu/plants/callisia-repens/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/callisia-repens/",
+      "status": 200,
+      "title": "Callisia repens Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Hoya carnosa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/hoya-carnosa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/hoya-carnosa/",
+      "status": 200,
+      "title": "Hoya carnosa Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Hoya kerrii",
+      "source_url": "https://plants.ces.ncsu.edu/plants/hoya-kerrii/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/hoya-kerrii/",
+      "status": 200,
+      "title": "Hoya kerrii Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Dischidia nummularia",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/3/1385",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/3/1385",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Dischidia nummularia Dischidia nummularia R.Br. Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Asparagus setaceus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/asparagus-setaceus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/asparagus-setaceus/",
+      "status": 200,
+      "title": "Asparagus setaceus Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Nephrolepis exaltata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/nephrolepis-exaltata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/nephrolepis-exaltata/",
+      "status": 200,
+      "title": "Nephrolepis exaltata Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Asplenium nidus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/asplenium-nidus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/asplenium-nidus/",
+      "status": 200,
+      "title": "Asplenium nidus Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Adiantum raddianum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/adiantum-raddianum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/adiantum-raddianum/",
+      "status": 200,
+      "title": "Adiantum raddianum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Platycerium bifurcatum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/platycerium-bifurcatum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/platycerium-bifurcatum/",
+      "status": 200,
+      "title": "Platycerium bifurcatum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Tillandsia ionantha",
+      "source_url": "https://plants.ces.ncsu.edu/plants/tillandsia-ionantha/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/tillandsia-ionantha/",
+      "status": 200,
+      "title": "Tillandsia ionantha Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Guzmania lingulata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/guzmania-lingulata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/guzmania-lingulata/",
+      "status": 200,
+      "title": "Guzmania lingulata Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Aechmea fasciata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/aechmea-fasciata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/aechmea-fasciata/",
+      "status": 200,
+      "title": "Aechmea fasciata Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Citrus × limon",
+      "source_url": "https://plants.ces.ncsu.edu/plants/citrus-x-limon/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/citrus-x-limon/",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Citrus x limon",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Aloe vera",
+      "source_url": "https://plants.ces.ncsu.edu/plants/aloe-vera/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/aloe-vera/",
+      "status": 200,
+      "title": "Aloe vera Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Haworthiopsis attenuata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/haworthiopsis-attenuata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/haworthiopsis-attenuata/",
+      "status": 200,
+      "title": "Haworthiopsis attenuata Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Haworthia cooperi",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/4/2/4248",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/4/2/4248",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Haworthia cooperi var. truncata Haworthia cooperi (H.Jacobsen) M.B.Bayer var. truncata Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Echeveria elegans",
+      "source_url": "https://plants.ces.ncsu.edu/plants/echeveria-elegans/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/echeveria-elegans/",
+      "status": 200,
+      "title": "Echeveria elegans Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Echeveria agavoides",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/7/4/7411",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/7/4/7411",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Echeveria agavoides 'Ebony' Echeveria agavoides 'Ebony' Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Crassula ovata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/crassula-ovata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/crassula-ovata/",
+      "status": 200,
+      "title": "Crassula ovata Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Crassula perforata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/crassula-perforata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/crassula-perforata/",
+      "status": 200,
+      "title": "Crassula perforata Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Kalanchoe blossfeldiana",
+      "source_url": "https://plants.ces.ncsu.edu/plants/kalanchoe-blossfeldiana/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/kalanchoe-blossfeldiana/",
+      "status": 200,
+      "title": "Kalanchoe blossfeldiana Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Kalanchoe tomentosa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/kalanchoe-tomentosa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/kalanchoe-tomentosa/",
+      "status": 200,
+      "title": "Kalanchoe tomentosa Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Sedum morganianum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/sedum-morganianum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/sedum-morganianum/",
+      "status": 200,
+      "title": "Sedum morganianum Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Sedum × rubrotinctum",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2447",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2447",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Sedum × rubrotinctum Sedum × rubrotinctum R.T.Clausen Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Graptopetalum paraguayense",
+      "source_url": "https://plants.ces.ncsu.edu/plants/graptopetalum-paraguayense/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/graptopetalum-paraguayense/",
+      "status": 200,
+      "title": "Graptopetalum paraguayense Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Portulacaria afra",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/3/2361",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/2/3/2361",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Portulacaria afra Portulacaria afra Jacq. Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Curio rowleyanus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/curio-rowleyanus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/curio-rowleyanus/",
+      "status": 200,
+      "title": "Curio rowleyanus Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Schlumbergera truncata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/schlumbergera-truncata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/schlumbergera-truncata/",
+      "status": 200,
+      "title": "Schlumbergera truncata Play pronunciation",
+      "light_categories": [
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Opuntia microdasys",
+      "source_url": "https://plants.ces.ncsu.edu/plants/opuntia-microdasys/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/opuntia-microdasys/",
+      "status": 200,
+      "title": "Opuntia microdasys Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Hesperocyparis macrocarpa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/hesperocyparis-macrocarpa/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/hesperocyparis-macrocarpa/",
+      "status": 200,
+      "title": "Hesperocyparis macrocarpa Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Kroenleinia grusonii",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/9/1981",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/1/9/1981",
+      "status": 200,
+      "title": "Kroenleinia grusonii Kroenleinia grusonii (Hildm.) Lodé Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Phalaenopsis amabilis",
+      "source_url": "https://www.nparks.gov.sg/florafaunaweb/flora/5/8/5881",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.nparks.gov.sg/florafaunaweb/flora/5/8/5881",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Phalaenopsis amabilis Phalaenopsis amabilis (L.) Blume Flora & Fauna Web",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Streptocarpus ionanthus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/streptocarpus-ionanthus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/streptocarpus-ionanthus/",
+      "status": 200,
+      "title": "Streptocarpus ionanthus Play pronunciation",
+      "light_categories": [
+        "Deep shade (Less than 2 hours to no direct sunlight)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Begonia rex",
+      "source_url": "https://www.rhs.org.uk/plants/101666/begonia-rex-r/details",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.rhs.org.uk/plants/101666/begonia-rex-r/details",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Begonia rex (R)",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Cyclamen persicum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/cyclamen-persicum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/cyclamen-persicum/",
+      "status": 200,
+      "title": "Cyclamen persicum Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Pelargonium zonale",
+      "source_url": "https://www.rhs.org.uk/plants/12407/pelargonium-zonale/details",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://www.rhs.org.uk/plants/12407/pelargonium-zonale/details",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Pelargonium zonale",
+      "light_categories": [],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Gardenia jasminoides",
+      "source_url": "https://plants.ces.ncsu.edu/plants/gardenia-jasminoides/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/gardenia-jasminoides/",
+      "status": 200,
+      "title": "Gardenia jasminoides Play pronunciation",
+      "light_categories": [
+        "Dappled Sunlight (Shade through upper canopy all day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Ocimum basilicum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/ocimum-basilicum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/ocimum-basilicum/",
+      "status": 200,
+      "title": "Ocimum basilicum Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Salvia rosmarinus",
+      "source_url": "https://plants.ces.ncsu.edu/plants/salvia-rosmarinus/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/salvia-rosmarinus/",
+      "status": 200,
+      "title": "Salvia rosmarinus Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Lavandula angustifolia",
+      "source_url": "https://plants.ces.ncsu.edu/plants/lavandula-angustifolia/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/lavandula-angustifolia/",
+      "status": 200,
+      "title": "Lavandula angustifolia Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Mentha spicata",
+      "source_url": "https://plants.ces.ncsu.edu/plants/mentha-spicata/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/mentha-spicata/",
+      "status": 200,
+      "title": "Mentha spicata Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Mentha × piperita",
+      "source_url": "https://plants.ces.ncsu.edu/plants/mentha-x-piperita/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/mentha-x-piperita/",
+      "status": 200,
+      "verification_method": "direct_http",
+      "title": "Mentha x piperita",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true
+    },
+    {
+      "scientific_name": "Thymus vulgaris",
+      "source_url": "https://plants.ces.ncsu.edu/plants/thymus-vulgaris/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/thymus-vulgaris/",
+      "status": 200,
+      "title": "Thymus vulgaris Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Origanum vulgare",
+      "source_url": "https://plants.ces.ncsu.edu/plants/origanum-vulgare/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/origanum-vulgare/",
+      "status": 200,
+      "title": "Origanum vulgare Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Petroselinum crispum",
+      "source_url": "https://plants.ces.ncsu.edu/plants/petroselinum-crispum/",
+      "checked_at": "2026-11-02",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/petroselinum-crispum/",
+      "status": 200,
+      "title": "Petroselinum crispum Play pronunciation",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "direct_http"
+    }
+  ]
+}

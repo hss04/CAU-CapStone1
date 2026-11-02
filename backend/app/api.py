@@ -7,11 +7,12 @@ from app.geometry import floor_area, perimeter
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.exc import IntegrityError
 
 from app import models as m, schemas as s
 from app.calendar_service import record_watering, remember_watering
+from app.species_catalog import alias_scientific_names
 from app.geometry import contains, grid, validate_window
 from app.security import CurrentUser, Db, DUMMY_HASH, create_token, password_hasher, unauthorized
 
@@ -303,11 +304,18 @@ def delete_window(window_id:int,db:Db,user:CurrentUser):
     return Response(status_code=204)
 
 
-@router.get('/plant-species',response_model=list[s.SpeciesOut],tags=['Plant species'])
+@router.get('/plant-species',response_model=list[s.SpeciesOut],tags=['Plant species'],
+            summary='Search plant names, aliases and botanical synonyms')
 def species(db:Db,user:CurrentUser,q:str=Query(default='',max_length=100),limit:Limit=50,offset:Offset=0):
     query=select(m.PlantSpecies)
+    q=q.strip()
     if q:
-        query=query.where(or_(m.PlantSpecies.name.contains(q,autoescape=True), m.PlantSpecies.scientific_name.contains(q,autoescape=True)))
+        conditions=[m.PlantSpecies.name.contains(q,autoescape=True),
+                    m.PlantSpecies.scientific_name.contains(q,autoescape=True)]
+        aliases=alias_scientific_names(q)
+        if aliases:
+            conditions.append(func.lower(func.trim(m.PlantSpecies.scientific_name)).in_([name.lower() for name in aliases]))
+        query=query.where(or_(*conditions))
     return db.scalars(query.order_by(m.PlantSpecies.id).limit(limit).offset(offset)).all()
 
 

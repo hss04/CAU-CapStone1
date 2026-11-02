@@ -15,7 +15,7 @@
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-새 설치는 README의 가상환경 및 `scripts/init_env.py` 생성 절차부터 진행합니다. Linux에서는 `python scripts/migrate_v4.py`를 사용합니다. 마이그레이션은 기존 SQLite DB 전체를 `.before-v4-...bak`로 백업하고, 빠진 열/테이블을 추가하며 6종을 등록합니다. 반복 실행해도 기존 식물·방·스캔 ID와 수정한 종 데이터를 유지합니다. 새 DB는 앱 시작 시에도 자동 생성/종 등록됩니다. 기존 DB에 열이 없으면 서버 시작 오류로 마이그레이션 실행을 안내합니다. PostgreSQL용 ALTER 마이그레이션은 포함하지 않았습니다.
+새 설치는 README의 가상환경 및 `scripts/init_env.py` 생성 절차부터 진행합니다. Linux에서는 `python scripts/migrate_v4.py`를 사용합니다. 마이그레이션은 기존 SQLite DB 전체를 `.before-v4-...bak`로 백업하고, 빠진 열/테이블을 추가하고 현재 기본 카탈로그 106종 중 빠진 항목을 등록합니다. 반복 실행해도 기존 식물·방·스캔 ID와 수정한 종 데이터를 유지합니다. 새 DB는 앱 시작 시에도 자동 생성/종 등록됩니다. 기존 DB에 열이 없으면 서버 시작 오류로 마이그레이션 실행을 안내합니다. PostgreSQL용 ALTER 마이그레이션은 포함하지 않았습니다.
 
 기존 작업 방식대로 서버 worker는 1개를 사용하세요. 실행 중이던 메모리 백그라운드 작업은 재시작 시 FAILED로 전환됩니다. 완료된 날짜별 캐시는 DB에 남습니다.
 
@@ -89,7 +89,7 @@ Plant 생성/수정/목록/상세 응답에 다음 필드를 추가했습니다.
 
 ## ④ 종 데이터
 
-`app/species_seed.py`에서 신규 DB 시작/마이그레이션 시 다음 6종을 등록합니다. 학명이 이미 있으면 기존 행/ID/사용자 수정값을 덮어쓰지 않습니다. `GET /plant-species?q=Monstera%20deliciosa`처럼 학명 검색도 지원합니다.
+아래는 v0.4.0의 최초 6종입니다. 현재 v0.8.0은 기존 6종에 100종을 추가한 총 106종을 신규 DB 시작/마이그레이션 시 등록합니다. 전체 목록과 별칭 검색은 [PLANT_CATALOG.md](PLANT_CATALOG.md)를 확인하세요. 학명·동의어가 이미 있으면 기존 행/ID/사용자 수정값을 덮어쓰지 않습니다. `GET /plant-species?q=Monstera%20deliciosa`처럼 학명 검색도 지원합니다.
 
 | scientific_name | min_dli | max_dli | 근거 수준 |
 | --- | ---: | ---: | --- |

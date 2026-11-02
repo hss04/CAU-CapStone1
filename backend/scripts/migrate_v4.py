@@ -37,7 +37,7 @@ def migrate(path):
         backfill_waterings(db)
         db.commit()
     engine.dispose()
-    print('v4 ready. Existing rooms, scans, plants and IDs preserved; six species seeded.')
+    print('Database ready. Existing rooms, scans, plants and IDs preserved; 106 catalog entries seeded without overwriting existing species.')
 
 
 if __name__=='__main__':

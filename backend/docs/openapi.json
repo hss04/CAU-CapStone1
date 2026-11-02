@@ -3,7 +3,7 @@
   "info": {
     "title": "PlantLight API",
     "description": "JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "paths": {
     "/api/v1/auth/register": {
@@ -949,7 +949,7 @@
         "tags": [
           "Plant species"
         ],
-        "summary": "Species",
+        "summary": "Search plant names, aliases and botanical synonyms",
         "operationId": "species_api_v1_plant_species_get",
         "security": [
           {

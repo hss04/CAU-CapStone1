@@ -37,7 +37,7 @@ async def lifespan(app:FastAPI):
     yield
 
 
-app=FastAPI(title='PlantLight API',version='0.7.0',lifespan=lifespan,
+app=FastAPI(title='PlantLight API',version='0.8.0',lifespan=lifespan,
             description='JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.')
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,

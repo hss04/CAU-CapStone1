@@ -1,0 +1,744 @@
+[
+  {
+    "name": "몬스테라",
+    "scientific_name": "Monstera deliciosa",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Monstera genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "스킨답서스",
+    "scientific_name": "Epipremnum aureum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Pothos / Epipremnum genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "올리브",
+    "scientific_name": "Olea europaea",
+    "min_dli": 18.0,
+    "max_dli": 40.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Olive / Olea genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "산세베리아",
+    "scientific_name": "Dracaena trifasciata",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Snake Plant entry, not generic Dracaena; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "떡갈고무나무",
+    "scientific_name": "Ficus lyrata",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Ficus genus; species-specific optimum unverified; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold."
+  },
+  {
+    "name": "필레아 페페로미오이데스",
+    "scientific_name": "Pilea peperomioides",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "ESTIMATED app starting range 6-12 mol/m2/day; species-specific DLI not verified. NC State describes bright indirect light, not numeric DLI: https://plants.ces.ncsu.edu/plants/pilea-peperomioides/ . Numeric range is a provisional medium-light category assumption; calibrate with measurements. Checked 2026-10-27."
+  },
+  {
+    "name": "몬스테라 아단소니",
+    "scientific_name": "Monstera adansonii",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Monstera. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/monstera-adansonii/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "히메몬스테라",
+    "scientific_name": "Rhaphidophora tetrasperma",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/rhaphidophora-tetrasperma/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "실버 스킨답서스",
+    "scientific_name": "Scindapsus pictus",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/scindapsus-pictus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "드래곤테일",
+    "scientific_name": "Epipremnum pinnatum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Pothos / Epipremnum. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/epipremnum-pinnatum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "하트리프 필로덴드론",
+    "scientific_name": "Philodendron hederaceum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Philodendron. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/philodendron-hederaceum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "필로덴드론 에루베스켄스",
+    "scientific_name": "Philodendron erubescens",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Philodendron. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/philodendron-erubescens/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "스투키",
+    "scientific_name": "Dracaena stuckyi",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Snake Plant; former Sansevieria, not generic Dracaena. https://growlightmeter.com/light-requirements-for-plants/; botany: https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77183329-1; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "극락조화",
+    "scientific_name": "Strelitzia reginae",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/strelitzia-reginae/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "셀렘",
+    "scientific_name": "Thaumatophyllum bipinnatifidum",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/thaumatophyllum-bipinnatifidum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "제나두",
+    "scientific_name": "Thaumatophyllum xanadu",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/thaumatophyllum-xanadu/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "인도고무나무",
+    "scientific_name": "Ficus elastica",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Ficus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/ficus-elastica/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "벤자민고무나무",
+    "scientific_name": "Ficus benjamina",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Ficus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/ficus-benjamina/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "인삼벤자민",
+    "scientific_name": "Ficus microcarpa",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Ficus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/ficus-microcarpa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "벵갈고무나무",
+    "scientific_name": "Ficus benghalensis",
+    "min_dli": 6.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Ficus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/ficus-benghalensis/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "파키라",
+    "scientific_name": "Pachira aquatica",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Money Tree / Pachira. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/pachira-aquatica/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "금전수",
+    "scientific_name": "Zamioculcas zamiifolia",
+    "min_dli": 2.0,
+    "max_dli": 10.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: ZZ Plant / Zamioculcas; not propagation. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/zamioculcas-zamiifolia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "행운목",
+    "scientific_name": "Dracaena fragrans",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Dracaena / Dragon Tree. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/dracaena-fragrans/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "송오브인디아",
+    "scientific_name": "Dracaena reflexa",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Dracaena / Dragon Tree. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/dracaena-reflexa-var-reflexa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "개운죽",
+    "scientific_name": "Dracaena sanderiana",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Dracaena / Dragon Tree. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/dracaena-sanderiana/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "산세베리아 실린드리카",
+    "scientific_name": "Dracaena angolensis",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Snake Plant; former Sansevieria, not generic Dracaena. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/dracaena-angolensis/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "코르딜리네",
+    "scientific_name": "Cordyline fruticosa",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/cordyline-fruticosa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "덕구리난",
+    "scientific_name": "Beaucarnea recurvata",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/beaucarnea-recurvata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "유카",
+    "scientific_name": "Yucca gigantea",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/yucca-gigantea/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "홍콩야자",
+    "scientific_name": "Heptapleurum arboricola",
+    "min_dli": 7.0,
+    "max_dli": 30.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Schefflera; Heptapleurum synonym. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2432; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "커피나무",
+    "scientific_name": "Coffea arabica",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/coffea-arabica/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "테이블야자",
+    "scientific_name": "Chamaedorea elegans",
+    "min_dli": 3.0,
+    "max_dli": 6.0,
+    "source_note": "ESTIMATED: Low Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/chamaedorea-elegans/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아레카야자",
+    "scientific_name": "Chrysalidocarpus lutescens",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/dypsis-lutescens/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "켄차야자",
+    "scientific_name": "Howea forsteriana",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/howea-forsteriana/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "관음죽",
+    "scientific_name": "Rhapis excelsa",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/rhapis-excelsa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아라우카리아",
+    "scientific_name": "Araucaria heterophylla",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/araucaria-heterophylla/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "스파티필름",
+    "scientific_name": "Spathiphyllum wallisii",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Peace Lily / Spathiphyllum. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2465; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "안스리움",
+    "scientific_name": "Anthurium andraeanum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Anthurium. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/anthurium-andraeanum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아글라오네마",
+    "scientific_name": "Aglaonema commutatum",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Aglaonema. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1611; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "디펜바키아",
+    "scientific_name": "Dieffenbachia seguine",
+    "min_dli": 3.0,
+    "max_dli": 6.0,
+    "source_note": "ESTIMATED: Low Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/dieffenbachia-seguine/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "싱고니움",
+    "scientific_name": "Syngonium podophyllum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Syngonium. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/syngonium-podophyllum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "알로카시아",
+    "scientific_name": "Alocasia macrorrhizos",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Alocasia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1636; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "알로카시아 제브리나",
+    "scientific_name": "Alocasia zebrina",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Alocasia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.rhs.org.uk/plants/136827/alocasia-zebrina/details; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "알로카시아 프라이덱",
+    "scientific_name": "Alocasia micholitziana",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Alocasia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.rhs.org.uk/plants/131678/alocasia-micholitziana/details; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼라데아 오르비폴리아",
+    "scientific_name": "Goeppertia orbifolia",
+    "min_dli": 4.0,
+    "max_dli": 15.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Calathea / Goeppertia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/goeppertia-orbifolia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼라데아 마코야나",
+    "scientific_name": "Goeppertia makoyana",
+    "min_dli": 4.0,
+    "max_dli": 15.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Calathea / Goeppertia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/goeppertia-makoyana/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼라데아 란시폴리아",
+    "scientific_name": "Goeppertia insignis",
+    "min_dli": 4.0,
+    "max_dli": 15.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Calathea / Goeppertia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/goeppertia-insignis/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼라데아 로세오픽타",
+    "scientific_name": "Goeppertia roseopicta",
+    "min_dli": 4.0,
+    "max_dli": 15.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Calathea / Goeppertia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/goeppertia-roseopicta/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "마란타",
+    "scientific_name": "Maranta leuconeura",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/maranta-leuconeura/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "크테난테",
+    "scientific_name": "Ctenanthe burle-marxii",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://www.nparks.gov.sg/florafaunaweb/flora/6/1/6101; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "스트로만테 트리오스타",
+    "scientific_name": "Stromanthe thalia",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/stromanthe-thalia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "청페페",
+    "scientific_name": "Peperomia obtusifolia",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Peperomia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/peperomia-obtusifolia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "수박페페",
+    "scientific_name": "Peperomia argyraea",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Peperomia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/peperomia-argyreia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "페페로미아 카페라타",
+    "scientific_name": "Peperomia caperata",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Peperomia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/peperomia-caperata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "페페로미아 프로스트라타",
+    "scientific_name": "Peperomia prostrata",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Peperomia. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/peperomia-prostrata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "접란",
+    "scientific_name": "Chlorophytum comosum",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Spider Plant / Chlorophytum. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/chlorophytum-comosum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아이비",
+    "scientific_name": "Hedera helix",
+    "min_dli": 4.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: English Ivy / Hedera. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/hedera-helix/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "팔손이",
+    "scientific_name": "Fatsia japonica",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/fatsia-japonica/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "엽란",
+    "scientific_name": "Aspidistra elatior",
+    "min_dli": 4.0,
+    "max_dli": 18.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Aspidistra. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/aspidistra-elatior/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "달개비 제브리나",
+    "scientific_name": "Tradescantia zebrina",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/tradescantia-zebrina/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "크로톤",
+    "scientific_name": "Codiaeum variegatum",
+    "min_dli": 4.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Croton common name: Codiaeum, not Croton genus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/codiaeum-variegatum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼리시아",
+    "scientific_name": "Callisia repens",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/callisia-repens/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "호야",
+    "scientific_name": "Hoya carnosa",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Hoya. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/hoya-carnosa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "하트호야",
+    "scientific_name": "Hoya kerrii",
+    "min_dli": 4.0,
+    "max_dli": 12.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Hoya. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/hoya-kerrii/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "디시디아",
+    "scientific_name": "Dischidia nummularia",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://www.nparks.gov.sg/florafaunaweb/flora/1/3/1385; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아스파라거스",
+    "scientific_name": "Asparagus setaceus",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/asparagus-setaceus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "보스턴고사리",
+    "scientific_name": "Nephrolepis exaltata",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/nephrolepis-exaltata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아스플레니움",
+    "scientific_name": "Asplenium nidus",
+    "min_dli": 3.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Ferns / Asplenium. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/asplenium-nidus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아디안텀",
+    "scientific_name": "Adiantum raddianum",
+    "min_dli": 4.0,
+    "max_dli": 6.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Ferns / Pteridaceae. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/adiantum-raddianum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "박쥐란",
+    "scientific_name": "Platycerium bifurcatum",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/platycerium-bifurcatum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "틸란드시아 이오난사",
+    "scientific_name": "Tillandsia ionantha",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Bromeliad / Bromeliaceae. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/tillandsia-ionantha/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "구즈마니아",
+    "scientific_name": "Guzmania lingulata",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Bromeliad / Bromeliaceae. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/guzmania-lingulata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "에크메아",
+    "scientific_name": "Aechmea fasciata",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Bromeliad / Bromeliaceae. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/aechmea-fasciata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "레몬나무",
+    "scientific_name": "Citrus × limon",
+    "min_dli": 21.0,
+    "max_dli": 28.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Lemon / Citrus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/citrus-x-limon/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "알로에베라",
+    "scientific_name": "Aloe vera",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Aloe. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/aloe-vera/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "십이지권",
+    "scientific_name": "Haworthiopsis attenuata",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/haworthiopsis-attenuata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "하월시아 쿠페리",
+    "scientific_name": "Haworthia cooperi",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/4/2/4248; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "에케베리아 엘레강스",
+    "scientific_name": "Echeveria elegans",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/echeveria-elegans/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "에케베리아 아가보이데스",
+    "scientific_name": "Echeveria agavoides",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/7/4/7411; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "염좌",
+    "scientific_name": "Crassula ovata",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/crassula-ovata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "십자성",
+    "scientific_name": "Crassula perforata",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/crassula-perforata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "칼랑코에",
+    "scientific_name": "Kalanchoe blossfeldiana",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Kalanchoe. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/kalanchoe-blossfeldiana/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "월토이",
+    "scientific_name": "Kalanchoe tomentosa",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Kalanchoe. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/kalanchoe-tomentosa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "청옥",
+    "scientific_name": "Sedum morganianum",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/sedum-morganianum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "홍옥",
+    "scientific_name": "Sedum × rubrotinctum",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2447; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "용월",
+    "scientific_name": "Graptopetalum paraguayense",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/graptopetalum-paraguayense/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아악무",
+    "scientific_name": "Portulacaria afra",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/2/3/2361; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "녹영",
+    "scientific_name": "Curio rowleyanus",
+    "min_dli": 8.0,
+    "max_dli": 16.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Succulents / Various. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/curio-rowleyanus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "게발선인장",
+    "scientific_name": "Schlumbergera truncata",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/schlumbergera-truncata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "백도선",
+    "scientific_name": "Opuntia microdasys",
+    "min_dli": 12.0,
+    "max_dli": 30.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Desert Cacti / Various; excludes epiphytic cacti. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/opuntia-microdasys/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "율마",
+    "scientific_name": "Hesperocyparis macrocarpa",
+    "min_dli": 18.0,
+    "max_dli": 30.0,
+    "source_note": "ESTIMATED: Very High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/hesperocyparis-macrocarpa/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "금호선인장",
+    "scientific_name": "Kroenleinia grusonii",
+    "min_dli": 12.0,
+    "max_dli": 30.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Desert Cacti / Various; excludes epiphytic cacti. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/1/9/1981; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "호접란",
+    "scientific_name": "Phalaenopsis amabilis",
+    "min_dli": 4.0,
+    "max_dli": 6.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Orchids (Low-Light); Phalaenopsis group assignment. https://growlightmeter.com/light-requirements-for-plants/; botany: https://www.nparks.gov.sg/florafaunaweb/flora/5/8/5881; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "아프리칸바이올렛",
+    "scientific_name": "Streptocarpus ionanthus",
+    "min_dli": 4.0,
+    "max_dli": 14.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: African Violets / Streptocarpus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/streptocarpus-ionanthus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "렉스베고니아",
+    "scientific_name": "Begonia rex",
+    "min_dli": 6.0,
+    "max_dli": 10.0,
+    "source_note": "ESTIMATED: Medium Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://www.rhs.org.uk/plants/101666/begonia-rex-r/details; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "시클라멘",
+    "scientific_name": "Cyclamen persicum",
+    "min_dli": 6.0,
+    "max_dli": 8.0,
+    "source_note": "PROVISIONAL REFERENCE_GROUP: Cyclamen / Primulaceae. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/cyclamen-persicum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "제라늄",
+    "scientific_name": "Pelargonium zonale",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://www.rhs.org.uk/plants/12407/pelargonium-zonale/details; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "치자나무",
+    "scientific_name": "Gardenia jasminoides",
+    "min_dli": 12.0,
+    "max_dli": 16.0,
+    "source_note": "ESTIMATED: High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/gardenia-jasminoides/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "바질",
+    "scientific_name": "Ocimum basilicum",
+    "min_dli": 12.0,
+    "max_dli": 26.0,
+    "source_note": "PROVISIONAL REFERENCE_SPECIES: Basil / Ocimum basilicum. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/ocimum-basilicum/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "로즈마리",
+    "scientific_name": "Salvia rosmarinus",
+    "min_dli": 20.0,
+    "max_dli": 28.0,
+    "source_note": "PROVISIONAL REFERENCE_SPECIES: Rosemary / Rosmarinus officinalis = Salvia rosmarinus. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/salvia-rosmarinus/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "라벤더",
+    "scientific_name": "Lavandula angustifolia",
+    "min_dli": 18.0,
+    "max_dli": 30.0,
+    "source_note": "ESTIMATED: Very High Light category; plant assignment inferred. https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants; botany: https://plants.ces.ncsu.edu/plants/lavandula-angustifolia/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "스피어민트",
+    "scientific_name": "Mentha spicata",
+    "min_dli": 10.0,
+    "max_dli": 20.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Mint / Mentha. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/mentha-spicata/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "페퍼민트",
+    "scientific_name": "Mentha × piperita",
+    "min_dli": 10.0,
+    "max_dli": 20.0,
+    "source_note": "PROVISIONAL REFERENCE_GENUS: Mint / Mentha. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/mentha-x-piperita/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "타임",
+    "scientific_name": "Thymus vulgaris",
+    "min_dli": 20.0,
+    "max_dli": 28.0,
+    "source_note": "PROVISIONAL REFERENCE_SPECIES: Thyme / Thymus vulgaris. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/thymus-vulgaris/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "오레가노",
+    "scientific_name": "Origanum vulgare",
+    "min_dli": 20.0,
+    "max_dli": 28.0,
+    "source_note": "PROVISIONAL REFERENCE_SPECIES: Oregano / Origanum vulgare. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/origanum-vulgare/; checked 2026-11-02. Starting range; species optimum unverified."
+  },
+  {
+    "name": "파슬리",
+    "scientific_name": "Petroselinum crispum",
+    "min_dli": 10.0,
+    "max_dli": 20.0,
+    "source_note": "PROVISIONAL REFERENCE_SPECIES: Parsley / Petroselinum crispum. https://growlightmeter.com/light-requirements-for-plants/; botany: https://plants.ces.ncsu.edu/plants/petroselinum-crispum/; checked 2026-11-02. Starting range; species optimum unverified."
+  }
+]

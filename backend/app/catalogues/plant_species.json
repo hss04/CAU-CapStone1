@@ -1,0 +1,1671 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-02",
+  "legacy_count": 6,
+  "added_count": 100,
+  "description": "Curated household container plants; not a popularity ranking. All DLI values are provisional with explicit reference mappings or inferred categories.",
+  "profiles": {
+    "monstera": {
+      "min_dli": 4,
+      "max_dli": 12,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Monstera",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "epipremnum": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Pothos / Epipremnum",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "philodendron": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Philodendron",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "ficus": {
+      "min_dli": 6,
+      "max_dli": 12,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Ficus",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "pachira": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Money Tree / Pachira",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "zamioculcas": {
+      "min_dli": 2,
+      "max_dli": 10,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "ZZ Plant / Zamioculcas; not propagation",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "dracaena": {
+      "min_dli": 3,
+      "max_dli": 8,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Dracaena / Dragon Tree",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "schefflera": {
+      "min_dli": 7,
+      "max_dli": 30,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Schefflera; Heptapleurum synonym",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "spathiphyllum": {
+      "min_dli": 3,
+      "max_dli": 8,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Peace Lily / Spathiphyllum",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "anthurium": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Anthurium",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "aglaonema": {
+      "min_dli": 3,
+      "max_dli": 8,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Aglaonema",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "syngonium": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Syngonium",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "alocasia": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Alocasia",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "goeppertia": {
+      "min_dli": 4,
+      "max_dli": 15,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Calathea / Goeppertia",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "peperomia": {
+      "min_dli": 4,
+      "max_dli": 12,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Peperomia",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "chlorophytum": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Spider Plant / Chlorophytum",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "hedera": {
+      "min_dli": 4,
+      "max_dli": 8,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "English Ivy / Hedera",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "aspidistra": {
+      "min_dli": 4,
+      "max_dli": 18,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Aspidistra",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "hoya": {
+      "min_dli": 4,
+      "max_dli": 12,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Hoya",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "asplenium": {
+      "min_dli": 3,
+      "max_dli": 8,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Ferns / Asplenium",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "aloe": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Aloe",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "kalanchoe": {
+      "min_dli": 8,
+      "max_dli": 16,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Kalanchoe",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "mint": {
+      "min_dli": 10,
+      "max_dli": 20,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Mint / Mentha",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "olive": {
+      "min_dli": 18,
+      "max_dli": 40,
+      "basis": "REFERENCE_GENUS",
+      "source_entry": "Olive / Olea",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "basil": {
+      "min_dli": 12,
+      "max_dli": 26,
+      "basis": "REFERENCE_SPECIES",
+      "source_entry": "Basil / Ocimum basilicum",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "rosemary": {
+      "min_dli": 20,
+      "max_dli": 28,
+      "basis": "REFERENCE_SPECIES",
+      "source_entry": "Rosemary / Rosmarinus officinalis = Salvia rosmarinus",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "thyme": {
+      "min_dli": 20,
+      "max_dli": 28,
+      "basis": "REFERENCE_SPECIES",
+      "source_entry": "Thyme / Thymus vulgaris",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "oregano": {
+      "min_dli": 20,
+      "max_dli": 28,
+      "basis": "REFERENCE_SPECIES",
+      "source_entry": "Oregano / Origanum vulgare",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "parsley": {
+      "min_dli": 10,
+      "max_dli": 20,
+      "basis": "REFERENCE_SPECIES",
+      "source_entry": "Parsley / Petroselinum crispum",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "snake": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Snake Plant; former Sansevieria, not generic Dracaena",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "croton": {
+      "min_dli": 4,
+      "max_dli": 16,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Croton common name: Codiaeum, not Croton genus",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "pteridaceae": {
+      "min_dli": 4,
+      "max_dli": 6,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Ferns / Pteridaceae",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "bromeliad": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Bromeliad / Bromeliaceae",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "lemon": {
+      "min_dli": 21,
+      "max_dli": 28,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Lemon / Citrus",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "succulent": {
+      "min_dli": 8,
+      "max_dli": 16,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Succulents / Various",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "desert_cactus": {
+      "min_dli": 12,
+      "max_dli": 30,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Desert Cacti / Various; excludes epiphytic cacti",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "orchid_low": {
+      "min_dli": 4,
+      "max_dli": 6,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Orchids (Low-Light); Phalaenopsis group assignment",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "african_violet": {
+      "min_dli": 4,
+      "max_dli": 14,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "African Violets / Streptocarpus",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "cyclamen": {
+      "min_dli": 6,
+      "max_dli": 8,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Cyclamen / Primulaceae",
+      "source_url": "https://growlightmeter.com/light-requirements-for-plants/"
+    },
+    "estimated_low": {
+      "min_dli": 3,
+      "max_dli": 6,
+      "basis": "ESTIMATED",
+      "source_entry": "Low Light category; plant assignment inferred",
+      "source_url": "https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants"
+    },
+    "estimated_medium": {
+      "min_dli": 6,
+      "max_dli": 10,
+      "basis": "ESTIMATED",
+      "source_entry": "Medium Light category; plant assignment inferred",
+      "source_url": "https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants"
+    },
+    "estimated_high": {
+      "min_dli": 12,
+      "max_dli": 16,
+      "basis": "ESTIMATED",
+      "source_entry": "High Light category; plant assignment inferred",
+      "source_url": "https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants"
+    },
+    "estimated_very_high": {
+      "min_dli": 18,
+      "max_dli": 30,
+      "basis": "ESTIMATED",
+      "source_entry": "Very High Light category; plant assignment inferred",
+      "source_url": "https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants"
+    },
+    "legacy_pilea": {
+      "min_dli": 6,
+      "max_dli": 12,
+      "basis": "ESTIMATED",
+      "source_entry": "Legacy app medium-light assumption; not verified species DLI",
+      "source_url": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/"
+    }
+  },
+  "plants": [
+    {
+      "name": "몬스테라",
+      "scientific_name": "Monstera deliciosa",
+      "light_profile": "monstera",
+      "category": "FOLIAGE",
+      "legacy_source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Monstera genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold.",
+      "aliases": [
+        "몬스테라 델리시오사",
+        "Swiss cheese plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/monstera-deliciosa/"
+    },
+    {
+      "name": "스킨답서스",
+      "scientific_name": "Epipremnum aureum",
+      "light_profile": "epipremnum",
+      "category": "FOLIAGE",
+      "legacy_source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Pothos / Epipremnum genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold.",
+      "aliases": [
+        "골든 포토스",
+        "포토스",
+        "Pothos"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/epipremnum-aureum/"
+    },
+    {
+      "name": "올리브",
+      "scientific_name": "Olea europaea",
+      "light_profile": "olive",
+      "category": "FRUIT",
+      "legacy_source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Olive / Olea genus; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold.",
+      "aliases": [
+        "올리브나무",
+        "Olive"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/olea-europaea/"
+    },
+    {
+      "name": "산세베리아",
+      "scientific_name": "Dracaena trifasciata",
+      "light_profile": "snake",
+      "category": "FOLIAGE",
+      "legacy_source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Snake Plant entry, not generic Dracaena; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold.",
+      "aliases": [
+        "Snake plant"
+      ],
+      "scientific_synonyms": [
+        "Sansevieria trifasciata"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dracaena-trifasciata/"
+    },
+    {
+      "name": "떡갈고무나무",
+      "scientific_name": "Ficus lyrata",
+      "light_profile": "ficus",
+      "category": "FOLIAGE",
+      "legacy_source_note": "PROVISIONAL cultivation starting range, mol/m2/day. Photone: Ficus genus; species-specific optimum unverified; https://growlightmeter.com/light-requirements-for-plants/; checked 2026-10-27. Genus/common-name mapping, not a species-specific experimental optimum or damage threshold.",
+      "aliases": [
+        "떡갈잎고무나무",
+        "피커스 리라타",
+        "Fiddle leaf fig"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ficus-lyrata/"
+    },
+    {
+      "name": "필레아 페페로미오이데스",
+      "scientific_name": "Pilea peperomioides",
+      "light_profile": "legacy_pilea",
+      "category": "FOLIAGE",
+      "legacy_source_note": "ESTIMATED app starting range 6-12 mol/m2/day; species-specific DLI not verified. NC State describes bright indirect light, not numeric DLI: https://plants.ces.ncsu.edu/plants/pilea-peperomioides/ . Numeric range is a provisional medium-light category assumption; calibrate with measurements. Checked 2026-10-27.",
+      "aliases": [
+        "필레아",
+        "중국돈나무",
+        "Chinese money plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/"
+    },
+    {
+      "name": "몬스테라 아단소니",
+      "scientific_name": "Monstera adansonii",
+      "light_profile": "monstera",
+      "category": "FOLIAGE",
+      "aliases": [
+        "아단소니",
+        "Swiss cheese vine"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/monstera-adansonii/"
+    },
+    {
+      "name": "히메몬스테라",
+      "scientific_name": "Rhaphidophora tetrasperma",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "미니몬스테라",
+        "미니 몬스테라",
+        "라피도포라 테트라스페르마"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/rhaphidophora-tetrasperma/"
+    },
+    {
+      "name": "실버 스킨답서스",
+      "scientific_name": "Scindapsus pictus",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "스킨답서스 픽투스",
+        "신답서스 픽투스",
+        "Satin pothos"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/scindapsus-pictus/"
+    },
+    {
+      "name": "드래곤테일",
+      "scientific_name": "Epipremnum pinnatum",
+      "light_profile": "epipremnum",
+      "category": "FOLIAGE",
+      "aliases": [],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/epipremnum-pinnatum/"
+    },
+    {
+      "name": "하트리프 필로덴드론",
+      "scientific_name": "Philodendron hederaceum",
+      "light_profile": "philodendron",
+      "category": "FOLIAGE",
+      "aliases": [
+        "필로덴드론 브라질",
+        "하트리프",
+        "Heartleaf philodendron"
+      ],
+      "scientific_synonyms": [
+        "Philodendron scandens",
+        "Philodendron oxycardium"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/philodendron-hederaceum/"
+    },
+    {
+      "name": "필로덴드론 에루베스켄스",
+      "scientific_name": "Philodendron erubescens",
+      "light_profile": "philodendron",
+      "category": "FOLIAGE",
+      "aliases": [
+        "핑크프린세스",
+        "핑크 프린세스",
+        "Blushing philodendron"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/philodendron-erubescens/"
+    },
+    {
+      "name": "스투키",
+      "scientific_name": "Dracaena stuckyi",
+      "light_profile": "snake",
+      "category": "SUCCULENT",
+      "aliases": [
+        "산세베리아 스투키"
+      ],
+      "scientific_synonyms": [
+        "Sansevieria stuckyi"
+      ],
+      "botanical_source": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77183329-1"
+    },
+    {
+      "name": "극락조화",
+      "scientific_name": "Strelitzia reginae",
+      "light_profile": "estimated_high",
+      "category": "FOLIAGE",
+      "aliases": [
+        "극락조",
+        "Bird of paradise"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/strelitzia-reginae/"
+    },
+    {
+      "name": "셀렘",
+      "scientific_name": "Thaumatophyllum bipinnatifidum",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "필로덴드론 셀렘",
+        "Tree philodendron"
+      ],
+      "scientific_synonyms": [
+        "Philodendron bipinnatifidum",
+        "Philodendron selloum"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/thaumatophyllum-bipinnatifidum/"
+    },
+    {
+      "name": "제나두",
+      "scientific_name": "Thaumatophyllum xanadu",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "필로덴드론 제나두",
+        "Xanadu"
+      ],
+      "scientific_synonyms": [
+        "Philodendron xanadu"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/thaumatophyllum-xanadu/"
+    },
+    {
+      "name": "인도고무나무",
+      "scientific_name": "Ficus elastica",
+      "light_profile": "ficus",
+      "category": "FOLIAGE",
+      "aliases": [
+        "루비고무나무",
+        "버건디고무나무",
+        "Rubber plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ficus-elastica/"
+    },
+    {
+      "name": "벤자민고무나무",
+      "scientific_name": "Ficus benjamina",
+      "light_profile": "ficus",
+      "category": "FOLIAGE",
+      "aliases": [
+        "벤자민",
+        "Weeping fig"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ficus-benjamina/"
+    },
+    {
+      "name": "인삼벤자민",
+      "scientific_name": "Ficus microcarpa",
+      "light_profile": "ficus",
+      "category": "FOLIAGE",
+      "aliases": [
+        "팬다고무나무",
+        "인삼고무나무",
+        "Ginseng ficus"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ficus-microcarpa/"
+    },
+    {
+      "name": "벵갈고무나무",
+      "scientific_name": "Ficus benghalensis",
+      "light_profile": "ficus",
+      "category": "FOLIAGE",
+      "aliases": [
+        "뱅갈고무나무",
+        "Banyan"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ficus-benghalensis/"
+    },
+    {
+      "name": "파키라",
+      "scientific_name": "Pachira aquatica",
+      "light_profile": "pachira",
+      "category": "FOLIAGE",
+      "aliases": [
+        "머니트리",
+        "Money tree"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/pachira-aquatica/"
+    },
+    {
+      "name": "금전수",
+      "scientific_name": "Zamioculcas zamiifolia",
+      "light_profile": "zamioculcas",
+      "category": "FOLIAGE",
+      "aliases": [
+        "자미오쿨카스",
+        "ZZ plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/zamioculcas-zamiifolia/"
+    },
+    {
+      "name": "행운목",
+      "scientific_name": "Dracaena fragrans",
+      "light_profile": "dracaena",
+      "category": "FOLIAGE",
+      "aliases": [
+        "드라세나 프라그란스",
+        "Corn plant"
+      ],
+      "scientific_synonyms": [
+        "Dracaena deremensis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dracaena-fragrans/"
+    },
+    {
+      "name": "송오브인디아",
+      "scientific_name": "Dracaena reflexa",
+      "light_profile": "dracaena",
+      "category": "FOLIAGE",
+      "aliases": [
+        "드라세나 레플렉사",
+        "Song of India"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dracaena-reflexa-var-reflexa/"
+    },
+    {
+      "name": "개운죽",
+      "scientific_name": "Dracaena sanderiana",
+      "light_profile": "dracaena",
+      "category": "FOLIAGE",
+      "aliases": [
+        "럭키밤부",
+        "Lucky bamboo"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dracaena-sanderiana/"
+    },
+    {
+      "name": "산세베리아 실린드리카",
+      "scientific_name": "Dracaena angolensis",
+      "light_profile": "snake",
+      "category": "SUCCULENT",
+      "aliases": [
+        "원통산세베리아",
+        "실린드리카"
+      ],
+      "scientific_synonyms": [
+        "Sansevieria cylindrica",
+        "Sansevieria angolensis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dracaena-angolensis/"
+    },
+    {
+      "name": "코르딜리네",
+      "scientific_name": "Cordyline fruticosa",
+      "light_profile": "estimated_high",
+      "category": "FOLIAGE",
+      "aliases": [
+        "코르딜리네 프루티코사",
+        "Ti plant"
+      ],
+      "scientific_synonyms": [
+        "Cordyline terminalis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/cordyline-fruticosa/"
+    },
+    {
+      "name": "덕구리난",
+      "scientific_name": "Beaucarnea recurvata",
+      "light_profile": "estimated_high",
+      "category": "FOLIAGE",
+      "aliases": [
+        "도쿠리란",
+        "놀리나",
+        "Ponytail palm"
+      ],
+      "scientific_synonyms": [
+        "Nolina recurvata"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/beaucarnea-recurvata/"
+    },
+    {
+      "name": "유카",
+      "scientific_name": "Yucca gigantea",
+      "light_profile": "estimated_high",
+      "category": "FOLIAGE",
+      "aliases": [
+        "청년유카",
+        "Spineless yucca"
+      ],
+      "scientific_synonyms": [
+        "Yucca elephantipes",
+        "Yucca guatemalensis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/yucca-gigantea/"
+    },
+    {
+      "name": "홍콩야자",
+      "scientific_name": "Heptapleurum arboricola",
+      "light_profile": "schefflera",
+      "category": "FOLIAGE",
+      "aliases": [
+        "쉐플레라",
+        "셰플레라",
+        "Dwarf umbrella tree"
+      ],
+      "scientific_synonyms": [
+        "Schefflera arboricola"
+      ],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2432"
+    },
+    {
+      "name": "커피나무",
+      "scientific_name": "Coffea arabica",
+      "light_profile": "estimated_medium",
+      "category": "FRUIT",
+      "aliases": [
+        "아라비카 커피",
+        "Coffee plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/coffea-arabica/"
+    },
+    {
+      "name": "테이블야자",
+      "scientific_name": "Chamaedorea elegans",
+      "light_profile": "estimated_low",
+      "category": "PALM",
+      "aliases": [
+        "테이블 야자",
+        "Parlor palm"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/chamaedorea-elegans/"
+    },
+    {
+      "name": "아레카야자",
+      "scientific_name": "Chrysalidocarpus lutescens",
+      "light_profile": "estimated_medium",
+      "category": "PALM",
+      "aliases": [
+        "아레카 야자",
+        "Areca palm"
+      ],
+      "scientific_synonyms": [
+        "Dypsis lutescens"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dypsis-lutescens/"
+    },
+    {
+      "name": "켄차야자",
+      "scientific_name": "Howea forsteriana",
+      "light_profile": "estimated_medium",
+      "category": "PALM",
+      "aliases": [
+        "켄티아야자",
+        "Kentia palm"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/howea-forsteriana/"
+    },
+    {
+      "name": "관음죽",
+      "scientific_name": "Rhapis excelsa",
+      "light_profile": "estimated_medium",
+      "category": "PALM",
+      "aliases": [
+        "Lady palm"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/rhapis-excelsa/"
+    },
+    {
+      "name": "아라우카리아",
+      "scientific_name": "Araucaria heterophylla",
+      "light_profile": "estimated_medium",
+      "category": "CONIFER",
+      "aliases": [
+        "노퍽소나무",
+        "Norfolk Island pine"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/araucaria-heterophylla/"
+    },
+    {
+      "name": "스파티필름",
+      "scientific_name": "Spathiphyllum wallisii",
+      "light_profile": "spathiphyllum",
+      "category": "FOLIAGE",
+      "aliases": [
+        "스파티필룸",
+        "Peace lily"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2465"
+    },
+    {
+      "name": "안스리움",
+      "scientific_name": "Anthurium andraeanum",
+      "light_profile": "anthurium",
+      "category": "FLOWERING",
+      "aliases": [
+        "안시리움",
+        "앤슈리엄",
+        "Flamingo flower"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/anthurium-andraeanum/"
+    },
+    {
+      "name": "아글라오네마",
+      "scientific_name": "Aglaonema commutatum",
+      "light_profile": "aglaonema",
+      "category": "FOLIAGE",
+      "aliases": [
+        "아글라오네마 커뮤타툼",
+        "Chinese evergreen"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1611"
+    },
+    {
+      "name": "디펜바키아",
+      "scientific_name": "Dieffenbachia seguine",
+      "light_profile": "estimated_low",
+      "category": "FOLIAGE",
+      "aliases": [
+        "Dumb cane"
+      ],
+      "scientific_synonyms": [
+        "Dieffenbachia amoena",
+        "Dieffenbachia maculata"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/dieffenbachia-seguine/"
+    },
+    {
+      "name": "싱고니움",
+      "scientific_name": "Syngonium podophyllum",
+      "light_profile": "syngonium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "싱고니움 포도필룸",
+        "Arrowhead plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/syngonium-podophyllum/"
+    },
+    {
+      "name": "알로카시아",
+      "scientific_name": "Alocasia macrorrhizos",
+      "light_profile": "alocasia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "알로카시아 마크로리자",
+        "Giant taro"
+      ],
+      "scientific_synonyms": [
+        "Alocasia macrorrhiza"
+      ],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/1/6/1636"
+    },
+    {
+      "name": "알로카시아 제브리나",
+      "scientific_name": "Alocasia zebrina",
+      "light_profile": "alocasia",
+      "category": "FOLIAGE",
+      "aliases": [],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.rhs.org.uk/plants/136827/alocasia-zebrina/details"
+    },
+    {
+      "name": "알로카시아 프라이덱",
+      "scientific_name": "Alocasia micholitziana",
+      "light_profile": "alocasia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "프라이덱",
+        "Green velvet alocasia"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.rhs.org.uk/plants/131678/alocasia-micholitziana/details"
+    },
+    {
+      "name": "칼라데아 오르비폴리아",
+      "scientific_name": "Goeppertia orbifolia",
+      "light_profile": "goeppertia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "오르비폴리아"
+      ],
+      "scientific_synonyms": [
+        "Calathea orbifolia"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/goeppertia-orbifolia/"
+    },
+    {
+      "name": "칼라데아 마코야나",
+      "scientific_name": "Goeppertia makoyana",
+      "light_profile": "goeppertia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "마코야나",
+        "Peacock plant"
+      ],
+      "scientific_synonyms": [
+        "Calathea makoyana"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/goeppertia-makoyana/"
+    },
+    {
+      "name": "칼라데아 란시폴리아",
+      "scientific_name": "Goeppertia insignis",
+      "light_profile": "goeppertia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "란시폴리아",
+        "Rattlesnake plant"
+      ],
+      "scientific_synonyms": [
+        "Calathea lancifolia",
+        "Goeppertia lancifolia",
+        "Calathea insignis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/goeppertia-insignis/"
+    },
+    {
+      "name": "칼라데아 로세오픽타",
+      "scientific_name": "Goeppertia roseopicta",
+      "light_profile": "goeppertia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "로세오픽타"
+      ],
+      "scientific_synonyms": [
+        "Calathea roseopicta"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/goeppertia-roseopicta/"
+    },
+    {
+      "name": "마란타",
+      "scientific_name": "Maranta leuconeura",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "마란타 레우코네우라",
+        "Prayer plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/maranta-leuconeura/"
+    },
+    {
+      "name": "크테난테",
+      "scientific_name": "Ctenanthe burle-marxii",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "크테난테 버럴막시",
+        "Fishbone prayer plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/6/1/6101"
+    },
+    {
+      "name": "스트로만테 트리오스타",
+      "scientific_name": "Stromanthe thalia",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "스트로만테",
+        "트리오스타",
+        "Triostar"
+      ],
+      "scientific_synonyms": [
+        "Stromanthe sanguinea"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/stromanthe-thalia/"
+    },
+    {
+      "name": "청페페",
+      "scientific_name": "Peperomia obtusifolia",
+      "light_profile": "peperomia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "페페로미아 옵투시폴리아",
+        "Baby rubber plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/peperomia-obtusifolia/"
+    },
+    {
+      "name": "수박페페",
+      "scientific_name": "Peperomia argyraea",
+      "light_profile": "peperomia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "수박페페로미아",
+        "Watermelon peperomia"
+      ],
+      "scientific_synonyms": [
+        "Peperomia argyreia",
+        "Peperomia sandersii"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/peperomia-argyreia/"
+    },
+    {
+      "name": "페페로미아 카페라타",
+      "scientific_name": "Peperomia caperata",
+      "light_profile": "peperomia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "에메랄드리플",
+        "Emerald ripple"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/peperomia-caperata/"
+    },
+    {
+      "name": "페페로미아 프로스트라타",
+      "scientific_name": "Peperomia prostrata",
+      "light_profile": "peperomia",
+      "category": "FOLIAGE",
+      "aliases": [
+        "거북이줄",
+        "String of turtles"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/peperomia-prostrata/"
+    },
+    {
+      "name": "접란",
+      "scientific_name": "Chlorophytum comosum",
+      "light_profile": "chlorophytum",
+      "category": "FOLIAGE",
+      "aliases": [
+        "나비란",
+        "Spider plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/chlorophytum-comosum/"
+    },
+    {
+      "name": "아이비",
+      "scientific_name": "Hedera helix",
+      "light_profile": "hedera",
+      "category": "FOLIAGE",
+      "aliases": [
+        "잉글리시 아이비",
+        "English ivy"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/hedera-helix/"
+    },
+    {
+      "name": "팔손이",
+      "scientific_name": "Fatsia japonica",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "팔손이나무",
+        "Japanese aralia"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/fatsia-japonica/"
+    },
+    {
+      "name": "엽란",
+      "scientific_name": "Aspidistra elatior",
+      "light_profile": "aspidistra",
+      "category": "FOLIAGE",
+      "aliases": [
+        "Cast iron plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/aspidistra-elatior/"
+    },
+    {
+      "name": "달개비 제브리나",
+      "scientific_name": "Tradescantia zebrina",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "얼룩달개비",
+        "Zebrina"
+      ],
+      "scientific_synonyms": [
+        "Zebrina pendula"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/tradescantia-zebrina/"
+    },
+    {
+      "name": "크로톤",
+      "scientific_name": "Codiaeum variegatum",
+      "light_profile": "croton",
+      "category": "FOLIAGE",
+      "aliases": [
+        "코디에움",
+        "Croton"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/codiaeum-variegatum/"
+    },
+    {
+      "name": "칼리시아",
+      "scientific_name": "Callisia repens",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "핑크레이디 칼리시아",
+        "Turtle vine"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/callisia-repens/"
+    },
+    {
+      "name": "호야",
+      "scientific_name": "Hoya carnosa",
+      "light_profile": "hoya",
+      "category": "FOLIAGE",
+      "aliases": [
+        "호야 카르노사",
+        "Wax plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/hoya-carnosa/"
+    },
+    {
+      "name": "하트호야",
+      "scientific_name": "Hoya kerrii",
+      "light_profile": "hoya",
+      "category": "FOLIAGE",
+      "aliases": [
+        "호야 케리",
+        "Sweetheart hoya"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/hoya-kerrii/"
+    },
+    {
+      "name": "디시디아",
+      "scientific_name": "Dischidia nummularia",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "디시디아 눔물라리아",
+        "String of nickels"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/1/3/1385"
+    },
+    {
+      "name": "아스파라거스",
+      "scientific_name": "Asparagus setaceus",
+      "light_profile": "estimated_medium",
+      "category": "FOLIAGE",
+      "aliases": [
+        "아스파라거스 세타세우스",
+        "Asparagus fern"
+      ],
+      "scientific_synonyms": [
+        "Asparagus plumosus"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/asparagus-setaceus/"
+    },
+    {
+      "name": "보스턴고사리",
+      "scientific_name": "Nephrolepis exaltata",
+      "light_profile": "estimated_medium",
+      "category": "FERN",
+      "aliases": [
+        "보스톤고사리",
+        "Boston fern"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/nephrolepis-exaltata/"
+    },
+    {
+      "name": "아스플레니움",
+      "scientific_name": "Asplenium nidus",
+      "light_profile": "asplenium",
+      "category": "FERN",
+      "aliases": [
+        "새둥지고사리",
+        "Bird nest fern"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/asplenium-nidus/"
+    },
+    {
+      "name": "아디안텀",
+      "scientific_name": "Adiantum raddianum",
+      "light_profile": "pteridaceae",
+      "category": "FERN",
+      "aliases": [
+        "아디안툼",
+        "Maidenhair fern"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/adiantum-raddianum/"
+    },
+    {
+      "name": "박쥐란",
+      "scientific_name": "Platycerium bifurcatum",
+      "light_profile": "estimated_medium",
+      "category": "FERN",
+      "aliases": [
+        "플라티세리움",
+        "Staghorn fern"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/platycerium-bifurcatum/"
+    },
+    {
+      "name": "틸란드시아 이오난사",
+      "scientific_name": "Tillandsia ionantha",
+      "light_profile": "bromeliad",
+      "category": "BROMELIAD",
+      "aliases": [
+        "이오난사",
+        "에어플랜트",
+        "Air plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/tillandsia-ionantha/"
+    },
+    {
+      "name": "구즈마니아",
+      "scientific_name": "Guzmania lingulata",
+      "light_profile": "bromeliad",
+      "category": "BROMELIAD",
+      "aliases": [
+        "Scarlet star"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/guzmania-lingulata/"
+    },
+    {
+      "name": "에크메아",
+      "scientific_name": "Aechmea fasciata",
+      "light_profile": "bromeliad",
+      "category": "BROMELIAD",
+      "aliases": [
+        "에크메아 파시아타",
+        "Silver vase plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/aechmea-fasciata/"
+    },
+    {
+      "name": "레몬나무",
+      "scientific_name": "Citrus × limon",
+      "light_profile": "lemon",
+      "category": "FRUIT",
+      "aliases": [
+        "레몬",
+        "Lemon tree"
+      ],
+      "scientific_synonyms": [
+        "Citrus limon",
+        "Citrus x limon"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/citrus-x-limon/"
+    },
+    {
+      "name": "알로에베라",
+      "scientific_name": "Aloe vera",
+      "light_profile": "aloe",
+      "category": "SUCCULENT",
+      "aliases": [
+        "알로에",
+        "Aloe"
+      ],
+      "scientific_synonyms": [
+        "Aloe barbadensis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/aloe-vera/"
+    },
+    {
+      "name": "십이지권",
+      "scientific_name": "Haworthiopsis attenuata",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "하월시아 아테누아타",
+        "Zebra haworthia"
+      ],
+      "scientific_synonyms": [
+        "Haworthia attenuata"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/haworthiopsis-attenuata/"
+    },
+    {
+      "name": "하월시아 쿠페리",
+      "scientific_name": "Haworthia cooperi",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "하월시아",
+        "쿠페리"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/4/2/4248"
+    },
+    {
+      "name": "에케베리아 엘레강스",
+      "scientific_name": "Echeveria elegans",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "엘레강스",
+        "Mexican snowball"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/echeveria-elegans/"
+    },
+    {
+      "name": "에케베리아 아가보이데스",
+      "scientific_name": "Echeveria agavoides",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "아가보이데스"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/7/4/7411"
+    },
+    {
+      "name": "염좌",
+      "scientific_name": "Crassula ovata",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "제이드플랜트",
+        "Jade plant"
+      ],
+      "scientific_synonyms": [
+        "Crassula argentea",
+        "Crassula portulacea"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/crassula-ovata/"
+    },
+    {
+      "name": "십자성",
+      "scientific_name": "Crassula perforata",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "크라슐라 퍼포라타",
+        "String of buttons"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/crassula-perforata/"
+    },
+    {
+      "name": "칼랑코에",
+      "scientific_name": "Kalanchoe blossfeldiana",
+      "light_profile": "kalanchoe",
+      "category": "FLOWERING",
+      "aliases": [
+        "칼란디바",
+        "Flaming Katy"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/kalanchoe-blossfeldiana/"
+    },
+    {
+      "name": "월토이",
+      "scientific_name": "Kalanchoe tomentosa",
+      "light_profile": "kalanchoe",
+      "category": "SUCCULENT",
+      "aliases": [
+        "판다플랜트",
+        "Panda plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/kalanchoe-tomentosa/"
+    },
+    {
+      "name": "청옥",
+      "scientific_name": "Sedum morganianum",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "Burro tail"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/sedum-morganianum/"
+    },
+    {
+      "name": "홍옥",
+      "scientific_name": "Sedum × rubrotinctum",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "젤리빈",
+        "Jelly bean plant"
+      ],
+      "scientific_synonyms": [
+        "Sedum rubrotinctum",
+        "Sedum x rubrotinctum"
+      ],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/2/4/2447"
+    },
+    {
+      "name": "용월",
+      "scientific_name": "Graptopetalum paraguayense",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "Ghost plant"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/graptopetalum-paraguayense/"
+    },
+    {
+      "name": "아악무",
+      "scientific_name": "Portulacaria afra",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "은행목",
+        "쇠비름나무",
+        "Elephant bush"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/2/3/2361"
+    },
+    {
+      "name": "녹영",
+      "scientific_name": "Curio rowleyanus",
+      "light_profile": "succulent",
+      "category": "SUCCULENT",
+      "aliases": [
+        "콩란",
+        "String of pearls"
+      ],
+      "scientific_synonyms": [
+        "Senecio rowleyanus"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/curio-rowleyanus/"
+    },
+    {
+      "name": "게발선인장",
+      "scientific_name": "Schlumbergera truncata",
+      "light_profile": "estimated_medium",
+      "category": "CACTUS",
+      "aliases": [
+        "가재발선인장",
+        "Thanksgiving cactus"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/schlumbergera-truncata/"
+    },
+    {
+      "name": "백도선",
+      "scientific_name": "Opuntia microdasys",
+      "light_profile": "desert_cactus",
+      "category": "CACTUS",
+      "aliases": [
+        "토끼귀선인장",
+        "Bunny ears cactus"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/opuntia-microdasys/"
+    },
+    {
+      "name": "율마",
+      "scientific_name": "Hesperocyparis macrocarpa",
+      "light_profile": "estimated_very_high",
+      "category": "CONIFER",
+      "aliases": [
+        "레몬사이프러스",
+        "골드크레스트",
+        "Lemon cypress"
+      ],
+      "scientific_synonyms": [
+        "Cupressus macrocarpa",
+        "Callitropsis macrocarpa"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/hesperocyparis-macrocarpa/"
+    },
+    {
+      "name": "금호선인장",
+      "scientific_name": "Kroenleinia grusonii",
+      "light_profile": "desert_cactus",
+      "category": "CACTUS",
+      "aliases": [
+        "금호",
+        "Golden barrel cactus"
+      ],
+      "scientific_synonyms": [
+        "Echinocactus grusonii"
+      ],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/1/9/1981"
+    },
+    {
+      "name": "호접란",
+      "scientific_name": "Phalaenopsis amabilis",
+      "light_profile": "orchid_low",
+      "category": "FLOWERING",
+      "aliases": [
+        "팔레놉시스",
+        "Moth orchid"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.nparks.gov.sg/florafaunaweb/flora/5/8/5881"
+    },
+    {
+      "name": "아프리칸바이올렛",
+      "scientific_name": "Streptocarpus ionanthus",
+      "light_profile": "african_violet",
+      "category": "FLOWERING",
+      "aliases": [
+        "세인트폴리아",
+        "African violet"
+      ],
+      "scientific_synonyms": [
+        "Saintpaulia ionantha"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/streptocarpus-ionanthus/"
+    },
+    {
+      "name": "렉스베고니아",
+      "scientific_name": "Begonia rex",
+      "light_profile": "estimated_medium",
+      "category": "FLOWERING",
+      "aliases": [
+        "베고니아 렉스",
+        "Rex begonia"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.rhs.org.uk/plants/101666/begonia-rex-r/details"
+    },
+    {
+      "name": "시클라멘",
+      "scientific_name": "Cyclamen persicum",
+      "light_profile": "cyclamen",
+      "category": "FLOWERING",
+      "aliases": [
+        "Florist cyclamen"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/cyclamen-persicum/"
+    },
+    {
+      "name": "제라늄",
+      "scientific_name": "Pelargonium zonale",
+      "light_profile": "estimated_high",
+      "category": "FLOWERING",
+      "aliases": [
+        "제라니움",
+        "Zonal geranium"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://www.rhs.org.uk/plants/12407/pelargonium-zonale/details"
+    },
+    {
+      "name": "치자나무",
+      "scientific_name": "Gardenia jasminoides",
+      "light_profile": "estimated_high",
+      "category": "FLOWERING",
+      "aliases": [
+        "치자",
+        "Cape jasmine"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/gardenia-jasminoides/"
+    },
+    {
+      "name": "바질",
+      "scientific_name": "Ocimum basilicum",
+      "light_profile": "basil",
+      "category": "HERB",
+      "aliases": [
+        "스위트바질",
+        "Basil"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/ocimum-basilicum/"
+    },
+    {
+      "name": "로즈마리",
+      "scientific_name": "Salvia rosmarinus",
+      "light_profile": "rosemary",
+      "category": "HERB",
+      "aliases": [
+        "로즈메리",
+        "Rosemary"
+      ],
+      "scientific_synonyms": [
+        "Rosmarinus officinalis"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/salvia-rosmarinus/"
+    },
+    {
+      "name": "라벤더",
+      "scientific_name": "Lavandula angustifolia",
+      "light_profile": "estimated_very_high",
+      "category": "HERB",
+      "aliases": [
+        "잉글리시라벤더",
+        "English lavender"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/lavandula-angustifolia/"
+    },
+    {
+      "name": "스피어민트",
+      "scientific_name": "Mentha spicata",
+      "light_profile": "mint",
+      "category": "HERB",
+      "aliases": [
+        "스피아민트",
+        "Spearmint"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/mentha-spicata/"
+    },
+    {
+      "name": "페퍼민트",
+      "scientific_name": "Mentha × piperita",
+      "light_profile": "mint",
+      "category": "HERB",
+      "aliases": [
+        "Peppermint"
+      ],
+      "scientific_synonyms": [
+        "Mentha piperita",
+        "Mentha x piperita"
+      ],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/mentha-x-piperita/"
+    },
+    {
+      "name": "타임",
+      "scientific_name": "Thymus vulgaris",
+      "light_profile": "thyme",
+      "category": "HERB",
+      "aliases": [
+        "커먼타임",
+        "Thyme"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/thymus-vulgaris/"
+    },
+    {
+      "name": "오레가노",
+      "scientific_name": "Origanum vulgare",
+      "light_profile": "oregano",
+      "category": "HERB",
+      "aliases": [
+        "Oregano"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/origanum-vulgare/"
+    },
+    {
+      "name": "파슬리",
+      "scientific_name": "Petroselinum crispum",
+      "light_profile": "parsley",
+      "category": "HERB",
+      "aliases": [
+        "Parsley"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/petroselinum-crispum/"
+    }
+  ]
+}
