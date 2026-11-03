@@ -1,0 +1,25 @@
+--- a/frontend/src/app/recommendation/[id].tsx
++++ b/frontend/src/app/recommendation/[id].tsx
+@@ -144,9 +144,17 @@
+   if (!rec) {
+-    return current ? (
++    if (current?.status === 'ok') {
++      return (
++        <NoChange
++          title="지금 위치가 잘 맞아요"
++          description={`예상 DLI ${formatDli(current.dli)} · 요구 ${range} mol/m²/day 범위 안이에요. (LUMAP 계산)`}
++        />
++      );
++    }
++    return (
+       <NoChange
+-        title="지금 위치가 잘 맞아요"
+-        description={`예상 DLI ${formatDli(current.dli)} · 요구 ${range} mol/m²/day 범위 안이에요. (LUMAP 계산)`}
++        title="추천할 빈 칸이 없어요"
++        description={current
++          ? `현재 예상 DLI ${formatDli(current.dli)}는 요구 ${range} mol/m²/day 범위 밖이에요. 배치 불가 칸을 확인하거나 여러 식물의 배치를 함께 바꿔보세요.`
++          : '다른 식물이나 배치 불가 칸을 빼면 남는 칸이 없어요.'}
+       />
+-    ) : (
+-      <NoChange title="추천할 빈 칸이 없어요" description="다른 식물이나 배치 불가 칸을 빼면 남는 칸이 없어요." />
+     );

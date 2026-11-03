@@ -6,10 +6,11 @@ import math
 import os
 from pathlib import Path
 import shutil
+import hashlib
 from uuid import uuid4
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, Header, HTTPException, Query, UploadFile
 from pydantic import Field, model_validator, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
@@ -25,6 +26,9 @@ from app.weather import get_irradiance, fetch_raw
 from app.integration_models import IntegrationJob
 from app.algorithm_bridge import invoke
 from app.korean_cities import KoreanCitiesOut, city_by_id, search_cities
+from app import job_control
+from app.integration_models import JobRuntime
+from app.placement_service import effective_blocked, decisions, validate_recommendations
 
 router = APIRouter(prefix='/api/v1', tags=['Integration'])
 UPLOAD_ROOT = Path(os.environ.get('UPLOAD_ROOT', 'data/scans')).resolve()
@@ -141,6 +145,7 @@ class JobAccepted(Input):
     job_id: str
     status: Literal['PENDING']
     status_url: str
+    reused: bool = False
 
 
 class Period(Input):
@@ -214,29 +219,42 @@ def prepare_dli(room, body, db, for_lookup=False):
 def make_payload(room, body, db, for_lookup=False):
     spec,angle,windows,custom=prepare_dli(room,body,db,for_lookup)
     return {'request':body.model_dump(mode='json'),'grid':spec,'room_id':room.id,
-        'geometry_version':room.geometry_version,'room':{'corners':[{'order_index':p.order_index,'x':p.x,'z':p.z} for p in room.corners],
+        'geometry_version':room.geometry_version,'algorithm_revision':get_algorithm_settings().dli_cache_version,
+        'room':{'corners':[{'order_index':p.order_index,'x':p.x,'z':p.z} for p in room.corners],
         'height_m':max((p.y for w in room.windows for p in w.corners),default=0),
         'x_axis_azimuth_deg':angle,'latitude':room.latitude,'longitude':room.longitude},'windows':windows,'callable':custom}
 
 
-def enqueue(room_id, body, tasks, db, user, kind):
+def enqueue(room_id, body, tasks, db, user, kind, idempotency_key=None):
     room=owned_room(db,user,room_id)
     payload=make_payload(room,body,db)
     payload['result_kind']=kind
-    job=IntegrationJob(id=str(uuid4()),user_id=user.id,room_id=room_id,kind=kind,payload=payload)
-    db.add(job); commit(db)
+    request_hash=job_control.digest({'user_id':user.id,'kind':kind,'payload':payload})
+    with job_control.admission_lock:
+        prior=job_control.find_existing(db,user.id,request_hash,idempotency_key)
+        if prior is not None:
+            job_control.remember_key(db,prior,request_hash,idempotency_key)
+            commit(db)
+            return job_control.accepted(prior,True)
+        job_control.admit(db,user.id)
+        job=IntegrationJob(id=str(uuid4()),user_id=user.id,room_id=room_id,kind=kind,payload=payload)
+        db.add(job)
+        job_control.attach(db,job,request_hash,idempotency_key,(body.end_date-body.start_date).days+1)
+        commit(db)
     tasks.add_task(run_job,job.id,sessionmaker(bind=db.get_bind(),expire_on_commit=False))
-    return {'job_id':job.id,'status':'PENDING','status_url':f'/api/v1/jobs/{job.id}'}
+    return job_control.accepted(job)
 
 
 @router.post('/rooms/{room_id}/dli-map', status_code=202)
-def calculate(room_id:int, body:DliRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser):
-    return enqueue(room_id,body,tasks,db,user,'DLI')
+def calculate(room_id:int, body:DliRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser,
+              idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=128)):
+    return enqueue(room_id,body,tasks,db,user,'DLI',idempotency_key)
 
 
 @router.post('/rooms/{room_id}/dli-series', status_code=202, response_model=JobAccepted)
-def calculate_series(room_id:int, body:DliSeriesRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser):
-    return enqueue(room_id,body,tasks,db,user,'DLI_SERIES')
+def calculate_series(room_id:int, body:DliSeriesRequest, tasks:BackgroundTasks, db:Db, user:CurrentUser,
+                     idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=128)):
+    return enqueue(room_id,body,tasks,db,user,'DLI_SERIES',idempotency_key)
 
 
 @router.get('/rooms/{room_id}/dli-series', response_model=DliSeries)
@@ -268,7 +286,10 @@ def compute_job(p,db):
     while day<=body.end_date:
         cached=dli_cache.lookup(db,p,day)
         if cached is not None:
-            results.append(cached); day+=timedelta(days=1); continue
+            results.append(cached); day+=timedelta(days=1)
+            if p.get('_job_id'):
+                job_control.progress(db,p['_job_id'],'CALCULATING_DLI',len(results)); db.commit()
+            continue
         weather=get_irradiance(db,p['room']['latitude'],p['room']['longitude'],day)
         payload={'room_id':p['room_id'],'room':p['room'],'date':day.isoformat(),'grid':p['grid'],
             'windows':p['windows'],'dni_dhi':weather['values'],'time_basis':weather['time_basis'],
@@ -289,6 +310,8 @@ def compute_job(p,db):
         daily=dli_cache.daily_result(p,day,result,weather['dataset'])
         dli_cache.save(db,p,day,daily,weather)
         results.append(daily); day+=timedelta(days=1)
+        if p.get('_job_id'):
+            job_control.progress(db,p['_job_id'],'CALCULATING_DLI',len(results)); db.commit()
     if p.get('result_kind')=='DLI_SERIES':
         return dli_cache.series_result(p,results,[],db)
     arrays={}
@@ -303,12 +326,19 @@ def compute_job(p,db):
 
 
 def run_job(job_id,factory):
+    with job_control.job_slot:
+        _run_job(job_id,factory)
+
+
+def _run_job(job_id,factory):
     with factory() as db:
         job=db.get(IntegrationJob,job_id)
         if job is None:return
-        job.status='RUNNING'; db.commit()
+        job.status='RUNNING'
+        job_control.progress(db,job.id,'ANALYZING_SCAN' if job.kind=='SCAN' else 'CALCULATING_DLI')
+        db.commit()
         try:
-            result=compute_job(job.payload,db) if job.kind in ('DLI','DLI_SERIES') else invoke('scan',job.payload)
+            result=compute_job({**job.payload,'_job_id':job.id},db) if job.kind in ('DLI','DLI_SERIES') else invoke('scan',job.payload)
             if job.kind=='SCAN':
                 if len(result['sky'])!=91 or any(len(r)!=360 for r in result['sky']) or len(result['max_captured_elevation_deg'])!=360:
                     raise ValueError('Invalid SKY dimensions')
@@ -321,11 +351,14 @@ def run_job(job_id,factory):
             if job.kind in ('DLI','DLI_SERIES') and light_inputs_changed(job,room,db):
                 raise ValueError('Light inputs changed during calculation; submit again')
             job.result=result; job.status='COMPLETED'
+            runtime=db.get(JobRuntime,job.id)
+            job_control.progress(db,job.id,'COMPLETED',runtime.total_steps if runtime else 1)
         except Exception as exc:
             db.rollback()
             job=db.get(IntegrationJob,job_id)
             if job is None:return
             job.status='FAILED'; job.error=exc.detail if isinstance(exc,HTTPException) else 'Processing failed; inspect server logs'
+            job_control.progress(db,job.id,'FAILED',error_code=job_control.classify_error(exc,job.kind))
             import logging
             logging.getLogger(__name__).exception('Job %s failed',job_id)
         db.commit()
@@ -335,8 +368,14 @@ def status(job_id:str,db:Db,user:CurrentUser):
     job=db.scalar(select(IntegrationJob).where(IntegrationJob.id==job_id,IntegrationJob.user_id==user.id))
     if job is None:raise HTTPException(404,'Job not found')
     room=owned_room(db,user,job.room_id)
+    runtime=db.get(JobRuntime,job.id)
     return {'job_id':job.id,'kind':job.kind,'status':job.status,'error':job.error,
-            'stale':job.status=='STALE' or room.geometry_version!=job.payload['geometry_version'] or (job.kind in ('DLI','DLI_SERIES') and light_inputs_changed(job,room,db)),'result':job.result}
+            'error_code':runtime.error_code if runtime else None,
+            'progress':{'stage':runtime.stage if runtime else job.status,
+                        'completed_steps':runtime.completed_steps if runtime else 0,
+                        'total_steps':runtime.total_steps if runtime else 1},
+            'stale':job.status=='STALE' or room.geometry_version!=job.payload['geometry_version'] or (job.kind in ('DLI','DLI_SERIES') and (light_inputs_changed(job,room,db) or
+                (job.status=='COMPLETED' and not dli_cache.period_is_fresh(db,job.payload)))),'result':job.result}
 
 class Camera(Input):
     hfov_deg:float=Field(gt=0,lt=180,allow_inf_nan=False)
@@ -374,7 +413,8 @@ class Scan(Input):
 
 @router.post('/windows/{window_id}/scans',status_code=202)
 async def upload_scan(window_id:int,tasks:BackgroundTasks,db:Db,user:CurrentUser,
-                      metadata:str=Form(...),files:list[UploadFile]=File(...)):
+                      metadata:str=Form(...),files:list[UploadFile]=File(...),
+                      idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=128)):
     window=owned_window(db,user,window_id); room=owned_room(db,user,window.room_id)
     try:body=Scan.model_validate_json(metadata)
     except ValidationError as exc:raise HTTPException(422,str(exc)) from exc
@@ -383,9 +423,11 @@ async def upload_scan(window_id:int,tasks:BackgroundTasks,db:Db,user:CurrentUser
     job_id=str(uuid4()); folder=UPLOAD_ROOT/job_id; folder.mkdir(parents=True)
     payload=body.model_dump(mode='json'); payload['geometry_version']=room.geometry_version
     by_name={f.filename:f for f in files}
+    file_hashes={}
     try:
         for frame in payload['frames']:
             raw=await by_name[frame['file']].read(5*1024*1024+1)
+            file_hashes[frame['file']]=hashlib.sha256(raw).hexdigest()
             if len(raw)>5*1024*1024:raise HTTPException(413,'Each JPEG must be <=5 MiB')
             try:
                 im=Image.open(io.BytesIO(raw))
@@ -394,14 +436,23 @@ async def upload_scan(window_id:int,tasks:BackgroundTasks,db:Db,user:CurrentUser
                 im.verify()
             except Exception as exc:raise HTTPException(422,'Expected upright JPEG matching camera dimensions') from exc
             path=folder/f"{frame['index']:02d}.jpg"; path.write_bytes(raw); frame['path']=str(path)
-        job=IntegrationJob(id=job_id,user_id=user.id,room_id=room.id,window_id=window_id,kind='SCAN',payload=payload)
-        db.add(job); commit(db)
+        request_hash=job_control.digest({'user_id':user.id,'kind':'SCAN','geometry_version':room.geometry_version,
+            'metadata':body.model_dump(mode='json'),'files':file_hashes})
+        with job_control.admission_lock:
+            prior=job_control.find_existing(db,user.id,request_hash,idempotency_key)
+            if prior is not None:
+                job_control.remember_key(db,prior,request_hash,idempotency_key); commit(db)
+                shutil.rmtree(folder,ignore_errors=True)
+                return job_control.accepted(prior,True)
+            job_control.admit(db,user.id)
+            job=IntegrationJob(id=job_id,user_id=user.id,room_id=room.id,window_id=window_id,kind='SCAN',payload=payload)
+            db.add(job); job_control.attach(db,job,request_hash,idempotency_key); commit(db)
     except Exception:
         shutil.rmtree(folder,ignore_errors=True); raise
     finally:
         for f in files:await f.close()
     tasks.add_task(run_job,job_id,sessionmaker(bind=db.get_bind(),expire_on_commit=False))
-    return {'job_id':job_id,'status':'PENDING','status_url':f'/api/v1/jobs/{job_id}'}
+    return job_control.accepted(job)
 
 @router.post('/rooms/{room_id}/direction')
 def direction(room_id:int,db:Db,user:CurrentUser):
@@ -432,6 +483,11 @@ class RecommendationRequest(Input):
 
 @router.post('/rooms/{room_id}/recommendations', response_model=RecommendationResponse)
 def recommend(room_id:int,body:RecommendationRequest,db:Db,user:CurrentUser):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(recommendation_data(room_id,body,db,user))
+
+
+def recommendation_data(room_id,body,db,user):
     room=owned_room(db,user,room_id)
     result=status(body.dli_job_id,db,user)
     job=db.get(IntegrationJob,body.dli_job_id)
@@ -443,18 +499,28 @@ def recommend(room_id:int,body:RecommendationRequest,db:Db,user:CurrentUser):
         species=db.get(m.PlantSpecies,p.species_id)
         plants.append({'plant_id':p.id,'species_id':species.id,'position':{'x':p.x,'y':p.y,'z':p.z},'min_dli':species.min_dli,'max_dli':species.max_dli})
     spec=job.result['grid']
-    if any(not(0<=r<spec['rows'] and 0<=c<spec['cols']) for r,c in body.blocked_cells):raise HTTPException(422,'Blocked cell outside grid')
-    output = invoke('custom',{'_callable':fn,'room_id':room.id,'dli_map':job.result,'plants':plants,'blocked_cells':[{'row':r,'col':c} for r,c in body.blocked_cells]})
+    if any(abs(p['position']['y']-spec['sample_height_m'])>.001 for p in plants):
+        raise HTTPException(422,'Plant heights must match the DLI sample_height_m; use height 0 consistently for 2D')
+    blocked=effective_blocked(db,room,spec,body.blocked_cells)
+    output = invoke('custom',{'_callable':fn,'_allow_relocation_swaps':True,
+        'room_id':room.id,'dli_map':job.result,'plants':plants,
+        'blocked_cells':[{'row':r,'col':c} for r,c in sorted(blocked)]})
     try:
         RecommendationResponse.model_validate(output)
     except ValidationError as exc:
         raise HTTPException(502, 'Invalid recommendation result') from exc
-    # Return the original JSON, with no envelope, rename, or derived UI metrics.
-    from fastapi.responses import JSONResponse
-    return JSONResponse(output)
+    validate_recommendations(output,room,spec,blocked,plants,job.result['total_dli'])
+    # Keep all original JSON fields. Machine-readable decisions live on the plan API.
+    for decision in decisions(output):
+        if decision['reason_code'] in ('NO_FREE_CELL','NO_SUITABLE_CELL'):
+            warning=f"PLANT_{decision['plant_id']}_{decision['reason_code']}"
+            if warning not in output['warnings']: output['warnings'].append(warning)
+    return output
 
 
 def light_inputs_changed(job, room, db):
+    if job.payload.get('algorithm_revision') != get_algorithm_settings().dli_cache_version:
+        return True
     request=DliRequest(**job.payload['request'])
     current=make_payload(room,request,db,for_lookup=True)
     # Older jobs did not store a scan id; changing them to stale is intentional.

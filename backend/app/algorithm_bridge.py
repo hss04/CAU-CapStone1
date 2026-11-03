@@ -4,9 +4,11 @@ from app.config import get_algorithm_settings
 from pathlib import Path
 import subprocess
 import sys
+from threading import BoundedSemaphore
 from fastapi import HTTPException
 
 _root = Path(__file__).resolve().parents[1]
+_algorithm_slot = BoundedSemaphore(1)
 def algorithm_directory():
     configured = get_algorithm_settings().algorithm_dir
     # Prefer the pinned bundled copy; sibling copies must be selected explicitly.
@@ -17,9 +19,10 @@ def algorithm_directory():
 def invoke(operation, payload):
     runner = Path(__file__).with_name('algorithm_worker.py')
     try:
-        p = subprocess.run([sys.executable, str(runner), str(algorithm_directory()), operation],
-            input=json.dumps(payload, allow_nan=False), text=True, capture_output=True,
-            timeout=900, check=False)
+        with _algorithm_slot:
+            p = subprocess.run([sys.executable, str(runner), str(algorithm_directory()), operation],
+                input=json.dumps(payload, allow_nan=False), text=True, capture_output=True,
+                timeout=900, check=False)
     except subprocess.TimeoutExpired as exc:
         raise HTTPException(504, 'Algorithm exceeded 15 minute limit') from exc
     if p.returncode:

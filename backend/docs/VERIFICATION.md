@@ -1,3 +1,5 @@
+> **2026-11-03 v0.9.0:** 전체 **227 passed** (기존 198 + 신규 29). 13장 합성 JPEG를 실제 SegFormer로 분석하고 외부 기상 → DLI → 추천 계획까지 Uvicorn HTTP 검증을 통과했습니다. 실제 휴대폰 사진 및 Expo 전체 빌드는 별도 검증이 필요합니다. 범위와 실행법은 [DEMO_IMPROVEMENTS.md](DEMO_IMPROVEMENTS.md)를 확인하세요.
+
 > 최종 backend 통합 테스트: **78 passed** (v5 75 + 기존 브랜치 회귀 3).
 
 > v5 GitHub 통합: AR 중복 방지 및 /ready 보존. 새 알고리즘 연결과 검증 범위는 [CHANGES_V5.md](CHANGES_V5.md)를 참고하세요.

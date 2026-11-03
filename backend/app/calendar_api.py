@@ -2,12 +2,12 @@
 from datetime import date, datetime
 
 from fastapi import APIRouter, HTTPException, Query, Response
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app import calendar_schemas as s, models as m
 from app.api import Limit, Offset, commit, owned_plant, owned_room
 from app.calendar_service import TASK_TITLES, build_calendar, matches_schedule
-from app.schemas import KST, PlantOut
+from app.schemas import KST, PlantOut, WateringInput
 from app.security import CurrentUser, Db
 
 
@@ -58,6 +58,42 @@ def watering_history(plant_id: int, db: Db, user: CurrentUser,
     if end_date is not None:
         query = query.where(m.WateringRecord.watered_at <= end_date)
     return db.scalars(query.order_by(m.WateringRecord.watered_at.desc()).limit(limit).offset(offset)).all()
+
+
+def refresh_last_watering(db, plant):
+    db.flush()
+    plant.last_watered_at = db.scalar(select(func.max(m.WateringRecord.watered_at)).where(
+        m.WateringRecord.plant_id == plant.id))
+
+
+@router.patch('/plants/{plant_id}/waterings/{record_id}', response_model=PlantOut)
+def correct_watering(plant_id: int, record_id: int, body: WateringInput, db: Db, user: CurrentUser):
+    plant = owned_plant(db, user, plant_id)
+    record = db.get(m.WateringRecord, record_id)
+    if record is None or record.plant_id != plant.id:
+        raise HTTPException(404, 'Watering record not found')
+    duplicate = db.scalar(select(m.WateringRecord).where(
+        m.WateringRecord.plant_id == plant.id, m.WateringRecord.watered_at == body.watered_at,
+        m.WateringRecord.id != record.id))
+    if duplicate is not None:
+        raise HTTPException(409, 'This plant already has a watering record on that date')
+    record.watered_at = body.watered_at
+    refresh_last_watering(db, plant)
+    commit(db)
+    return plant
+
+
+@router.delete('/plants/{plant_id}/waterings/{record_id}', response_model=PlantOut)
+def undo_watering(plant_id: int, record_id: int, db: Db, user: CurrentUser):
+    plant = owned_plant(db, user, plant_id)
+    record = db.get(m.WateringRecord, record_id)
+    if record is not None and record.plant_id != plant.id:
+        raise HTTPException(404, 'Watering record not found')
+    if record is not None:
+        db.delete(record)
+        refresh_last_watering(db, plant)
+        commit(db)
+    return plant
 
 
 def schedule_values(body):

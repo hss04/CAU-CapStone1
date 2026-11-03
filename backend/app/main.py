@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
-from sqlalchemy import inspect, text, update
-from app.integration_models import IntegrationJob
+from sqlalchemy import inspect, text, update, select
+from app.integration_models import IntegrationJob, JobRuntime
 from app.database import SessionLocal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,8 @@ from app.calendar_service import backfill_waterings
 from app.growth_api import router as growth_router
 from app.weather import router as weather_router
 from app.integration import router as integration_router
+from app.placement_api import router as placement_router
+from app.insights_api import router as insights_router
 from app.config import get_settings
 from app.database import Base, engine
 from app.algorithm_bridge import algorithm_directory
@@ -33,11 +35,15 @@ async def lifespan(app:FastAPI):
         backfill_waterings(db)
         db.execute(update(IntegrationJob).where(IntegrationJob.status.in_(['PENDING','RUNNING']))
                    .values(status='FAILED',error='Server restarted during processing; submit again'))
+        db.execute(update(JobRuntime).where(JobRuntime.job_id.in_(
+            select(IntegrationJob.id).where(
+                IntegrationJob.error=='Server restarted during processing; submit again')))
+            .values(stage='FAILED',error_code='SERVER_RESTARTED'))
         db.commit()
     yield
 
 
-app=FastAPI(title='PlantLight API',version='0.8.0',lifespan=lifespan,
+app=FastAPI(title='PlantLight API',version='0.9.0',lifespan=lifespan,
             description='JWT + rooms/windows + plant placement. Open-Meteo DNI/DHI retrieval and DB cache; DLI calculation is a separate module.')
 if get_settings().cors_origins:
     app.add_middleware(CORSMiddleware,allow_origins=get_settings().cors_origins,
@@ -48,6 +54,8 @@ app.include_router(calendar_router)
 app.include_router(growth_router)
 app.include_router(weather_router)
 app.include_router(integration_router)
+app.include_router(placement_router)
+app.include_router(insights_router)
 
 
 @app.get('/health',tags=['Health'])

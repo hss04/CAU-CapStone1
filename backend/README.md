@@ -14,6 +14,8 @@
 
 > **2026-11-03 적상추 추가:** 기본 카탈로그는 총 107종입니다. `적상추`, `붉은상추`, `Red leaf lettuce`로 검색하고 개별 식물로 등록할 수 있습니다. 기존 DB는 업데이트 후 서버 재시작으로 빠진 항목을 추가합니다. DLI 참고 범위와 적용 방법은 [PLANT_CATALOG.md](docs/PLANT_CATALOG.md)를 확인하세요.
 
+> **v0.9.0 시연·배치 개선:** 중복 작업 방지, 진행 상태, 추천 사유, 식물 일괄 이동, 물주기 취소, 저장된 지도 복원, 금지 칸 저장과 기간 비교를 추가했습니다. 먼저 [DEMO_IMPROVEMENTS.md](docs/DEMO_IMPROVEMENTS.md)를 읽고 `python scripts/migrate_v6.py`를 실행하세요. 시연에서는 `--reload` 없이 worker 1개로 실행합니다.
+
 # PlantLight FastAPI 백엔드
 
 로그인, 방/창문 좌표, 식물 종류와 사용자 식물 위치를 관리하는 백엔드입니다. 제공된 AR 방·창문 앱의 저장 규격 v3에 맞춘 보정 버전(0.2.0)입니다. Python 3.11 이상이 필요하며 Python 3.12에서 테스트했습니다. Android 프로젝트와 별도로 PC에서 실행합니다.

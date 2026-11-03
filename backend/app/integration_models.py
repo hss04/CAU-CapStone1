@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, JSON, String, DateTime
+from sqlalchemy import ForeignKey, JSON, String, DateTime, Integer, Float
 from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
@@ -24,3 +24,43 @@ class DliDailyCache(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class JobRuntime(Base):
+    """Additive job metadata; existing integration_jobs rows stay intact."""
+    __tablename__ = 'job_runtime'
+    job_id: Mapped[str] = mapped_column(ForeignKey('integration_jobs.id', ondelete='CASCADE'), primary_key=True)
+    dedup_key: Mapped[str] = mapped_column(String(64), index=True)
+    stage: Mapped[str] = mapped_column(String(40), default='QUEUED')
+    completed_steps: Mapped[int] = mapped_column(Integer, default=0)
+    total_steps: Mapped[int] = mapped_column(Integer, default=1)
+    error_code: Mapped[str | None] = mapped_column(String(50))
+
+
+class JobRequestKey(Base):
+    __tablename__ = 'job_request_keys'
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    key: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    job_id: Mapped[str] = mapped_column(ForeignKey('integration_jobs.id', ondelete='CASCADE'))
+
+
+class PlacementRules(Base):
+    __tablename__ = 'placement_rules'
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), primary_key=True)
+    geometry_version: Mapped[int] = mapped_column(Integer)
+    cell_size_m: Mapped[float] = mapped_column(Float)
+    blocked_cells: Mapped[list] = mapped_column(JSON)
+
+
+class PlacementPlan(Base):
+    __tablename__ = 'placement_plans'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id', ondelete='CASCADE'), index=True)
+    dli_job_id: Mapped[str] = mapped_column(ForeignKey('integration_jobs.id', ondelete='CASCADE'))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    input_hash: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict] = mapped_column(JSON)
+    applied_result: Mapped[dict | None] = mapped_column(JSON)

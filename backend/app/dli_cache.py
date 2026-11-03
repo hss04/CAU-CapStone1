@@ -15,7 +15,7 @@ def fingerprint(payload):
     request = payload['request']
     inputs = {k: payload[k] for k in ('room_id', 'geometry_version', 'room', 'grid', 'windows', 'callable')}
     inputs.update(mock_sky=request['mock_sky'], temporary_direction=request['temporary_x_axis_azimuth_deg'] is not None,
-                  algorithm_revision=get_algorithm_settings().dli_cache_version)
+                  algorithm_revision=payload.get('algorithm_revision', get_algorithm_settings().dli_cache_version))
     return hashlib.sha256(json.dumps(inputs, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
@@ -34,6 +34,16 @@ def fresh(item, day, now=None):
 def lookup(db, payload, day):
     item = db.get(DliDailyCache, cache_key(payload, day))
     return item.payload if item and fresh(item, day) else None
+
+
+def period_is_fresh(db, payload):
+    request = payload['request']
+    day, end = date.fromisoformat(request['start_date']), date.fromisoformat(request['end_date'])
+    while day <= end:
+        if lookup(db, payload, day) is None:
+            return False
+        day += timedelta(days=1)
+    return True
 
 
 def save(db, payload, day, result, weather):
