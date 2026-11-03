@@ -1,6 +1,6 @@
-# 식물 카탈로그 106종 — v0.8.0
+# 식물 카탈로그 107종 — v0.8.0
 
-기존 6종을 유지하고 관엽·야자·고사리·다육·선인장·허브·개화·열매 식물 100종을 추가했습니다. 국내 가정의 화분·원예 유통에서 접할 수 있는 대상을 선별한 목록이며 이용자 수에 따른 인기 순위나 관리 난이도 순위는 아닙니다.
+기존 6종을 유지하고 관엽·야자·고사리·다육·선인장·허브·개화·열매 식물 100종과 채소인 적상추를 추가했습니다. 국내 가정의 화분·원예 유통에서 접할 수 있는 대상을 선별한 목록이며 이용자 수에 따른 인기 순위나 관리 난이도 순위는 아닙니다.
 
 ## 적용 방법
 
@@ -17,7 +17,7 @@
 - 기존 사용자 식물의 `species_id`, 물주기 설정, 사진과 일정은 유지합니다.
 - 여러 번 실행해도 같은 종류를 다시 추가하지 않습니다. 옛 학명의 홍콩야자·아레카야자 등도 중복 등록하지 않습니다.
 - 이름만 같은 별도 기존 행은 바꾸지 않고, 새 항목의 표시 이름에 학명을 사용합니다.
-- 기본 카탈로그가 106종이며 기존에 직접 등록한 종류가 있으면 DB 전체 건수는 그보다 많을 수 있습니다. 기존 중복 행을 자동 병합하지 않습니다.
+- 기본 카탈로그가 107종이며 기존에 직접 등록한 종류가 있으면 DB 전체 건수는 그보다 많을 수 있습니다. 기존 중복 행을 자동 병합하지 않습니다.
 
 ## 등록 정보와 검색
 
@@ -26,6 +26,8 @@
 조회 API와 배열 응답 형식은 그대로입니다.
 
 ```http
+GET /api/v1/plant-species?q=적상추
+GET /api/v1/plant-species?q=Red%20leaf%20lettuce
 GET /api/v1/plant-species?q=홍콩야자
 GET /api/v1/plant-species?q=쉐플레라
 GET /api/v1/plant-species?q=Schefflera%20arboricola
@@ -33,9 +35,9 @@ GET /api/v1/plant-species?q=Schefflera%20arboricola
 
 표시 이름·학명·한글/영문 별칭·옛 학명을 검색합니다. 별칭 검색은 공백·영문 대소문자 차이를 처리합니다. 예를 들어 `미니몬스테라`는 히메몬스테라, `Dypsis lutescens`는 아레카야자, `로즈메리`는 로즈마리 항목을 찾습니다. 기존 동의어 행이 있으면 해당 기존 ID를 반환합니다.
 
-핑크프린세스·루비고무나무·트리오스타 등 품종 유통명은 해당 종의 검색 별칭으로 묶습니다. 품종을 별도 종으로 늘려 세거나 무늬별 DLI를 검증한 것으로 취급하지 않습니다. 스투키와 실린드리카는 서로 다른 종으로 구분합니다.
+핑크프린세스·루비고무나무·트리오스타 등 품종 유통명은 해당 종의 검색 별칭으로 묶습니다. 품종을 별도 종으로 늘려 세거나 무늬별 DLI를 검증한 것으로 취급하지 않습니다. 스투키와 실린드리카는 서로 다른 종으로 구분합니다. 적상추는 `Lactuca sativa`의 붉은 잎 재배 그룹 표시명이며 별도 종을 뜻하지 않습니다. `붉은상추`, `적잎상추`, `Red leaf lettuce`, `Red lettuce`로도 검색할 수 있습니다.
 
-기존 페이지 처리는 기본 50·최대 100개입니다. 106종 전체를 표시하려면 다음 페이지도 조회합니다.
+기존 페이지 처리는 기본 50·최대 100개입니다. 107종 전체를 표시하려면 다음 페이지도 조회합니다.
 
 ```http
 GET /api/v1/plant-species?limit=100&offset=0
@@ -57,25 +59,34 @@ GET /api/v1/plant-species?limit=100&offset=100
 
 `source_note`에는 `PROVISIONAL` 또는 `ESTIMATED` 표시와 적용 항목·출처·확인일을 저장합니다. 기존 운영자 수정값은 보존하므로 서버 응답이 아래 기본값과 다를 수 있습니다.
 
-- 수치 참고: [Photone Plant Light Database](https://growlightmeter.com/light-requirements-for-plants/).
+- 기존 106종 수치 참고: [Photone Plant Light Database](https://growlightmeter.com/light-requirements-for-plants/).
 - 추정 범주: [Iowa State University Extension의 실내 식물 DLI 분류](https://yardandgarden.extension.iastate.edu/how-to/growing-indoor-plants-under-supplemental-lights/important-considerations-providing-supplemental-light-indoor-plants). 이 대학 자료가 각 종의 수치를 측정했다고 주장하지 않습니다. 저광·중광·고광·매우 고광 범주를 해당 식물에 배정한 것은 카탈로그의 추론입니다.
 - 정성적 광 환경 교차 확인: [University of Minnesota Extension](https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/lighting-for-indoor-plants).
-- 식물별 학명·동의어·재배 설명: NC State Plant Toolbox, Singapore NParks, RHS 및 Kew. 아래 표의 식물 출처 링크와 [확인 기록](plant-catalog-sources.json)을 참고합니다. 105건은 직접 HTTP 조회, 스투키 Kew 1건은 직접 접근 403에 따라 웹 검색으로 확인했으며 그 차이도 기록했습니다.
+- 식물별 학명·동의어·재배 설명: NC State Plant Toolbox, Singapore NParks, RHS 및 Kew. 아래 표의 식물 출처 링크와 [확인 기록](plant-catalog-sources.json)을 참고합니다. 105건은 직접 HTTP 조회, 스투키 Kew 1건은 직접 접근 403에 따라 웹 검색으로 확인했습니다. 추가된 적상추 1건은 NC State 원문을 웹 열기로 확인했으며 조회 방식 차이도 기록했습니다.
 
 Lux나 직사광 시간만으로 DLI를 임의 환산하지 않았습니다. 속·그룹 범위는 품종·계절·성장 단계·환경에 따라 달라질 수 있으므로 실측과 생장 기록으로 보정하는 기준 데이터입니다.
+
+## 적상추 추가 (2026-11-03)
+
+- 표시 이름: **적상추**, 학명: `Lactuca sativa`, 분류: 채소(`VEGETABLE`).
+- 기본 DLI 참고 범위: **12~17 mol/m²/day**, 근거: `PROVISIONAL REFERENCE_GROUP`.
+- [Cornell Hydroponic Lettuce Handbook](https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf)의 상추 재배 사례(공기 흐름 조건에 따른 12와 17)를 바탕으로 앱의 시작용 범위를 정했습니다. 이 간격을 적상추 전 품종의 최적값이나 손상 한계로 실험 검증한 것은 아닙니다.
+- 실내 수확을 연구한 [Paz 외(2019)](https://doi.org/10.2134/urbanag2019.03.0001)는 `Red Salad Bowl` 적상추에 최소 6.5, 더 나은 생장·품질을 위해 9.7 mol/m²/day를 제시했습니다. 따라서 12 미만을 생존 불가로 해석하지 않습니다. 품종·재배 목적·환기와 생장 기록에 따라 운영자가 범위를 보정할 수 있습니다.
+- 기존 106종의 ID·광량·출처와 사용자가 등록한 식물·사진·일정은 기존 추가 등록 처리로 보존합니다. 업데이트 후 서버를 재시작하면 빠진 적상추만 추가됩니다. 이미 `Lactuca sativa`로 등록한 행이 있으면 그 행과 수정값을 재사용합니다.
+- 개별 식물 등록 시 조회 API가 반환한 실제 `id`를 사용합니다. 카탈로그 표의 107은 순번이며 고정 `species_id`가 아닙니다. 물주기 간격은 다른 식물과 같이 개별 설정을 사용합니다.
 
 ## 파일과 검증
 
 - `app/catalogues/plant_species.json`: 별칭·동의어·광량 프로필·식물 출처를 포함한 기준 파일.
 - `app/species_catalog.py`, `app/species_seed.py`: 검증·검색·기존 데이터를 보존하는 추가 등록 처리.
-- [species-106.json](../examples/species-106.json): 기존 import 스키마와 동일한 106종 내보내기. 운영자 import는 기존 값을 갱신하는 도구이므로, 기존 값을 보존해서 추가할 때는 위 서버 시작/마이그레이션 절차를 사용합니다.
+- [species-107.json](../examples/species-107.json): 적상추를 포함하는 최신 107종 내보내기. 이전 [species-106.json](../examples/species-106.json)은 기존 자료로 보존합니다. 운영자 import는 기존 값을 갱신하는 도구이므로, 기존 값을 보존해서 추가할 때는 위 서버 시작/마이그레이션 절차를 사용합니다.
 - `examples/species-six.json`: 이전 버전의 최초 6종 자료를 보존한 파일.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-`tests/test_species_catalog.py`는 100종 추가·기존 6종 보존, 학명/동의어 중복 방지, 운영자 수정값·식물 외래키 보존, 별칭 검색, 페이지 처리, 새 식물 등록, 서버 재시작과 출처 확인 기록을 검증합니다.
+`tests/test_species_catalog.py`는 101종 추가·기존 6종 보존, 학명/동의어 중복 방지, 운영자 수정값·식물 외래키 보존, 별칭 검색, 페이지 처리, 새 식물 등록, 서버 재시작과 출처 확인 기록을 검증합니다.
 
 ## 전체 목록
 
@@ -189,3 +200,4 @@ Lux나 직사광 시간만으로 DLI를 임의 환산하지 않았습니다. 속
 | 104 | 타임 | Thymus vulgaris | 허브 | 20~28 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/thymus-vulgaris/) |
 | 105 | 오레가노 | Origanum vulgare | 허브 | 20~28 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/origanum-vulgare/) |
 | 106 | 파슬리 | Petroselinum crispum | 허브 | 10~20 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/petroselinum-crispum/) |
+| 107 | 적상추 | Lactuca sativa | 채소 | 12~17 | 상추 그룹 참고 범위 | [확인](https://plants.ces.ncsu.edu/plants/lactuca-sativa/) |

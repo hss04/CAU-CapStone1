@@ -13,14 +13,14 @@ from app.species_catalog import catalog_entries, catalog_plants, load_catalog, s
 from app.species_seed import seed_species
 
 
-def test_catalog_has_100_additions_and_preserves_legacy_six():
+def test_catalog_has_101_additions_and_preserves_legacy_six():
     entries = catalog_entries()
     raw, _ = load_catalog()
     legacy = json.loads(Path('examples/species-six.json').read_text(encoding='utf-8'))
-    assert len(entries) == 106 and raw['legacy_count'] == 6 and raw['added_count'] == 100
+    assert len(entries) == 107 and raw['legacy_count'] == 6 and raw['added_count'] == 101
     assert entries[:6] == legacy
-    assert len({row['name'] for row in entries}) == 106
-    assert len({scientific_key(row['scientific_name']) for row in entries}) == 106
+    assert len({row['name'] for row in entries}) == 107
+    assert len({scientific_key(row['scientific_name']) for row in entries}) == 107
     for plant, entry in zip(catalog_plants(), entries):
         assert 0 <= entry['min_dli'] <= entry['max_dli']
         assert 0 < len(entry['source_note']) <= 500
@@ -50,11 +50,11 @@ def test_seed_preserves_existing_six_ids_edits_and_user_plant(context, headers):
     assert response.status_code == 201, response.text
     plant_id = response.json()['id']
     with factory() as db:
-        assert seed_species(db) == 100
+        assert seed_species(db) == 101
         db.commit()
         assert seed_species(db) == 0
         db.commit()
-        assert db.scalar(select(func.count()).select_from(PlantSpecies)) == 107  # Includes fixture-only test species.
+        assert db.scalar(select(func.count()).select_from(PlantSpecies)) == 108  # Includes fixture-only test species.
         for scientific, species_id in ids.items():
             assert db.get(PlantSpecies, species_id).scientific_name == scientific
         saved = db.get(PlantSpecies, ids['Monstera deliciosa'])
@@ -71,7 +71,7 @@ def test_old_botanical_name_reuses_row_and_is_searchable(context, headers):
         db.add(old)
         db.commit()
         old_id = old.id
-        assert seed_species(db) == 105
+        assert seed_species(db) == 106
         db.commit()
         assert seed_species(db) == 0
         db.commit()
@@ -111,6 +111,8 @@ def test_common_name_collision_does_not_replace_unrelated_species(context):
     ('ZZ PLANT', 'Zamioculcas zamiifolia'), ('피커스 리라타', 'Ficus lyrata'),
     ('콩란', 'Curio rowleyanus'), ('금호', 'Kroenleinia grusonii'),
     ('Peperomia argyreia', 'Peperomia argyraea'),
+    ('적상추', 'Lactuca sativa'), ('  적 상추  ', 'Lactuca sativa'),
+    ('붉은상추', 'Lactuca sativa'), ('RED LEAF LETTUCE', 'Lactuca sativa'),
 ])
 def test_search_aliases_and_synonyms(context, headers, query, scientific):
     client, factory = context
@@ -129,17 +131,20 @@ def test_pagination_existing_response_and_new_plant_registration(context, header
         db.commit()
     first = client.get('/api/v1/plant-species', headers=headers, params={'limit': 100}).json()
     second = client.get('/api/v1/plant-species', headers=headers, params={'limit': 100, 'offset': 100}).json()
-    assert len(first) == 100 and len(second) == 7
-    assert len({row['id'] for row in first + second}) == 107
+    assert len(first) == 100 and len(second) == 8
+    assert len({row['id'] for row in first + second}) == 108
     assert len(client.get('/api/v1/plant-species', headers=headers).json()) == 50
     assert set(first[0]) == {'id', 'name', 'scientific_name', 'min_dli', 'max_dli', 'source_note'}
     for query in ['%', '_', 'no-such-plant-in-catalog']:
         assert client.get('/api/v1/plant-species', headers=headers, params={'q': query}).json() == []
     assert client.get('/api/v1/plant-species').status_code == 401
-    basil = client.get('/api/v1/plant-species', headers=headers, params={'q': '바질'}).json()[0]
-    response = client.post('/api/v1/plants', headers=headers, json={'species_id': basil['id'], 'nickname': '내 바질'})
+    lettuce = client.get('/api/v1/plant-species', headers=headers, params={'q': '적상추'}).json()[0]
+    assert lettuce['name'] == '적상추' and lettuce['scientific_name'] == 'Lactuca sativa'
+    assert (lettuce['min_dli'], lettuce['max_dli']) == (12, 17)
+    assert 'PROVISIONAL' in lettuce['source_note'] and '2026-11-03' in lettuce['source_note']
+    response = client.post('/api/v1/plants', headers=headers, json={'species_id': lettuce['id'], 'nickname': '내 적상추'})
     assert response.status_code == 201, response.text
-    assert response.json()['species_id'] == basil['id']
+    assert response.json()['species_id'] == lettuce['id']
 
 
 def test_startup_seeds_new_catalog_and_is_repeatable(tmp_path, monkeypatch):
@@ -154,7 +159,7 @@ def test_startup_seeds_new_catalog_and_is_repeatable(tmp_path, monkeypatch):
             assert client.get('/health').status_code == 200
             with factory() as db:
                 rows = db.scalars(select(PlantSpecies).order_by(PlantSpecies.id)).all()
-                assert len(rows) == 106
+                assert len(rows) == 107
                 if ids is None:
                     ids = [row.id for row in rows]
                 assert [row.id for row in rows] == ids
@@ -163,7 +168,7 @@ def test_startup_seeds_new_catalog_and_is_repeatable(tmp_path, monkeypatch):
 
 def test_botanical_source_audit_covers_each_catalog_entry():
     audit = json.loads(Path('docs/plant-catalog-sources.json').read_text(encoding='utf-8'))
-    assert len(audit['sources']) == 106
+    assert len(audit['sources']) == 107
     by_name = {row['scientific_name']: row for row in audit['sources']}
     assert set(by_name) == {plant['scientific_name'] for plant in catalog_plants()}
     for plant in catalog_plants():

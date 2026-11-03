@@ -2,7 +2,7 @@
   "schema_version": 1,
   "checked_at": "2026-11-02",
   "legacy_count": 6,
-  "added_count": 100,
+  "added_count": 101,
   "description": "Curated household container plants; not a popularity ranking. All DLI values are provisional with explicit reference mappings or inferred categories.",
   "profiles": {
     "monstera": {
@@ -312,6 +312,14 @@
       "basis": "ESTIMATED",
       "source_entry": "Legacy app medium-light assumption; not verified species DLI",
       "source_url": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/"
+    },
+    "red_leaf_lettuce": {
+      "min_dli": 12,
+      "max_dli": 17,
+      "basis": "REFERENCE_GROUP",
+      "source_entry": "Lettuce 12-17 starting reference; cultivar/airflow dependent; not red-cultivar optimum or damage limit",
+      "source_url": "https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf",
+      "checked_at": "2026-11-03"
     }
   },
   "plants": [
@@ -1666,6 +1674,21 @@
       ],
       "scientific_synonyms": [],
       "botanical_source": "https://plants.ces.ncsu.edu/plants/petroselinum-crispum/"
+    },
+    {
+      "name": "적상추",
+      "scientific_name": "Lactuca sativa",
+      "light_profile": "red_leaf_lettuce",
+      "category": "VEGETABLE",
+      "aliases": [
+        "붉은상추",
+        "적잎상추",
+        "레드리프 레터스",
+        "Red leaf lettuce",
+        "Red lettuce"
+      ],
+      "scientific_synonyms": [],
+      "botanical_source": "https://plants.ces.ncsu.edu/plants/lactuca-sativa/"
     }
   ]
 }

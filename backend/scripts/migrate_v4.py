@@ -10,6 +10,7 @@ from app.database import Base, build_engine
 from app import models
 from app.integration_models import IntegrationJob, DliDailyCache
 from app.species_seed import seed_species
+from app.species_catalog import catalog_entries
 from app.calendar_service import backfill_waterings
 
 ADDITIONS = [('rooms','saved_at','VARCHAR(50)'), ('windows','measurement','JSON'),
@@ -37,7 +38,7 @@ def migrate(path):
         backfill_waterings(db)
         db.commit()
     engine.dispose()
-    print('Database ready. Existing rooms, scans, plants and IDs preserved; 106 catalog entries seeded without overwriting existing species.')
+    print(f'Database ready. Existing rooms, scans, plants and IDs preserved; {len(catalog_entries())} catalog entries seeded without overwriting existing species.')
 
 
 if __name__=='__main__':

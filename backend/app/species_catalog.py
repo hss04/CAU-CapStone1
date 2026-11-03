@@ -42,7 +42,7 @@ def load_catalog():
         note = plant.get('legacy_source_note') or (
             f'{evidence}: {profile["source_entry"]}. '
             f'{profile["source_url"]}; botany: {plant["botanical_source"]}; '
-            f'checked {data["checked_at"]}. Starting range; species optimum unverified.')
+            f'checked {profile.get("checked_at", data["checked_at"])}. Starting range; species optimum unverified.')
         entry = SpeciesInput.model_validate(dict(name=name, scientific_name=plant['scientific_name'],
             min_dli=profile['min_dli'], max_dli=profile['max_dli'], source_note=note))
         entries.append(entry.model_dump())

@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-02",
+  "checked_at": "2026-11-03",
   "sources": [
     {
       "scientific_name": "Monstera deliciosa",
@@ -1344,6 +1344,20 @@
       ],
       "scientific_name_present": true,
       "verification_method": "direct_http"
+    },
+    {
+      "scientific_name": "Lactuca sativa",
+      "source_url": "https://plants.ces.ncsu.edu/plants/lactuca-sativa/",
+      "checked_at": "2026-11-03",
+      "resolved_url": "https://plants.ces.ncsu.edu/plants/lactuca-sativa/",
+      "status": "VERIFIED_VIA_WEB_SEARCH",
+      "title": "Lactuca sativa | North Carolina Extension Gardener Plant Toolbox",
+      "light_categories": [
+        "Full sun (6 or more hours of direct sunlight a day)",
+        "Partial Shade (Direct sunlight only part of the day, 2-6 hours)"
+      ],
+      "scientific_name_present": true,
+      "verification_method": "web_open"
     }
   ]
 }
