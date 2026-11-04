@@ -261,6 +261,19 @@ r9 = dim["plants"][0]["recommended"]
 check("방 전체가 모자라면 가장 밝은 칸 추천 (올리브 사례)", r9 is not None and r9["col"] == 2 and r9["score"] > 0, f"{r9}")
 check("그때 '범위 만족 칸 없음' 경고", any("no cell in this room meets" in w for w in dim["warnings"]), f"{dim['warnings']}")
 
+# 백엔드 검증(placement_service.validate_recommendations): 추천 결과 DLI가 저장된 지도 값과 1e-5 이내여야 함.
+# 30일 평균 지도는 끝자리가 길어서(8.9666...) 반올림해서 돌려주면 502가 남 -> 지도 값을 그대로 돌려줘야 함
+avg_total = [[sum(day) / 30 for day in ([1.23] * 29 + [2.0], [8.9] * 29 + [10.9], [5.05] * 30)]]  # 1.2556.., 8.9666.., 5.05
+avg_map = {"date": DATE, "period": {"start_date": "2026-10-04", "end_date": DATE, "day_count": 30},
+           "grid": {"origin": {"x": 0, "y": 0, "z": 0}, "cell_size_m": 1.0, "rows": 1, "cols": 3, "inside_mask": [[True] * 3]},
+           "total_dli": avg_total}
+avg = recommend_for_room({"room_id": 1, "dli_map": avg_map, "blocked_cells": [], "plants": [
+    {"plant_id": 11, "species_id": 1, "position": {"x": 0.5, "y": 0, "z": 0.5}, "min_dli": 4.0, "max_dli": 12.0}]})
+p11 = avg["plants"][0]
+gaps = [abs(p11[k]["total_dli"] - avg_total[0][p11[k]["col"]]) for k in ("current", "recommended") if p11[k]]
+check("기간 평균 지도(끝자리 긴 값)에서 current/recommended DLI가 지도 값과 1e-5 이내 (백엔드 검증 통과)",
+      len(gaps) == 2 and max(gaps) <= 1e-5, f"지도 {[round(v, 6) for v in avg_total[0]]}, 차이 {gaps}")
+
 # ---------------------------------------------------------------------------
 print("\n[8] import 방식")
 parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -106,10 +106,9 @@ def recommend_for_room(payload: dict) -> dict:
     for entry in results:
         if entry["current"]["status"] == STATUS_UNPLACED:
             entry["current"] = None
-        # 백엔드 dli_map의 total은 direct+diffuse 합이라 13.540000000000001처럼 올 수 있음 -> DLI는 소수 2자리(CLAUDE.md 9장)
-        for key in ("current", "recommended"):
-            if entry[key] is not None and entry[key]["total_dli"] is not None:
-                entry[key]["total_dli"] = round(entry[key]["total_dli"], 2)
+        # total_dli는 dli_map 값을 반올림하지 않고 그대로 돌려준다. 백엔드가 추천 결과의 DLI가 저장된 지도 값과
+        # 1e-5 이내로 같은지 검사하는데(placement_service.validate_recommendations), 기간 평균 지도는 8.9666...처럼
+        # 끝자리가 길어서 반올림하면 502가 난다. 화면 표시용 반올림은 앱에서 한다.
         if entry["recommended"] is None and entry["current"] is None:
             warnings.append(f"plant {entry['plant_id']}: no free cell available for recommendation")
         rec = entry["recommended"]
@@ -117,7 +116,7 @@ def recommend_for_room(payload: dict) -> dict:
         if rec is not None and not in_range(rec["total_dli"], req["min"], req["max"]):
             warnings.append(
                 f"plant {entry['plant_id']}: no cell in this room meets the required DLI "
-                f"{req['min']}~{req['max']}; recommended the closest cell ({rec['total_dli']})"
+                f"{req['min']}~{req['max']}; recommended the closest cell ({rec['total_dli']:.2f})"
             )
 
     return {
