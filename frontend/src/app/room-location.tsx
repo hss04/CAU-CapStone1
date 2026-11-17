@@ -17,7 +17,7 @@ import { ApiError } from '@/services/api/client';
 import { searchLocations } from '@/services/api/endpoints';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden } from '@/store/GardenProvider';
-import type { ApiLocationResult } from '@/types/api';
+import type { ApiCityResult } from '@/types/api';
 
 interface Candidate {
   key: string;
@@ -25,15 +25,25 @@ interface Candidate {
   detail: string;
   latitude: number;
   longitude: number;
+  /** 서버 한국 도시 목록 항목이면 그 ID (city_id로 저장) */
+  cityId?: number;
 }
 
 /** 검색 결과 → 고를 수 있는 후보 (좌표가 없는 결과는 뺀다) */
-function toCandidates(results: ApiLocationResult[]): Candidate[] {
+function toCandidates(results: ApiCityResult[]): Candidate[] {
   return results.flatMap((r, i) => {
     if (r.latitude === null || r.longitude === null || !r.name) return [];
-    const label = r.admin1 && r.admin1 !== r.name ? `${r.admin1} ${r.name}` : r.name;
-    const detail = [r.country, `${r.latitude.toFixed(3)}, ${r.longitude.toFixed(3)}`].filter(Boolean).join(' · ');
-    return [{ key: `${r.id ?? i}`, label, detail, latitude: r.latitude, longitude: r.longitude }];
+    const city = r.coordinateBasis === 'CITY_REPRESENTATIVE' && r.id !== null;
+    // 같은 이름(광주)이 여러 곳이면 시·도와 함께 보여준다
+    const base = r.displayName ?? r.name;
+    const label = r.admin1 && !base.startsWith(r.admin1) ? `${r.admin1} ${base}` : base;
+    const detail = [
+      city ? '도시 대표 위치' : r.country,
+      `${r.latitude.toFixed(3)}, ${r.longitude.toFixed(3)}`,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    return [{ key: `${r.id ?? i}`, label, detail, latitude: r.latitude, longitude: r.longitude, cityId: city ? r.id! : undefined }];
   });
 }
 
@@ -100,7 +110,12 @@ export default function RoomLocationScreen() {
     if (!picked) return;
     setSaving(true);
     try {
-      await actions.saveRoomLocation({ latitude: picked.latitude, longitude: picked.longitude, label: picked.label });
+      await actions.saveRoomLocation({
+        latitude: picked.latitude,
+        longitude: picked.longitude,
+        label: picked.label,
+        cityId: picked.cityId,
+      });
       toast.show(`방 위치를 ${picked.label}(으)로 저장했어요`, 'leaf');
       goBackOrHome();
     } catch (e) {
@@ -140,8 +155,8 @@ export default function RoomLocationScreen() {
         </View>
       </Card>
 
-      {/* 서버가 쓰는 Open-Meteo 지오코딩은 한글 시·구 이름(서울, 마포구)을 거의 못 찾고, 영문 도시명·동 이름은 찾는다 */}
-      <FormField label="지역 검색" hint="도시는 영문(예: Seoul, Busan), 동네는 동 이름(예: 흑석동)으로 찾으면 잘 나와요">
+      {/* 서버(v0.8.1~)가 한국 시 단위 85곳을 한글로 먼저 찾고, 없으면 Open-Meteo 지오코딩(동 이름 등)으로 찾는다 */}
+      <FormField label="지역 검색" hint="시 이름(예: 서울, 부산, 수원)으로 찾아요 · 구는 없고, 동 이름(예: 흑석동)은 찾을 수 있어요">
         <View style={styles.searchRow}>
           <TextField
             value={query}
@@ -172,7 +187,7 @@ export default function RoomLocationScreen() {
       {candidates && !searching ? (
         candidates.length === 0 ? (
           <AppText variant="caption" color={Colors.textSecondary} style={styles.section}>
-            검색 결과가 없어요. &apos;Seoul&apos;처럼 영문 도시 이름이나 &apos;흑석동&apos;처럼 동 이름으로 찾아보세요.
+            검색 결과가 없어요. &apos;서울&apos;처럼 시 이름이나 &apos;흑석동&apos;처럼 동 이름으로 찾아보세요.
           </AppText>
         ) : (
           <Card padding={0} radius={Radius.lg} style={styles.section}>

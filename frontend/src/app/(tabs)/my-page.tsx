@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import {
   Bell,
   BellRing,
+  CalendarCheck,
   CircleHelp,
   CloudSun,
   Droplets,
@@ -32,6 +33,7 @@ import { APP_NAME, APP_VERSION } from '@/constants/app';
 import { CHARACTER_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { usePlantsDli } from '@/hooks/usePlantDli';
+import { syncDeviceNotifications } from '@/services/notifications/deviceSchedule';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type SyncState } from '@/store/GardenProvider';
 import { diffInDays, parseISODate } from '@/utils/date';
@@ -68,6 +70,19 @@ export default function MyPageScreen() {
   const judged = plants.filter((p) => plantsDli[p.id]?.current.status);
   const inRange = judged.filter((p) => plantsDli[p.id]?.current.status === 'ok').length;
   const soon = () => toast.show('다음 업데이트에서 만나요 🌱', 'leaf');
+  const signedIn = auth.status === 'signedIn';
+
+  /** 물주기·관리 일정 알림 — 서버 일정(GET /notifications/schedule)을 휴대폰에 직접 예약한다 */
+  const scheduleNotifications = async (enabled: boolean, ask: boolean) => {
+    if (!signedIn) {
+      if (enabled) toast.show('로그인하면 서버 일정으로 알림을 예약해요', 'water');
+      return;
+    }
+    const r = await syncDeviceNotifications(state.today, enabled, ask);
+    if (!r.ok) toast.show(r.message, 'water');
+    else if (enabled) toast.show(`앞으로 2주 관리 알림 ${r.count}개를 예약했어요 🔔`, 'water');
+    else toast.show('예약한 관리 알림을 지웠어요', 'water');
+  };
 
   return (
     <ScreenContainer>
@@ -129,17 +144,27 @@ export default function MyPageScreen() {
       <Group title="Space & Plants">
         <SettingRow icon={MapIcon} title="내 공간 관리" subtitle={`${room.name} · ${room.orientationLabel} · 창문 ${room.windows.length}개`} onPress={() => router.navigate('/space')} />
         <SettingRow icon={Sprout} title="내 식물 관리" value={`${plants.length}개`} onPress={() => router.navigate('/plants')} />
+        <SettingRow
+          icon={CalendarCheck}
+          title="관리 캘린더"
+          subtitle="물주기·비료·분갈이 일정"
+          tone="water"
+          onPress={() => router.push('/calendar')}
+        />
         <SettingRow icon={ScanLine} title="공간 측정·불러오기" tone="sun" onPress={() => router.push('/room-scan')} showDivider={false} />
       </Group>
 
       <Group title="Notifications">
         <SettingRow
           icon={Droplets}
-          title="물주기 알림"
-          subtitle="물 줄 날 아침 9시에 알려드려요"
+          title="물주기·관리 알림"
+          subtitle="물주기·비료 등 일정이 있는 날 아침 9시에 알려드려요"
           tone="water"
           toggleValue={notifications.watering}
-          onToggle={() => actions.toggleNotification('watering')}
+          onToggle={() => {
+            actions.toggleNotification('watering');
+            void scheduleNotifications(!notifications.watering, true);
+          }}
         />
         <SettingRow
           icon={CloudSun}
@@ -149,7 +174,14 @@ export default function MyPageScreen() {
           toggleValue={notifications.environment}
           onToggle={() => actions.toggleNotification('environment')}
         />
-        <SettingRow icon={Bell} title="알림 설정" tone="neutral" onPress={soon} showDivider={false} />
+        <SettingRow
+          icon={Bell}
+          title="알림 다시 맞추기"
+          subtitle="일정을 바꾼 뒤 눌러 주세요 · 웹에서는 예약되지 않아요"
+          tone="neutral"
+          onPress={() => void scheduleNotifications(notifications.watering, true)}
+          showDivider={false}
+        />
       </Group>
 
       <Group title="General">

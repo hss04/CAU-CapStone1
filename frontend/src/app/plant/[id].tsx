@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowRight,
+  CalendarCheck,
+  Camera,
   ChevronRight,
   CircleCheck,
   Droplet,
@@ -13,7 +15,7 @@ import {
   Trash2,
   Waves,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Polygon, Stop } from 'react-native-svg';
 
@@ -31,12 +33,16 @@ import { useToast } from '@/components/common/Toast';
 import { TopBar, goBackOrHome } from '@/components/common/TopBar';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
 import { WaterCycle } from '@/components/plants/WaterCycle';
+import { WateringHistory } from '@/components/plants/WateringHistory';
 import { FloorPlanGrid } from '@/components/space/FloorPlanGrid';
 import { DLI_STATUS_COPY, LIGHT_PREFERENCE_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getSpecies } from '@/data/plantSpecies';
 import { dliValueText, rangeText, usePlantDli } from '@/hooks/usePlantDli';
+import { fetchSpeciesEvidence } from '@/services/api/endpoints';
 import { recentStatusOf } from '@/services/lightForecast';
+import { evidenceText } from '@/services/placement/evidence';
+import { useAuth } from '@/store/AuthProvider';
 import { useGarden, usePlant } from '@/store/GardenProvider';
 import { useLightForecast } from '@/store/LightForecastProvider';
 import { getHealthLabel, getPlantStatus, getWateringInfo } from '@/store/selectors';
@@ -52,6 +58,9 @@ export default function PlantDetailScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const light = usePlantDli(plant);
+  const signedIn = useAuth().status === 'signedIn';
+  const serverSpeciesId = plant ? state.serverSpecies[plant.speciesId]?.id : undefined;
+  const evidence = useSpeciesEvidence(signedIn ? serverSpeciesId : undefined);
 
   if (!plant) {
     return (
@@ -162,6 +171,24 @@ export default function PlantDetailScreen() {
         onPress={() => router.push({ pathname: '/light/[plantId]', params: { plantId: plant.id } })}
       />
 
+      {/* 서버 식물: 성장 사진 · 관리 캘린더 */}
+      {signedIn && plant.serverId !== undefined ? (
+        <>
+          <DetailLink
+            icon={Camera}
+            title="성장 사진"
+            caption="날짜별 사진과 메모로 자라는 모습을 기록해요"
+            onPress={() => router.push({ pathname: '/growth/[plantId]', params: { plantId: plant.id } })}
+          />
+          <DetailLink
+            icon={CalendarCheck}
+            title="관리 캘린더"
+            caption="물주기·비료·분갈이 일정을 확인해요"
+            onPress={() => router.push('/calendar')}
+          />
+        </>
+      ) : null}
+
       {/* Watering */}
       <View style={styles.section}>
         <Card tone="surface" padding={Spacing.xl} radius={Radius.xl}>
@@ -196,6 +223,10 @@ export default function PlantDetailScreen() {
           )}
         </Card>
       </View>
+
+      {signedIn && plant.serverId !== undefined ? (
+        <WateringHistory plantServerId={plant.serverId} lastWateredAt={plant.lastWateredAt} />
+      ) : null}
 
       {/* Placement */}
       <View style={styles.section}>
@@ -287,8 +318,14 @@ export default function PlantDetailScreen() {
             <GuideRow icon={Waves} label="습도" value={species.humidity} />
             <GuideRow icon={Gauge} label="난이도" value={species.difficulty} last={!serverSpecies} />
             {serverSpecies ? (
-              <GuideRow icon={Sun} label="필요 광량 (DLI)" value={`${serverSpecies.minDli}–${serverSpecies.maxDli} mol/m²/day`} last />
+              <GuideRow
+                icon={Sun}
+                label="필요 광량 (DLI)"
+                value={`${serverSpecies.minDli}–${serverSpecies.maxDli} mol/m²/day`}
+                last={!evidence}
+              />
             ) : null}
+            {serverSpecies && evidence ? <GuideRow icon={Sparkles} label="DLI 기준 근거" value={evidence} last /> : null}
           </View>
         </Card>
       </View>
@@ -305,6 +342,41 @@ export default function PlantDetailScreen() {
         />
       </View>
     </ScreenContainer>
+  );
+}
+
+/** 종별 요구 DLI 근거 문구 (GET /plant-species/{id}/evidence). 옛 서버·실패면 null */
+function useSpeciesEvidence(speciesId: number | undefined): string | null {
+  const [text, setText] = useState<{ id: number; value: string } | null>(null);
+  useEffect(() => {
+    if (speciesId === undefined) return;
+    let cancelled = false;
+    fetchSpeciesEvidence(speciesId)
+      .then((e) => {
+        if (!cancelled) setText({ id: speciesId, value: evidenceText(e) });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [speciesId]);
+  return text && text.id === speciesId ? text.value : null;
+}
+
+function DetailLink({ icon: Icon, title, caption, onPress }: { icon: typeof Sun; title: string; caption: string; onPress: () => void }) {
+  return (
+    <Card padding={Spacing.lg} radius={Radius.xl} onPress={onPress} accessibilityLabel={title} style={weeklyStyles.card}>
+      <View style={[weeklyStyles.icon, { backgroundColor: Colors.lightGreen }]}>
+        <Icon size={18} color={Colors.primary} strokeWidth={1.9} />
+      </View>
+      <View style={weeklyStyles.texts}>
+        <AppText variant="bodyStrong">{title}</AppText>
+        <AppText variant="caption" color={Colors.textSecondary}>
+          {caption}
+        </AppText>
+      </View>
+      <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.8} />
+    </Card>
   );
 }
 

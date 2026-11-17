@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/common/AppText';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
-import { PLANT_SPECIES } from '@/data/plantSpecies';
+import { getSpecies, isLocalSpecies, PLANT_SPECIES } from '@/data/plantSpecies';
 import type { PlantSpeciesId } from '@/types';
 import { haptic } from '@/utils/haptics';
 
@@ -16,15 +16,16 @@ export interface SpeciesPickerProps {
   unavailable?: Partial<Record<PlantSpeciesId, string>>;
 }
 
-/** 식물 종류 선택 — 가로 스크롤 카드 */
+/** 식물 종류 선택 — 가로 스크롤 카드. 검색으로 고른 서버 카탈로그 종은 맨 앞에 보여준다 */
 export function SpeciesPicker({ value, onChange, unavailable }: SpeciesPickerProps) {
+  const list = value && !isLocalSpecies(value) ? [getSpecies(value), ...PLANT_SPECIES] : PLANT_SPECIES;
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
       style={styles.scroll}>
-      {PLANT_SPECIES.map((s) => {
+      {list.map((s) => {
         const selected = s.id === value;
         const disabledReason = unavailable?.[s.id];
         return (
@@ -54,7 +55,7 @@ export function SpeciesPicker({ value, onChange, unavailable }: SpeciesPickerPro
               {s.name}
             </AppText>
             <AppText variant="small" color={Colors.textTertiary} numberOfLines={1}>
-              {disabledReason ?? s.englishName}
+              {disabledReason ?? (s.source === 'server' ? s.scientificName || '카탈로그' : s.englishName)}
             </AppText>
             {selected ? (
               <View style={styles.badge}>

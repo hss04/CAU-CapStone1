@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { DLI_PERIOD } from '@/constants/labels';
-import { runPeriodDliJob } from '@/services/lightForecast';
+import { type JobProgress, runPeriodDliJob } from '@/services/lightForecast';
 import { buildMockDliMap, demoGrid } from '@/services/space/dliMap';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden } from '@/store/GardenProvider';
@@ -26,6 +26,8 @@ export interface PeriodDliMap {
   jobId: string | null;
   /** 예시를 보여주는 이유 (서버 계산 실패 등) */
   note: string | null;
+  /** 서버 계산 중일 때 날짜 단위 진행 (서버가 알려준 값만) */
+  progress: JobProgress | null;
 }
 
 interface Done {
@@ -41,6 +43,15 @@ interface Done {
 const cache = new Map<string, Done>();
 /** 여러 화면이 같은 지도를 동시에 요청하면 계산 작업 하나를 같이 기다린다 */
 const inflight = new Map<string, Promise<Done | null>>();
+/** 계산 중인 지도의 진행 — 같은 지도를 보는 화면들이 같이 받는다 */
+const progressByKey = new Map<string, JobProgress>();
+const progressListeners = new Set<() => void>();
+
+function reportProgress(key: string, p: JobProgress | null) {
+  if (p) progressByKey.set(key, p);
+  else progressByKey.delete(key);
+  progressListeners.forEach((l) => l());
+}
 
 export function periodRange(period: DliPeriod, today: string): { startDate: string; endDate: string } {
   const end = parseISODate(today);
@@ -58,14 +69,24 @@ export function usePeriodDliMap(period: DliPeriod): PeriodDliMap {
   const key = room.server ? `${room.server.roomId}:${room.server.geometryVersion}:${startDate}:${endDate}` : '';
 
   const [done, setDone] = useState<Done | null>(null);
+  const [, setProgressTick] = useState(0);
+
+  useEffect(() => {
+    const listener = () => setProgressTick((t) => t + 1);
+    progressListeners.add(listener);
+    return () => {
+      progressListeners.delete(listener);
+    };
+  }, []);
 
   useEffect(() => {
     if (!serverReady || cache.has(key)) return;
     let cancelled = false;
     let job = inflight.get(key);
     if (!job) {
-      job = runPeriodDliJob(room, startDate, endDate, () => false).then((r): Done | null => {
+      job = runPeriodDliJob(room, startDate, endDate, () => false, (p) => reportProgress(key, p)).then((r): Done | null => {
         inflight.delete(key);
+        reportProgress(key, null);
         if (r === null) return null;
         const result: Done = r.ok
           ? { key, ok: true, map: r.result, jobId: r.jobId, provisional: r.provisional, error: null }
@@ -87,7 +108,7 @@ export function usePeriodDliMap(period: DliPeriod): PeriodDliMap {
   }, [serverReady, key]);
 
   const current = cache.get(key) ?? (done?.key === key ? done : null);
-  const base = { startDate, endDate };
+  const base = { startDate, endDate, progress: progressByKey.get(key) ?? null };
 
   if (serverReady && current?.ok && current.map) {
     return { ...base, status: 'ready', source: 'calculated', map: current.map, provisional: current.provisional, jobId: current.jobId, note: null };

@@ -35,9 +35,11 @@ import { useServerRecommendation } from '@/hooks/useServerRecommendation';
 import { dliValueText, usePlantsDli } from '@/hooks/usePlantDli';
 import { classifyDli, formatDli } from '@/services/lightForecast';
 import { dliAt } from '@/services/space/dliMap';
-import { type ServerPlacement, toPlacementRecommendation } from '@/services/placement/serverRecommendation';
+import { evidenceText, moveGroup } from '@/services/placement/evidence';
+import { REASON_COPY, type ServerPlacement, toPlacementRecommendation } from '@/services/placement/serverRecommendation';
 import { useGarden, usePlant } from '@/store/GardenProvider';
 import type { GridPosition, PlacementAnalysis, Plant } from '@/types';
+import type { ApiRecommendationPlan } from '@/types/api';
 import { withIga, withRo } from '@/utils/korean';
 
 /**
@@ -51,13 +53,13 @@ export default function RecommendationScreen() {
 
   // 적용 후에도 비교 화면을 유지하기 위해 처음 받은 결과를 보관
   const [localSnap] = useState<PlacementAnalysis | null>(() => plant?.analysis ?? null);
-  const [serverSnap, setServerSnap] = useState<ServerPlacement | null>(null);
-  if (server.status === 'ready' && server.placement && !serverSnap) setServerSnap(server.placement);
+  const [serverSnap, setServerSnap] = useState<{ placement: ServerPlacement; plan: ApiRecommendationPlan | null } | null>(null);
+  if (server.status === 'ready' && server.placement && !serverSnap) setServerSnap({ placement: server.placement, plan: server.plan });
 
   if (!plant) {
     return <NoChange title="식물을 찾을 수 없어요" description="목록에서 다시 선택해 주세요." />;
   }
-  if (serverSnap) return <ServerResult plant={plant} placement={serverSnap} />;
+  if (serverSnap) return <ServerResult plant={plant} placement={serverSnap.placement} plan={serverSnap.plan} />;
   if (server.status === 'waitingMap' || server.status === 'loading' || server.status === 'ready') {
     return <Waiting mapReady={server.status !== 'waitingMap'} />;
   }
@@ -136,19 +138,27 @@ function LocalResult({ plant, snapshot, note }: { plant: Plant; snapshot: Placem
 }
 
 /** 서버 추천 (칸별 예상 DLI와 식물 요구 DLI 범위 비교) */
-function ServerResult({ plant, placement }: { plant: Plant; placement: ServerPlacement }) {
+function ServerResult({ plant, placement, plan }: { plant: Plant; placement: ServerPlacement; plan: ApiRecommendationPlan | null }) {
   const { state, actions } = useGarden();
-  const { required, current, recommended: rec, noFitCell, period, warnings } = placement;
+  const { required, current, recommended: rec, noFitCell, period, warnings, decision } = placement;
   const range = `${required.min}–${required.max}`;
 
   if (!rec) {
-    return current ? (
+    if (current && (decision?.reasonCode === 'CURRENT_OK' || current.status === 'ok')) {
+      return (
+        <NoChange
+          title="지금 위치가 잘 맞아요"
+          description={`예상 DLI ${formatDli(current.dli)} · 요구 ${range} mol/m²/day 범위 안이에요. (LUMAP 계산)`}
+        />
+      );
+    }
+    return (
       <NoChange
-        title="지금 위치가 잘 맞아요"
-        description={`예상 DLI ${formatDli(current.dli)} · 요구 ${range} mol/m²/day 범위 안이에요. (LUMAP 계산)`}
+        title="추천할 빈 칸이 없어요"
+        description={current
+          ? `현재 예상 DLI ${formatDli(current.dli)}는 요구 ${range} mol/m²/day 범위 밖이에요. 배치 불가 칸을 확인하거나 여러 식물의 배치를 함께 바꿔보세요.`
+          : '다른 식물이나 배치 불가 칸을 빼면 남는 칸이 없어요.'}
       />
-    ) : (
-      <NoChange title="추천할 빈 칸이 없어요" description="다른 식물이나 배치 불가 칸을 빼면 남는 칸이 없어요." />
     );
   }
 
@@ -166,14 +176,32 @@ function ServerResult({ plant, placement }: { plant: Plant; placement: ServerPla
       ? `방 안에 요구 범위에 드는 빈 칸이 없어요. 추천 칸의 예상 DLI도 ${formatDli(rec.dli)}(${DLI_STATUS_COPY[rec.status].label})예요.`
       : `추천 칸의 예상 DLI는 ${formatDli(rec.dli)}로 요구 범위 안이에요.`,
     '다른 식물이 있는 칸과 배치 불가 칸은 빼고 골랐어요.',
+    ...(decision ? [`요구 DLI 근거: ${evidenceText(decision.evidence)}`] : []),
     ...warnings,
   ];
+
+  // 추천 칸에 다른 식물이 있으면(자리 교환) 같이 옮겨야 서버가 적용해 준다
+  const group = plan?.planId && plant.serverId !== undefined ? moveGroup(plan, plant.serverId) : [];
+  const partners = group
+    .slice(1)
+    .map((id) => state.plants.find((p) => p.serverId === id)?.name)
+    .filter((n): n is string => !!n);
+  const canApply = !noFitCell && (decision ? decision.canApply : true);
+  const apply = async () => {
+    if (plan?.planId) {
+      await actions.applyRecommendationPlan(plan.planId, group);
+      return;
+    }
+    // 계획 API가 없는 서버: 식물별 위치 저장
+    await actions.applyRecommendation(plant.id, toPlacementRecommendation(state.room, placement) ?? undefined);
+  };
+  const swapNote = partners.length ? `추천 칸에 ${partners.join(', ')}이(가) 있어서 함께 옮겨요 (서로 자리 바꾸기).` : null;
 
   return (
     <ResultLayout
       plant={plant}
-      source={{ label: 'LUMAP 계산', tone: 'green' }}
-      note={noFitCell ? '요구 범위에 드는 빈 칸이 없어 서버가 고른 칸을 참고로만 보여드려요.' : null}
+      source={{ label: decision ? `LUMAP 계산 · ${REASON_COPY[decision.reasonCode].label}` : 'LUMAP 계산', tone: 'green' }}
+      note={noFitCell ? '요구 범위에 드는 빈 칸이 없어 서버가 고른 칸을 참고로만 보여드려요.' : swapNote}
       title={noFitCell ? '요구 범위에 맞는 칸이 없어요' : '더 좋은 자리를 찾았어요'}
       planChip={noFitCell ? { label: '범위에 맞는 칸 없음', tone: 'dusk' } : { label: deltaLabel, tone: 'green' }}
       deltaLabel={deltaLabel}
@@ -191,7 +219,8 @@ function ServerResult({ plant, placement }: { plant: Plant; placement: ServerPla
       reasons={reasons}
       basis={`${periodText} · LUMAP 계산 · 실제 측정값이 아니에요.`}
       successText={`이제 ${withIga(plant.name)} ${rec.label}에서 하루 약 ${formatDli(rec.dli)} mol/m²/day 빛을 받을 것으로 예상돼요.`}
-      onApply={noFitCell ? null : () => actions.applyRecommendation(plant.id, toPlacementRecommendation(state.room, placement) ?? undefined)}
+      onApply={canApply ? apply : null}
+      applyTitle={partners.length ? `${partners.length + 1}개 함께 옮기기` : undefined}
     />
   );
 }
@@ -220,6 +249,8 @@ interface ResultLayoutProps {
   successText: string;
   /** null이면 '이 위치로 설정' 없이 둘러보기만 */
   onApply: (() => Promise<void>) | null;
+  /** 기본 '이 위치로 설정' */
+  applyTitle?: string;
 }
 
 function ResultLayout(props: ResultLayoutProps) {
@@ -269,7 +300,7 @@ function ResultLayout(props: ResultLayoutProps) {
       <PrimaryButton title="완료" tone="deep" fullWidth={false} style={styles.flex} onPress={goBackOrHome} />
     </View>
   ) : onApply ? (
-    <PrimaryButton title="이 위치로 설정" icon={Check} onPress={handleApply} />
+    <PrimaryButton title={props.applyTitle ?? '이 위치로 설정'} icon={Check} onPress={handleApply} />
   ) : (
     <PrimaryButton title="돌아가기" tone="deep" onPress={goBackOrHome} />
   );

@@ -13,6 +13,7 @@ import { LightPreferencePicker } from '@/components/plants/LightPreferencePicker
 import { LocationPicker, type LocationValue } from '@/components/plants/LocationPicker';
 import { PlacementPreview } from '@/components/plants/PlacementPreview';
 import { SpeciesPicker } from '@/components/plants/SpeciesPicker';
+import { SpeciesSearch } from '@/components/plants/SpeciesSearch';
 import { Colors, Spacing } from '@/constants/theme';
 import { getSpecies, PLANT_SPECIES } from '@/data/plantSpecies';
 import { analyzePlacement } from '@/services/placement/placementEngine';
@@ -100,8 +101,16 @@ export default function AddPlantScreen() {
           식물 정보를 알려주시면 우리 집에서 가장 잘 맞는 자리를 찾아드릴게요.
         </AppText>
 
-        <FormField label="식물 종류" required hint="종류를 고르면 광량과 물주기가 자동으로 채워져요">
+        <FormField
+          label="식물 종류"
+          required
+          hint={
+            syncStatus === 'synced'
+              ? '목록에 없으면 아래에서 검색해요 (식물 카탈로그 107종)'
+              : '종류를 고르면 광량과 물주기가 자동으로 채워져요'
+          }>
           <SpeciesPicker value={speciesId} onChange={selectSpecies} unavailable={unavailable} />
+          {syncStatus === 'synced' ? <SpeciesSearch links={state.serverSpecies} value={speciesId} onSelect={selectSpecies} /> : null}
           {serverSpecies ? (
             <AppText variant="caption" color={Colors.textSecondary} style={styles.dli}>
               {`필요 광량 ${serverSpecies.minDli}–${serverSpecies.maxDli} mol/m²/day (서버 기준)`}

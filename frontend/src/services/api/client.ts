@@ -33,8 +33,10 @@ export function setUnauthorizedListener(listener: UnauthorizedListener | null) {
 }
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
+  /** 같은 요청을 다시 보내도 서버가 한 번만 처리하게 하는 키 (계산·스캔·사진 업로드) */
+  idempotencyKey?: string;
   /** multipart 요청 (사진 업로드). 있으면 body 대신 보낸다 — 키 변환 없음 */
   form?: FormData;
   /** 기본 true */
@@ -45,8 +47,9 @@ export interface RequestOptions {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, form, auth = true, query, timeoutMs = API_TIMEOUT_MS } = options;
+  const { method = 'GET', body, form, auth = true, query, timeoutMs = API_TIMEOUT_MS, idempotencyKey } = options;
   const headers: Record<string, string> = { Accept: 'application/json' };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
 
   if (auth) {
     const token = getAccessToken();
@@ -89,6 +92,22 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError(response.status, detailMessage(data) ?? `요청에 실패했어요 (${response.status})`);
   }
   return camelize<T>(data);
+}
+
+/** 요청 하나를 구분하는 키 — 재시도할 때는 같은 키를 다시 쓴다 */
+export function newRequestKey(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** 서버가 주는 상대 경로(/api/v1/...)를 전체 주소로 */
+export function absoluteApiUrl(path: string): string {
+  return path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+}
+
+/** 인증이 필요한 이미지 요청용 헤더 (토큰이 없으면 빈 객체) */
+export function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {

@@ -9,6 +9,7 @@ import { linkSpecies, plantsFromServer, type SpeciesLinks } from '@/services/api
 import { cellToReal, roomFromServer } from '@/services/api/roomSync';
 import { analyzePlacement } from '@/services/placement/placementEngine';
 import { describeServerError } from '@/services/lightForecast';
+import { syncDeviceNotifications } from '@/services/notifications/deviceSchedule';
 import { buildMockDliMap } from '@/services/space/dliMap';
 import { describePosition, isBlocked, isInsideRoom, samePosition } from '@/services/space/geometry';
 import { toApiRoom, type ManualRoomInput } from '@/services/space/manualRoom';
@@ -71,6 +72,8 @@ export interface GardenState {
   directionNote: string | null;
   /** 앱 방 ID → 사용자가 지정한 배치 불가 칸 (방을 다시 받아도 유지) */
   blockedCells: Record<string, GridPosition[]>;
+  /** 배치 불가 칸 서버 저장 상태 (서버 방만) */
+  blockedSync: BlockedSync;
   /** 공간 화면 DLI 지도의 계산 기간 */
   dliPeriod: DliPeriod;
   /** 앱 종 ↔ 서버 종 연결 (로그인 상태에서만 채워짐) */
@@ -88,6 +91,14 @@ export interface DliCheck {
 }
 
 const IDLE_CHECK: DliCheck = { status: 'idle', message: null };
+
+/** local: 앱에만 있음(데모 방) · saving · saved: 서버와 같음 · error: 저장 실패 */
+export interface BlockedSync {
+  status: 'local' | 'saving' | 'saved' | 'error';
+  message: string | null;
+}
+
+const LOCAL_BLOCKED: BlockedSync = { status: 'local', message: null };
 
 export interface NewPlantInput {
   id: string;
@@ -117,6 +128,8 @@ type Action =
   | { type: 'scanUpload'; windowId: string; upload: ScanUploadState }
   | { type: 'directionNote'; note: string | null }
   | { type: 'toggleBlockedCell'; pos: GridPosition }
+  | { type: 'setBlockedCells'; roomId: string; cells: GridPosition[] }
+  | { type: 'blockedSync'; sync: BlockedSync }
   | { type: 'setDliPeriod'; period: DliPeriod }
   | { type: 'syncStart' }
   | { type: 'syncSuccess'; links: SpeciesLinks; plants: Plant[]; skipped: number; room: Room; dliMap: ApiDliMap | null }
@@ -151,6 +164,7 @@ function createInitialState(hasOnboarded = false): GardenState {
     scanUploads: {},
     directionNote: null,
     blockedCells: {},
+    blockedSync: LOCAL_BLOCKED,
     dliPeriod: 'month',
     serverSpecies: {},
     sync: DEMO_SYNC,
@@ -271,6 +285,14 @@ function reducer(state: GardenState, action: Action): GardenState {
         plants: reanalyzePlants(room, state.plants),
       };
     }
+    case 'setBlockedCells': {
+      const blockedCells = { ...state.blockedCells, [action.roomId]: action.cells };
+      if (state.room.id !== action.roomId) return { ...state, blockedCells };
+      const room = { ...state.room, blockedCells: action.cells };
+      return { ...state, blockedCells, room, plants: reanalyzePlants(room, state.plants) };
+    }
+    case 'blockedSync':
+      return { ...state, blockedSync: action.sync };
     case 'setDliPeriod':
       return { ...state, dliPeriod: action.period };
     case 'removePlant':
@@ -312,6 +334,7 @@ function reducer(state: GardenState, action: Action): GardenState {
         sync: DEMO_SYNC,
         dliMap: null,
         dliCheck: IDLE_CHECK,
+        blockedSync: LOCAL_BLOCKED,
       };
     default:
       return state;
@@ -334,6 +357,11 @@ interface GardenActions {
   movePlant: (plantId: string, position: GridPosition) => Promise<void>;
   /** recommendation을 넘기면(서버 추천) 그 칸으로, 없으면 앱 예시 추천 칸으로 옮긴다 */
   applyRecommendation: (plantId: string, recommendation?: PlacementRecommendation) => Promise<void>;
+  /**
+   * 서버 추천 계획 적용 (POST recommendation-plans/{id}/apply) — 서버가 위치를 한 번에 저장한다.
+   * serverPlantIds를 빼면 옮길 수 있는 식물 전부. 적용한 식물 수를 돌려준다
+   */
+  applyRecommendationPlan: (planId: string, serverPlantIds?: number[]) => Promise<number>;
   setRoom: (room: Room) => void;
   toggleNotification: (key: keyof NotificationSettings) => void;
   cycleCharacter: () => void;
@@ -343,7 +371,7 @@ interface GardenActions {
   /** 창밖 스캔을 서버에 올리고 SKY 분석이 끝날 때까지 상태를 갱신한다 (실패는 scanUploads에 기록) */
   uploadWindowScan: (windowId: string) => Promise<void>;
   /** 서버 방 위치·지역 이름 저장 후 방을 다시 받는다 (창밖 스캔은 유지된다) */
-  saveRoomLocation: (location: { latitude: number; longitude: number; label: string }) => Promise<void>;
+  saveRoomLocation: (location: { latitude: number; longitude: number; label: string; cityId?: number }) => Promise<void>;
   /** ARCore 없이 직접 입력한 방을 서버에 만들고 그 방으로 바꾼다 */
   createManualRoom: (input: ManualRoomInput) => Promise<void>;
   /** 배치 불가 칸 지정/해제. 식물이 있는 칸·방 밖은 바꾸지 않는다 */
@@ -370,6 +398,8 @@ export function GardenProvider({ children }: { children: ReactNode }) {
   const uploadRuns = useRef<Record<string, number>>({});
   /** 방 방향 자동 계산을 이미 시도한 방 (roomId:geometryVersion) — 실패해도 동기화마다 반복하지 않는다 */
   const directionTried = useRef(new Set<string>());
+  /** 배치 불가 칸 저장 예약 (연속으로 누르면 마지막 상태만 보낸다) */
+  const blockedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -437,6 +467,51 @@ export function GardenProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    /** 배치 불가 칸을 서버에 저장 (서버 방만). 방 구조가 바뀌었으면(409) 방을 다시 받는다 */
+    const saveBlocked = async () => {
+      const { room, blockedCells } = stateRef.current;
+      if (!signedInRef.current || !room.server) return;
+      const cells = (blockedCells[room.id] ?? []).map((c): [number, number] => [c.y, c.x]);
+      dispatch({ type: 'blockedSync', sync: { status: 'saving', message: null } });
+      try {
+        await api.saveBlockedCells(room.server.roomId, room.server.geometryVersion, cells, room.cellSizeM);
+        dispatch({ type: 'blockedSync', sync: { status: 'saved', message: null } });
+      } catch (e) {
+        dispatch({ type: 'blockedSync', sync: { status: 'error', message: errorMessage(e) } });
+        if (e instanceof ApiError && e.status === 409) await reloadFromServer();
+      }
+    };
+
+    /**
+     * 서버에 저장된 배치 불가 칸 불러오기. 서버에 없고 앱에만 있으면(이 기능 전에 지정한 칸) 서버에 올린다.
+     * 방 구조가 바뀌어 stale이면 서버가 빈 목록을 주므로 다시 지정해야 한다.
+     */
+    const restoreBlocked = async (room: Room) => {
+      if (!room.server) return;
+      try {
+        const saved = await api.fetchBlockedCells(room.server.roomId, room.cellSizeM);
+        const local = stateRef.current.blockedCells[room.id] ?? [];
+        if (saved.blockedCells.length === 0 && local.length > 0 && !saved.stale) {
+          await saveBlocked();
+          return;
+        }
+        const cells = saved.blockedCells.map(([row, col]) => ({ x: col, y: row }));
+        dispatch({ type: 'setBlockedCells', roomId: room.id, cells });
+        dispatch({
+          type: 'blockedSync',
+          sync: saved.stale
+            ? { status: 'error', message: '방 구조가 바뀌어 배치 불가 칸을 다시 지정해야 해요' }
+            : { status: 'saved', message: null },
+        });
+      } catch (e) {
+        // 옛 서버(v0.8 이하)는 저장 API가 없다 → 앱에만 둔다
+        dispatch({
+          type: 'blockedSync',
+          sync: e instanceof ApiError && e.status === 404 ? LOCAL_BLOCKED : { status: 'error', message: errorMessage(e) },
+        });
+      }
+    };
+
     const reloadFromServer = async () => {
       if (!signedInRef.current) return;
       dispatch({ type: 'syncStart' });
@@ -471,7 +546,10 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (syncedRoom.server) await restoreScanStatus(syncedRoom);
+      if (syncedRoom.server) await Promise.all([restoreScanStatus(syncedRoom), restoreBlocked(syncedRoom)]);
+
+      // 알림을 켜 두었고 이미 허락받았으면 서버 일정으로 조용히 다시 예약한다 (일정이 같으면 그대로)
+      if (stateRef.current.notifications.watering) void syncDeviceNotifications(stateRef.current.today, true, false);
 
       // DLI 지도 JSON이 서버 규격(dli_map_v2)과 맞는지 서버에 검증 요청
       if (dliMap) {
@@ -554,6 +632,14 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         }
         dispatch({ type: 'applyRecommendation', plantId, recommendation });
       },
+      applyRecommendationPlan: async (planId, serverPlantIds) => {
+        const { room } = stateRef.current;
+        if (!signedInRef.current || !room.server) throw new Error('로그인하고 서버에 저장된 방에서만 적용할 수 있어요');
+        const applied = await api.applyRecommendationPlan(room.server.roomId, planId, serverPlantIds);
+        // 서버가 칸 중심 좌표로 저장했으니 다시 받아 지도에 반영한다
+        await reloadFromServer();
+        return applied.appliedCount;
+      },
       setRoom: (room) => dispatch({ type: 'setRoom', room }),
       toggleNotification: (key) => dispatch({ type: 'toggleNotification', key }),
       cycleCharacter: () => dispatch({ type: 'cycleCharacter' }),
@@ -586,10 +672,14 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         }
         if (!cancelled()) await watchScanJob(windowId, jobId, geometryVersion);
       },
-      saveRoomLocation: async ({ latitude, longitude, label }) => {
+      saveRoomLocation: async ({ latitude, longitude, label, cityId }) => {
         const { room } = stateRef.current;
         if (!signedInRef.current || !room.server) throw new Error('로그인하고 서버에 저장된 방에서만 설정할 수 있어요');
-        await api.updateRoomLocation(room.server.roomId, { latitude, longitude, locationName: label });
+        // 서버 도시 목록 항목이면 도시 ID로 (서버가 대표 좌표·이름을 저장)
+        await api.updateRoomLocation(
+          room.server.roomId,
+          cityId !== undefined ? { cityId } : { latitude, longitude, locationName: label },
+        );
         await reloadFromServer();
       },
       createManualRoom: async (input) => {
@@ -612,6 +702,15 @@ export function GardenProvider({ children }: { children: ReactNode }) {
         if (plants.some((p) => samePosition(p.location.position, pos))) return 'occupied';
         const wasBlocked = isBlocked(room, pos);
         dispatch({ type: 'toggleBlockedCell', pos });
+        // 서버 방이면 잠깐 기다렸다가 마지막 상태를 저장한다
+        if (signedInRef.current && room.server) {
+          if (blockedTimer.current) clearTimeout(blockedTimer.current);
+          dispatch({ type: 'blockedSync', sync: { status: 'saving', message: null } });
+          blockedTimer.current = setTimeout(() => {
+            blockedTimer.current = null;
+            void saveBlocked();
+          }, 700);
+        }
         return wasBlocked ? 'unblocked' : 'blocked';
       },
       setDliPeriod: (period) => dispatch({ type: 'setDliPeriod', period }),

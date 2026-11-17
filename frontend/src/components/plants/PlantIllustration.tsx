@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
-import type { PlantSpeciesId } from '@/types';
+import type { LocalSpeciesId, PlantSpeciesId } from '@/types';
 
 /**
  * 식물 종류별 top-front 일러스트 (사진 대신 사용).
@@ -18,7 +18,7 @@ const POT: Record<PotTone, { rim: string; body: string; shade: string }> = {
   sand: { rim: '#E7CFAE', body: '#DDBF97', shade: '#C4A276' },
 };
 
-const SPECIES_POT: Record<PlantSpeciesId, PotTone> = {
+const SPECIES_POT: Record<LocalSpeciesId, PotTone> = {
   monstera: 'clay',
   pothos: 'cream',
   olive: 'sand',
@@ -256,6 +256,47 @@ function Pilea() {
   );
 }
 
+/* ---------------- 공통 (서버 카탈로그 종) ---------------- */
+const GENERIC_LEAF = 'M 0 0 C -10 -8 -11 -27 0 -40 C 11 -27 10 -8 0 0 Z';
+/** 종마다 잎 색·화분이 조금씩 다르게 (서버 종 ID로 고른다) */
+const GENERIC_PALETTES: { back: string; front: string; vein: string }[] = [
+  { back: '#5E8F5A', front: '#7DAF6C', vein: '#CFE3BF' },
+  { back: '#6E9B4F', front: '#93BF63', vein: '#E1EFC8' },
+  { back: '#4F7F63', front: '#6FA284', vein: '#C9E2D2' },
+  { back: '#7A8F4E', front: '#A0B865', vein: '#E6EDC9' },
+];
+const GENERIC_POTS: PotTone[] = ['clay', 'cream', 'sage', 'sand'];
+
+function serverIndex(speciesId: PlantSpeciesId): number {
+  const n = Number(speciesId.slice(4));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** 이름만 아는 식물 — 둥근 잎이 모여 난 공통 그림 */
+function Leafy({ index }: { index: number }) {
+  const c = GENERIC_PALETTES[index % GENERIC_PALETTES.length];
+  // [각도, 크기, 앞쪽 잎 여부]
+  const leaves: [number, number, boolean][] = [
+    [-58, 0.82, false],
+    [58, 0.82, false],
+    [-30, 1.0, false],
+    [30, 1.0, false],
+    [0, 1.12, false],
+    [-14, 0.9, true],
+    [16, 0.88, true],
+  ];
+  return (
+    <G>
+      {leaves.map(([deg, scale, front], i) => (
+        <G key={i} transform={tf(60, 97, deg, scale)}>
+          <Path d={GENERIC_LEAF} fill={front ? c.front : c.back} />
+          <Path d="M 0 -2 L 0 -33" stroke={c.vein} strokeWidth={1.2} opacity={0.7} />
+        </G>
+      ))}
+    </G>
+  );
+}
+
 export interface PlantIllustrationProps {
   speciesId: PlantSpeciesId;
   size?: number;
@@ -278,17 +319,20 @@ export function PlantIllustration({ speciesId, size = 96, background = Colors.li
         return <FiddleLeaf />;
       case 'pilea':
         return <Pilea />;
+      default:
+        return <Leafy index={serverIndex(speciesId)} />;
     }
   })();
 
   // 덩굴 식물은 잎이 화분 앞으로 내려오도록 화분을 먼저 그린다
   const potFirst = speciesId === 'pothos';
+  const pot = speciesId in SPECIES_POT ? SPECIES_POT[speciesId as LocalSpeciesId] : GENERIC_POTS[serverIndex(speciesId) % GENERIC_POTS.length];
 
   return (
     <Svg width={size} height={(size * 140) / 120} viewBox="0 0 120 140">
-      {potFirst ? <Pot tone={SPECIES_POT[speciesId]} /> : null}
+      {potFirst ? <Pot tone={pot} /> : null}
       {foliage}
-      {!potFirst ? <Pot tone={SPECIES_POT[speciesId]} /> : null}
+      {!potFirst ? <Pot tone={pot} /> : null}
     </Svg>
   );
 }

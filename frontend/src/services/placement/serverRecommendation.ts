@@ -1,4 +1,5 @@
 import type { DliStatus, GridPosition, PlacementRecommendation, Room } from '@/types';
+import type { ApiDecision, ApiReasonCode, ApiRecommendationCell, ApiRecommendationResult } from '@/types/api';
 
 import { classifyDli } from '../lightForecast/dliStatus';
 import { describePosition, nearestWindowDistance } from '../space/geometry';
@@ -11,28 +12,7 @@ import { lightLabelFor } from './placementEngine';
  * 격자는 서버 grid_v2와 같다: col = GridPosition.x, row = GridPosition.y.
  */
 
-export interface ApiRecommendationCell {
-  row: number;
-  col: number;
-  totalDli: number;
-}
-
-export interface ApiPlantRecommendation {
-  plantId: number;
-  speciesId: number;
-  requiredDli: { min: number; max: number };
-  /** 식물 위치가 없으면 null */
-  current: (ApiRecommendationCell & { status: 'LOW' | 'OK' | 'HIGH' }) | null;
-  /** 지금 자리가 적정이면 null (이동 제안 안 함) */
-  recommended: (ApiRecommendationCell & { score: number }) | null;
-}
-
-export interface ApiRecommendationResult {
-  roomId: number;
-  period: { startDate: string; endDate: string; dayCount: number } | null;
-  plants: ApiPlantRecommendation[];
-  warnings: string[];
-}
+export type { ApiPlantRecommendation, ApiRecommendationCell, ApiRecommendationResult } from '@/types/api';
 
 export interface ServerSpot {
   position: GridPosition;
@@ -49,6 +29,25 @@ export interface ServerPlacement {
   noFitCell: boolean;
   period: ApiRecommendationResult['period'];
   warnings: string[];
+  /** 서버 판정 (추천 계획 API). 옛 추천 API 응답이면 null */
+  decision: ApiDecision | null;
+}
+
+/** 서버 판정 코드 → 화면 문구 */
+export const REASON_COPY: Record<ApiReasonCode, { label: string; description: string }> = {
+  CURRENT_OK: { label: '지금 자리 유지', description: '지금 자리가 요구 범위 안이라 옮기지 않아요.' },
+  RELOCATE: { label: '옮기기 추천', description: '요구 범위 안에 드는 빈 칸을 찾았어요.' },
+  NO_FREE_CELL: { label: '빈 칸 없음', description: '다른 식물과 배치 불가 칸을 빼면 옮길 칸이 없어요.' },
+  NO_SUITABLE_CELL: { label: '맞는 칸 없음', description: '빈 칸 중에 요구 범위에 드는 칸이 없어요.' },
+};
+
+/**
+ * 화면에 그대로 보여줄 서버 경고만 남긴다.
+ * 식물별 경고(PLANT_<id>_NO_FREE_CELL 코드, 알고리즘의 영문 'plant <id>: no cell … closest cell')는
+ * 판정·추천 칸 문구로 이미 보여주고, 다른 식물 것까지 섞여 오므로 뺀다.
+ */
+export function readableWarnings(warnings: string[]): string[] {
+  return warnings.filter((w) => !/^PLANT_\d+_NO_(FREE|SUITABLE)_CELL$/.test(w) && !/^plant \d+:/i.test(w));
 }
 
 const STATUS: Record<'LOW' | 'OK' | 'HIGH', DliStatus> = { LOW: 'low', OK: 'ok', HIGH: 'high' };
@@ -58,7 +57,12 @@ function toPosition(cell: ApiRecommendationCell): GridPosition {
 }
 
 /** 응답에서 이 식물(serverPlantId)의 결과를 꺼낸다. 없으면 null */
-export function toServerPlacement(room: Room, serverPlantId: number, result: ApiRecommendationResult): ServerPlacement | null {
+export function toServerPlacement(
+  room: Room,
+  serverPlantId: number,
+  result: ApiRecommendationResult,
+  decisions: ApiDecision[] = [],
+): ServerPlacement | null {
   const item = result.plants.find((p) => p.plantId === serverPlantId);
   if (!item) return null;
   const required = item.requiredDli;
@@ -85,7 +89,8 @@ export function toServerPlacement(room: Room, serverPlantId: number, result: Api
     recommended,
     noFitCell: recommended !== null && recommended.status !== 'ok',
     period: result.period,
-    warnings: result.warnings,
+    warnings: readableWarnings(result.warnings),
+    decision: decisions.find((d) => d.plantId === serverPlantId) ?? null,
   };
 }
 

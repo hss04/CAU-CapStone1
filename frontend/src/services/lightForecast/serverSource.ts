@@ -2,6 +2,7 @@ import { ApiError } from '@/services/api/client';
 import {
   fetchDliSeries,
   fetchJob,
+  fetchLatestDliMap,
   requestDliMap,
   requestDliSeries,
   type DliSeriesOptions,
@@ -55,12 +56,30 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type JobOutcome<T> = { ok: true; result: T } | { ok: false; error: string };
 
-async function waitForJob<T>(jobId: string, isCancelled: () => boolean): Promise<JobOutcome<T> | null> {
+/** 서버가 알려주는 실제 진행 단계 (DLI는 날짜 단위) */
+export interface JobProgress {
+  done: number;
+  total: number;
+  /** 서버가 다른 계산을 먼저 하느라 아직 시작 전 (작업은 한 번에 하나씩) */
+  queued?: boolean;
+}
+
+async function waitForJob<T>(
+  jobId: string,
+  isCancelled: () => boolean,
+  onProgress?: (p: JobProgress) => void,
+): Promise<JobOutcome<T> | null> {
   const started = Date.now();
   while (Date.now() - started < JOB_TIMEOUT_MS) {
     await sleep(POLL_INTERVAL_MS);
     if (isCancelled()) return null;
     const job = await fetchJob<T>(jobId);
+    if (job.progress && job.progress.totalSteps > 1) {
+      onProgress?.({ done: job.progress.completedSteps, total: job.progress.totalSteps, queued: job.progress.stage === 'QUEUED' });
+    }
+    if (job.status === 'FAILED' && job.errorCode === 'SERVER_RESTARTED') {
+      return { ok: false, error: '서버가 다시 시작돼 계산이 멈췄어요 · 다시 계산해 주세요' };
+    }
     if (job.status === 'COMPLETED' && job.result && !job.stale) return { ok: true, result: job.result };
     if (job.status === 'COMPLETED' || job.status === 'STALE' || job.stale) {
       return { ok: false, error: '방 정보가 바뀌어 다시 계산해야 해요' };
@@ -138,12 +157,12 @@ export async function loadServerLightDays(options: ServerLightOptions): Promise<
   if (saved.days.length > 0) onPartial(savedDays, savedProvisional);
   if (saved.missingDates.length === 0 && !force) return { ok: true, days: savedDays, provisional: savedProvisional };
 
-  // ② 빠진 날짜 계산
+  // ② 빠진 날짜 계산 — 서버가 날짜 단위 진행을 알려준다 (저장된 날짜는 건너뛴다)
   onProgress({ stage: 'dli', done: saved.days.length, total: dates.length });
   let outcome: JobOutcome<ApiDliSeries> | null;
   try {
     const { jobId } = await requestDliSeries(roomId, startDate, endDate, seriesOpts);
-    outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled);
+    outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled, (p) => onProgress({ stage: 'dli', done: p.done, total: p.total }));
   } catch (e) {
     outcome = { ok: false, error: describeServerError(e) };
   }
@@ -175,21 +194,75 @@ export type PeriodDliResult =
   | { ok: false; error: string };
 
 /**
+ * 저장된 최근 기간 지도 (GET /rooms/{id}/dli-map/latest) — 같은 기간이면 다시 계산하지 않고 바로 쓴다.
+ * 예보가 만료되거나 방·스캔·위치가 바뀌면 서버가 주지 않는다 (404).
+ */
+async function latestPeriodMap(room: Room, startDate: string, endDate: string): Promise<PeriodDliResult | null> {
+  if (!room.server) return null;
+  try {
+    const job = await fetchLatestDliMap(room.server.roomId, { cellSizeM: room.cellSizeM, mockSky: seriesOptions(room).mockSky });
+    const r = job.result;
+    if (!r || job.stale || job.status !== 'COMPLETED') return null;
+    if (r.period.startDate !== startDate || r.period.endDate !== endDate) return null;
+    return { ok: true, jobId: job.jobId, result: r, provisional: isProvisional(r) };
+  } catch {
+    // 404(저장된 지도 없음)·옛 서버 → 새로 계산
+    return null;
+  }
+}
+
+/**
  * 기간(start~end) 평균 DLI 지도 하나 — 공간 화면 지도, 추천 요청(dli_job_id)에 쓴다.
- * 서버는 날짜별 결과를 저장해 두고 다시 쓴다. 취소되면 null.
+ * 저장된 같은 기간 지도가 있으면 그대로 쓰고, 없으면 계산한다 (서버는 날짜별 결과를 저장해 두고 다시 쓴다).
+ * 취소되면 null.
  */
 export async function runPeriodDliJob(
   room: Room,
   startDate: string,
   endDate: string,
   isCancelled: () => boolean,
+  onProgress?: (p: JobProgress) => void,
 ): Promise<PeriodDliResult | null> {
   if (!room.server) return { ok: false, error: '서버에 측정한 방이 없어요' };
+  const restored = await latestPeriodMap(room, startDate, endDate);
+  if (restored) return restored;
+  if (isCancelled()) return null;
   try {
     const { jobId } = await requestDliMap(room.server.roomId, periodRequestBody(room, startDate, endDate));
-    const outcome = await waitForJob<ApiDliJobResult>(jobId, isCancelled);
+    const outcome = await waitForJob<ApiDliJobResult>(jobId, isCancelled, onProgress);
     if (outcome === null) return null;
     return outcome.ok ? { ok: true, jobId, result: outcome.result, provisional: isProvisional(outcome.result) } : outcome;
+  } catch (e) {
+    return { ok: false, error: describeServerError(e) };
+  }
+}
+
+/** 비교·검증용 계산 옵션 (공간 화면과 같은 칸 크기·연동 테스트 설정) */
+export function dliOptionsFor(room: Room): DliSeriesOptions {
+  return seriesOptions(room);
+}
+
+/**
+ * 기간(start~end, 최대 93일)의 날짜별 결과를 서버에 저장해 둔다 — 이미 있는 날짜는 서버가 건너뛴다.
+ * 기간 비교(POST /dli-comparison)는 저장된 결과만 쓰므로 그 전에 부른다. 취소되면 null.
+ */
+export async function ensureDliSeries(
+  room: Room,
+  startDate: string,
+  endDate: string,
+  isCancelled: () => boolean,
+  onProgress?: (p: JobProgress) => void,
+): Promise<{ ok: true } | { ok: false; error: string } | null> {
+  if (!room.server) return { ok: false, error: '서버에 측정한 방이 없어요' };
+  const opts = seriesOptions(room);
+  try {
+    const saved = await fetchDliSeries(room.server.roomId, startDate, endDate, opts);
+    if (saved.missingDates.length === 0) return { ok: true };
+    if (isCancelled()) return null;
+    const { jobId } = await requestDliSeries(room.server.roomId, startDate, endDate, opts);
+    const outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled, onProgress);
+    if (outcome === null) return null;
+    return outcome.ok ? { ok: true } : outcome;
   } catch (e) {
     return { ok: false, error: describeServerError(e) };
   }

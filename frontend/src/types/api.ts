@@ -162,6 +162,8 @@ export interface ApiJobCreated {
   jobId: string;
   status: ApiJobStatus;
   statusUrl: string;
+  /** 같은 입력으로 진행 중·완료된 작업을 다시 쓴 경우 — v0.9.0 */
+  reused?: boolean;
 }
 
 export type ApiJobStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'STALE';
@@ -236,10 +238,272 @@ export interface ApiLocationResult {
 
 export interface ApiJob<T> {
   jobId: string;
-  kind: 'DLI' | 'SCAN';
+  kind: 'DLI' | 'DLI_SERIES' | 'SCAN';
   status: ApiJobStatus;
   error: string | null;
+  /** 실패 사유 코드 (예: SERVER_RESTARTED) — v0.9.0 */
+  errorCode?: string | null;
+  /** 실제 처리 단계. DLI는 날짜 단위, 스캔은 전체가 1단계 — v0.9.0 */
+  progress?: { stage: string; completedSteps: number; totalSteps: number };
   /** 방 구조가 바뀌어 결과가 더 이상 맞지 않음 */
   stale: boolean;
   result: T | null;
+}
+
+/* ---------------- 배치 추천 (POST /rooms/{id}/recommendations · recommendation-plans) ---------------- */
+
+export interface ApiRecommendationCell {
+  row: number;
+  col: number;
+  totalDli: number;
+}
+
+export interface ApiPlantRecommendation {
+  plantId: number;
+  speciesId: number;
+  requiredDli: { min: number; max: number };
+  /** 식물 위치가 없으면 null */
+  current: (ApiRecommendationCell & { status: 'LOW' | 'OK' | 'HIGH' }) | null;
+  /** 옮길 칸이 없으면 null — current.status가 OK일 때만 '지금 자리 유지'다 */
+  recommended: (ApiRecommendationCell & { score: number }) | null;
+}
+
+export interface ApiRecommendationResult {
+  roomId: number;
+  date?: string | null;
+  period: { startDate: string; endDate: string; dayCount: number } | null;
+  plants: ApiPlantRecommendation[];
+  warnings: string[];
+}
+
+/** CURRENT_OK 유지 · RELOCATE 이동 가능 · NO_FREE_CELL 빈 칸 없음 · NO_SUITABLE_CELL 범위에 맞는 칸 없음 */
+export type ApiReasonCode = 'CURRENT_OK' | 'RELOCATE' | 'NO_FREE_CELL' | 'NO_SUITABLE_CELL';
+
+/** 종별 요구 DLI의 근거 (GET /plant-species/{id}/evidence) */
+export interface ApiSpeciesEvidence {
+  basis: 'REFERENCE_SPECIES' | 'REFERENCE_GENUS' | 'REFERENCE_GROUP' | 'ESTIMATED' | 'OPERATOR_DEFINED' | 'UNKNOWN';
+  /** 실험으로 확정된 값이 아니라 참고 범위 */
+  provisional: boolean;
+  sourceUrl: string | null;
+  sourceEntry: string | null;
+  checkedAt: string | null;
+  botanicalSourceUrl: string | null;
+  sourceNote: string | null;
+}
+
+export interface ApiDecision {
+  plantId: number;
+  reasonCode: ApiReasonCode;
+  canApply: boolean;
+  evidence: ApiSpeciesEvidence;
+}
+
+/** POST /rooms/{id}/recommendation-plans — 30분 동안 한 번에 적용할 수 있는 추천 계획 */
+export interface ApiRecommendationPlan {
+  planId: string;
+  expiresAt: string;
+  geometryVersion: number;
+  result: ApiRecommendationResult;
+  decisions: ApiDecision[];
+}
+
+export interface ApiAppliedPlan {
+  planId: string;
+  appliedCount: number;
+  plants: ApiPlant[];
+}
+
+/* ---------------- 배치 불가 칸 (서버 저장) ---------------- */
+
+export interface ApiBlockedCells {
+  roomId: number;
+  geometryVersion: number;
+  cellSizeM: number;
+  /** 저장할 때와 방 구조·격자가 달라 쓰지 않음 */
+  stale: boolean;
+  /** [row, col] */
+  blockedCells: [number, number][];
+}
+
+/* ---------------- 한국 도시 (GET /locations/cities, /locations/search) ---------------- */
+
+export interface ApiCityResult extends ApiLocationResult {
+  displayName?: string;
+  /** CITY_REPRESENTATIVE면 서버 도시 목록 항목 — city_id로 저장한다 */
+  coordinateBasis?: string;
+  source?: string;
+}
+
+/* ---------------- 관리 캘린더 (GET /calendar) ---------------- */
+
+export type ApiTaskType = 'WATERING' | 'FERTILIZING' | 'REPOTTING' | 'PRUNING' | 'MISTING' | 'OTHER';
+export type ApiCareType = Exclude<ApiTaskType, 'WATERING'>;
+export type ApiEventStatus = 'PENDING' | 'COMPLETED' | 'SKIPPED';
+
+export interface ApiCalendarDay {
+  date: string;
+  totalCount: number;
+  pendingCount: number;
+  completedCount: number;
+  skippedCount: number;
+  overdueCount: number;
+  taskTypes: ApiTaskType[];
+}
+
+export interface ApiCalendarEvent {
+  eventId: string;
+  /** 예정일 (완료 기록도 원래 예정일에 표시) */
+  date: string;
+  plantId: number;
+  plantNickname: string;
+  speciesId: number;
+  speciesName: string;
+  scientificName: string | null;
+  roomId: number | null;
+  /** 물주기는 null */
+  scheduleId: number | null;
+  taskType: ApiTaskType;
+  title: string;
+  status: ApiEventStatus;
+  isOverdue: boolean;
+  completedOn: string | null;
+  intervalDays: number | null;
+  note: string | null;
+}
+
+export interface ApiCalendar {
+  timezone: 'Asia/Seoul';
+  today: string;
+  startDate: string;
+  endDate: string;
+  days: ApiCalendarDay[];
+  events: ApiCalendarEvent[];
+}
+
+export interface ApiCareScheduleInput {
+  taskType: ApiCareType;
+  title?: string | null;
+  startDate: string;
+  /** null이면 시작일 한 번만 */
+  intervalDays?: number | null;
+  endDate?: string | null;
+  active?: boolean;
+  note?: string | null;
+}
+
+export interface ApiCareSchedule extends Required<Omit<ApiCareScheduleInput, 'title'>> {
+  id: number;
+  plantId: number;
+  title: string;
+}
+
+export interface ApiWateringRecord {
+  id: number;
+  plantId: number;
+  wateredAt: string;
+}
+
+/* ---------------- 생장 사진 (GET /plants/{id}/growth-photos) ---------------- */
+
+export interface ApiGrowthPhoto {
+  id: number;
+  plantId: number;
+  takenAt: string;
+  takenOn: string;
+  note: string | null;
+  width: number;
+  height: number;
+  byteSize: number;
+  createdAt: string;
+  contentType: string;
+  /** 서버 상대 경로 — 조회에도 Bearer 토큰 필요 */
+  imageUrl: string;
+  thumbnailUrl: string;
+}
+
+export interface ApiGrowthPhotoList {
+  plantId: number;
+  plantNickname: string;
+  timezone: string;
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  photos: ApiGrowthPhoto[];
+}
+
+/* ---------------- 요약 · 알림 · 적합 종 · 기간 비교 ---------------- */
+
+export interface ApiDashboard {
+  date: string;
+  timezone: string;
+  plantCount: number;
+  roomCount: number;
+  overdueWindowStart: string;
+  todayTasks: ApiCalendarEvent[];
+  overdueTasks: ApiCalendarEvent[];
+  plants: {
+    plantId: number;
+    nickname: string;
+    roomId: number | null;
+    lastWateredAt: string | null;
+    latestPhotoAt: string | null;
+    light: { totalDli: number; status: 'LOW' | 'OK' | 'HIGH'; dliJobId: string } | null;
+  }[];
+}
+
+export interface ApiNotificationSchedule {
+  timezone: string;
+  delivery: 'DEVICE_LOCAL';
+  pushConfigured: boolean;
+  /** 일정이 바뀌면 달라진다 — 같으면 다시 예약할 필요 없음 */
+  scheduleVersion: string;
+  notifications: {
+    notificationId: string;
+    eventId: string;
+    plantId: number;
+    title: string;
+    scheduledAt: string;
+    taskType: ApiTaskType;
+  }[];
+}
+
+export interface ApiSuitableSpecies {
+  roomId: number;
+  dliJobId: string;
+  mockSky: boolean;
+  reasonCode: 'MATCHES_FOUND' | 'NO_FREE_CELL' | 'NO_SUITABLE_SPECIES';
+  total: number;
+  results: {
+    speciesId: number;
+    name: string;
+    scientificName: string | null;
+    requiredDli: { min: number; max: number };
+    suitableCells: number;
+    availableCells: number;
+    suitableFraction: number;
+    bestCell: { row: number; col: number; totalDli: number; score: number };
+    evidence: ApiSpeciesEvidence;
+  }[];
+}
+
+export interface ApiComparisonPeriodInput {
+  label: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface ApiDliComparison {
+  roomId: number;
+  geometryVersion: number;
+  grid: ApiGrid;
+  mockSky: boolean;
+  temporaryDirection: boolean;
+  periods: (ApiComparisonPeriodInput & {
+    /** 기간의 날짜별 결과가 모두 저장돼 있어야 평균을 낸다 */
+    complete: boolean;
+    missingDates: string[];
+    meanTotalDli: DliGrid | null;
+    plants: { plantId: number; meanDli: number | null; status: 'LOW' | 'OK' | 'HIGH' | 'UNAVAILABLE' }[];
+  })[];
 }

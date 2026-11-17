@@ -2,13 +2,14 @@ import type { GridPosition, LightLevel } from './room';
 
 export type LightPreference = 'direct' | 'brightIndirect' | 'partialShade' | 'shade';
 
-export type PlantSpeciesId =
-  | 'monstera'
-  | 'pothos'
-  | 'olive'
-  | 'sansevieria'
-  | 'fiddleLeaf'
-  | 'pilea';
+/** 앱에 그림·관리 정보가 있는 종 */
+export type LocalSpeciesId = 'monstera' | 'pothos' | 'olive' | 'sansevieria' | 'fiddleLeaf' | 'pilea';
+
+/**
+ * 앱 종 6개 + 서버 식물 카탈로그에만 있는 종(`srv-<서버 종 ID>`, 로그인 후).
+ * 서버 종은 이름·학명·요구 DLI만 있어서 공통 그림과 기본 관리 정보로 보여준다.
+ */
+export type PlantSpeciesId = LocalSpeciesId | `srv-${number}`;
 
 export interface PlantSpecies {
   id: PlantSpeciesId;
@@ -19,13 +20,15 @@ export interface PlantSpecies {
   wateringIntervalDays: number;
   temperature: string;
   humidity: string;
-  difficulty: '쉬움' | '보통' | '까다로움';
+  difficulty: '쉬움' | '보통' | '까다로움' | '정보 없음';
   summary: string;
   /**
    * 요구 DLI 예시 범위 (mol/m²/day) — 로그인 전 데모 화면용.
    * 로그인하면 서버 식물 종 카탈로그의 min_dli/max_dli를 쓴다.
    */
   exampleDliRange: { min: number; max: number };
+  /** app: 앱에 정보가 있는 종 · server: 서버 카탈로그에서 만든 종 (관리 정보 없음) */
+  source: 'app' | 'server';
 }
 
 export interface PlantLocation {

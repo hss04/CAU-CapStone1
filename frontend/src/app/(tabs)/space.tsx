@@ -1,5 +1,20 @@
 import { router } from 'expo-router';
-import { Ban, Check, ChevronRight, Compass, Hand, MapPin, Move, PanelsTopLeft, Plus, ScanLine, X } from 'lucide-react-native';
+import {
+  Ban,
+  CalendarRange,
+  Check,
+  ChevronRight,
+  Compass,
+  Hand,
+  MapPin,
+  Move,
+  PanelsTopLeft,
+  Plus,
+  ScanLine,
+  Sprout,
+  WandSparkles,
+  X,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -24,6 +39,8 @@ import { isUploadStale, WindowDetailSheet } from '@/components/space/WindowDetai
 import { DLI_PERIOD, DLI_STATUS_COPY, LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { usePeriodDliMap, type PeriodDliMap } from '@/hooks/usePeriodDliMap';
+import { useRecommendationPlan } from '@/hooks/useRecommendationPlan';
+import { REASON_COPY } from '@/services/placement/serverRecommendation';
 import { dliValueText, type PlantDli, rangeText, usePlantsDli } from '@/hooks/usePlantDli';
 import { dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
 import { describePosition, isPlaceable, roomSizeLabel, samePosition } from '@/services/space/geometry';
@@ -31,7 +48,7 @@ import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/
 import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
 import type { ScanUploadState } from '@/services/windowScan/uploadService';
 import { useAuth } from '@/store/AuthProvider';
-import { useGarden, type DliCheck } from '@/store/GardenProvider';
+import { useGarden, type BlockedSync, type DliCheck } from '@/store/GardenProvider';
 import { getPlantStatus } from '@/store/selectors';
 import { withEulReul, withRo } from '@/utils/korean';
 import type { DliPeriod, GridPosition, Plant, Room, RoomWindow, TimeOfDay, WindowScan } from '@/types';
@@ -72,6 +89,21 @@ function serverMapGuide(room: Room, m: PeriodDliMap): string {
   if (room.windows.length === 0) return '창문을 측정하면 빛 지도를 계산해요 · ARCore 앱에서 창문 꼭짓점을 측정해 다시 보내 주세요';
   if (!room.location) return '방 위치를 정하면 빛 지도를 계산해요 · 위의 위치 설정을 눌러 주세요';
   return `빛 지도를 아직 계산하지 못했어요 · 창문을 눌러 창밖 스캔을 해 주세요${m.note ? ` · ${m.note}` : ''}`;
+}
+
+/** 배치 불가 칸 바 안내 */
+function blockedBarText(editing: boolean, count: number, sync: BlockedSync, serverRoom: boolean): string {
+  const saved =
+    !serverRoom || sync.status === 'local'
+      ? ''
+      : sync.status === 'saving'
+        ? ' · 서버에 저장 중'
+        : sync.status === 'saved'
+          ? ' · 서버에 저장됨'
+          : ` · 저장 실패${sync.message ? ` (${sync.message})` : ''}`;
+  if (editing) return `칸을 눌러 배치 불가로 지정·해제해요 · ${count}칸${saved}`;
+  if (count > 0) return `배치 불가 칸 ${count}개 · 추천 위치에서 빠져요${saved}`;
+  return sync.status === 'error' && sync.message ? sync.message : '식물을 둘 수 없는 칸을 지정할 수 있어요';
 }
 
 function dliCheckText(check: DliCheck): string | null {
@@ -119,6 +151,9 @@ export default function SpaceScreen() {
   // 선택한 기간의 DLI 지도 — 서버 계산이 되면 그 결과, 아니면 예시 지도(예시 방만)
   const period = usePeriodDliMap(state.dliPeriod);
   const dliMap = period.map;
+  // 방 전체 서버 추천 계획 — '한 번에 옮기기'와 식물별 판정
+  const recPlan = useRecommendationPlan();
+  const [applyingAll, setApplyingAll] = useState(false);
   const plantsDli = usePlantsDli().byId;
   const lightReady = !serverRoom || period.source === 'calculated';
   const checkText = state.dliMap && period.source === 'mock' ? dliCheckText(state.dliCheck) : null;
@@ -308,7 +343,7 @@ export default function SpaceScreen() {
                 <ActivityIndicator size="small" color={Colors.primary} />
                 <AppText variant="small" color={Colors.textSecondary}>
                   {serverRoom
-                    ? `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중`
+                    ? `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중${period.progress ? (period.progress.queued ? ' · 다른 계산이 끝나길 기다리는 중' : ` · ${period.progress.done}/${period.progress.total}일`) : ''}`
                     : `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중 · 지금은 예시 지도를 보여드려요`}
                 </AppText>
               </View>
@@ -337,11 +372,7 @@ export default function SpaceScreen() {
           <View style={[styles.blockedBar, editBlocked && styles.blockedBarActive]}>
             <Ban size={15} color={editBlocked ? Colors.clayDeep : Colors.textSecondary} strokeWidth={1.9} />
             <AppText variant="small" color={editBlocked ? Colors.clayDeep : Colors.textSecondary} style={styles.flex}>
-              {editBlocked
-                ? `칸을 눌러 배치 불가로 지정·해제해요 · ${blockedCount}칸`
-                : blockedCount > 0
-                  ? `배치 불가 칸 ${blockedCount}개 · 추천 위치에서 빠져요`
-                  : '식물을 둘 수 없는 칸을 지정할 수 있어요'}
+              {blockedBarText(editBlocked, blockedCount, state.blockedSync, serverRoom)}
             </AppText>
             <SecondaryButton
               title={editBlocked ? '완료' : '편집'}
@@ -426,6 +457,29 @@ export default function SpaceScreen() {
 
         <View style={styles.section}>
           <SectionHeader eyebrow="Plants" title="이 공간의 식물" subtitle="적합도가 낮은 식물은 추천 위치를 확인해보세요" />
+          {recPlan.status === 'ready' && recPlan.plan && recPlan.plan.decisions.length > 0 ? (
+            <PlanCard
+              counts={countDecisions(recPlan.plan.decisions.filter((d) => plants.some((p) => p.serverId === d.plantId)))}
+              applying={applyingAll}
+              canApplyAll={!!recPlan.plan.planId}
+              onApplyAll={() => {
+                if (!recPlan.plan) return;
+                setApplyingAll(true);
+                actions
+                  .applyRecommendationPlan(recPlan.plan.planId)
+                  .then((n) => toast.show(`추천 위치로 ${n}개를 옮겼어요 🌿`, 'leaf'))
+                  .catch((e: unknown) => toast.show(`옮기지 못했어요 · ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'leaf'))
+                  .finally(() => setApplyingAll(false));
+              }}
+            />
+          ) : recPlan.status === 'loading' ? (
+            <View style={[styles.calcRow, styles.planLoading]}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <AppText variant="small" color={Colors.textSecondary}>
+                방 전체 배치 추천을 계산하는 중
+              </AppText>
+            </View>
+          ) : null}
           <Card padding={0} radius={Radius.xl}>
             {plants.length === 0 ? (
               <View style={styles.emptyRow}>
@@ -450,6 +504,7 @@ export default function SpaceScreen() {
                     <AppText variant="bodyStrong">{p.name}</AppText>
                     <AppText variant="caption" color={Colors.textSecondary}>
                       {p.location.label} · {plantsDli[p.id] ? rangeText(plantsDli[p.id].range) : ''}
+                      {decisionLabel(recPlan.plan?.decisions, p.serverId)}
                     </AppText>
                   </View>
                   <StatusChip
@@ -463,6 +518,27 @@ export default function SpaceScreen() {
             )}
           </Card>
         </View>
+
+        {serverRoom && signedIn ? (
+          <View style={[styles.section, styles.toolRow]}>
+            <SecondaryButton
+              title="맞는 식물 찾기"
+              icon={Sprout}
+              variant="outline"
+              fullWidth={false}
+              style={styles.flex}
+              onPress={() => router.push('/suitable-species')}
+            />
+            <SecondaryButton
+              title="기간 비교"
+              icon={CalendarRange}
+              variant="outline"
+              fullWidth={false}
+              style={styles.flex}
+              onPress={() => router.push('/light-compare')}
+            />
+          </View>
+        ) : null}
 
         <SecondaryButton
           title="공간 측정·불러오기"
@@ -519,8 +595,91 @@ export default function SpaceScreen() {
   );
 }
 
+type DecisionCounts = Record<keyof typeof REASON_COPY, number>;
+
+function countDecisions(decisions: { reasonCode: keyof typeof REASON_COPY }[]): DecisionCounts {
+  const counts: DecisionCounts = { CURRENT_OK: 0, RELOCATE: 0, NO_FREE_CELL: 0, NO_SUITABLE_CELL: 0 };
+  decisions.forEach((d) => {
+    counts[d.reasonCode] += 1;
+  });
+  return counts;
+}
+
+/** 식물 목록 설명 뒤에 붙는 서버 판정 (' · 옮기기 추천') */
+function decisionLabel(
+  decisions: { plantId: number; reasonCode: keyof typeof REASON_COPY }[] | undefined,
+  serverId: number | undefined,
+): string {
+  const d = serverId === undefined ? undefined : decisions?.find((x) => x.plantId === serverId);
+  return d ? ` · ${REASON_COPY[d.reasonCode].label}` : '';
+}
+
+/** 방 전체 추천 요약 + 한 번에 옮기기 (서버가 같은 트랜잭션에서 위치를 저장) */
+function PlanCard({
+  counts,
+  applying,
+  canApplyAll,
+  onApplyAll,
+}: {
+  counts: DecisionCounts;
+  applying: boolean;
+  canApplyAll: boolean;
+  onApplyAll: () => void;
+}) {
+  const parts = (Object.keys(counts) as (keyof DecisionCounts)[])
+    .filter((k) => counts[k] > 0)
+    .map((k) => `${REASON_COPY[k].label} ${counts[k]}`);
+  return (
+    <Card tone={counts.RELOCATE > 0 ? 'green' : 'muted'} padding={Spacing.lg} radius={Radius.lg} style={styles.planSummary}>
+      <View style={styles.planSummaryRow}>
+        <WandSparkles size={18} color={Colors.primary} strokeWidth={1.9} />
+        <View style={styles.flex}>
+          <AppText variant="captionStrong" color={Colors.deepGreen}>
+            {counts.RELOCATE > 0
+              ? `옮기면 좋은 식물 ${counts.RELOCATE}개`
+              : counts.NO_FREE_CELL + counts.NO_SUITABLE_CELL > 0
+                ? `요구 범위에 맞는 빈 칸이 없는 식물 ${counts.NO_FREE_CELL + counts.NO_SUITABLE_CELL}개`
+                : '지금 배치 그대로 괜찮아요'}
+          </AppText>
+          <AppText variant="small" color={Colors.textSecondary}>
+            {parts.join(' · ')} · LUMAP 계산
+          </AppText>
+        </View>
+      </View>
+      {counts.RELOCATE > 0 && canApplyAll ? (
+        <SecondaryButton
+          title={applying ? '옮기는 중…' : '추천 위치로 한 번에 옮기기'}
+          icon={applying ? undefined : Check}
+          size="sm"
+          disabled={applying}
+          style={styles.planApply}
+          onPress={onApplyAll}
+        />
+      ) : null}
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  toolRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  planSummary: {
+    marginBottom: Spacing.md,
+  },
+  planSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  planApply: {
+    marginTop: Spacing.md,
+  },
+  planLoading: {
+    marginBottom: Spacing.md,
+  },
   roomChips: {
     flexDirection: 'row',
     gap: Spacing.sm,

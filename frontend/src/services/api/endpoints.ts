@@ -1,13 +1,29 @@
 import type {
+  ApiAppliedPlan,
+  ApiBlockedCells,
+  ApiCalendar,
+  ApiCareSchedule,
+  ApiCareScheduleInput,
+  ApiCityResult,
+  ApiComparisonPeriodInput,
+  ApiDashboard,
+  ApiDliComparison,
   ApiDliJobResult,
   ApiDliMap,
   ApiDliRequest,
   ApiDliSeries,
   ApiGrid,
+  ApiGrowthPhoto,
+  ApiGrowthPhotoList,
   ApiJob,
   ApiJobCreated,
-  ApiLocationResult,
+  ApiNotificationSchedule,
   ApiPlant,
+  ApiRecommendationPlan,
+  ApiRecommendationResult,
+  ApiSpeciesEvidence,
+  ApiSuitableSpecies,
+  ApiWateringRecord,
   ApiPlantInput,
   ApiRoom,
   ApiRoomInput,
@@ -19,7 +35,7 @@ import type {
   ApiWindowScans,
 } from '@/types/api';
 
-import { apiRequest } from './client';
+import { apiRequest, newRequestKey } from './client';
 
 /** 백엔드 API 목록 (경로는 backend 브랜치 app/api.py 기준) */
 
@@ -48,6 +64,11 @@ export async function fetchAllSpecies(): Promise<ApiSpecies[]> {
     all.push(...page);
     if (page.length < pageSize) return all;
   }
+}
+
+/** 종 검색 — 한글·영문 이름, 별칭, 옛 학명까지 서버가 찾는다 (107종 카탈로그) */
+export function searchSpecies(q: string, limit = 20) {
+  return apiRequest<ApiSpecies[]>('/plant-species', { query: { q, limit } });
 }
 
 /* ---------------- Plants (내 식물) ---------------- */
@@ -101,7 +122,7 @@ export function validateDliMap(map: ApiDliMap) {
 
 /** 격자별 DLI 계산 요청 — 202와 job_id를 받고, 결과는 fetchDliJob으로 조회한다 */
 export function requestDliMap(roomId: number, body: ApiDliRequest) {
-  return apiRequest<ApiJobCreated>(`/rooms/${roomId}/dli-map`, { method: 'POST', body });
+  return apiRequest<ApiJobCreated>(`/rooms/${roomId}/dli-map`, { method: 'POST', body, idempotencyKey: newRequestKey('dli') });
 }
 
 export function fetchDliJob(jobId: string) {
@@ -113,30 +134,192 @@ export function fetchJob<T>(jobId: string) {
   return apiRequest<ApiJob<T>>(`/jobs/${encodeURIComponent(jobId)}`);
 }
 
-/**
- * 배치 추천 — 완료된 DLI 작업(기간 지도)과 배치 불가 칸으로 요청한다.
- * 백엔드는 알고리즘 추천 함수가 연결되기 전까지 501을 돌려준다. 응답 형식은 아직 미정이라 unknown.
- */
+/** 배치 추천 (위치 저장 안 함) — 완료된 DLI 작업(기간 지도)과 배치 불가 칸으로 요청한다 */
 export function requestRecommendations(roomId: number, input: { dliJobId: string; blockedCells: [number, number][] }) {
-  return apiRequest<unknown>(`/rooms/${roomId}/recommendations`, { method: 'POST', body: input });
+  return apiRequest<ApiRecommendationResult>(`/rooms/${roomId}/recommendations`, { method: 'POST', body: input });
+}
+
+/**
+ * 추천 계획 — 추천 결과 + 식물별 판정(reason_code). 30분 안에 apply로 한 번에 적용할 수 있다.
+ * 서버 어댑터가 옮길 식물끼리 자리를 바꾸는 배치도 찾는다. 배치 불가 칸은 서버 저장분과 합친다.
+ */
+export function createRecommendationPlan(roomId: number, input: { dliJobId: string; blockedCells: [number, number][] }) {
+  return apiRequest<ApiRecommendationPlan>(`/rooms/${roomId}/recommendation-plans`, { method: 'POST', body: input });
+}
+
+/** 계획 적용 — plantIds를 빼면 옮길 수 있는 식물 전부. 서로 자리를 바꾸는 식물 중 하나만 고르면 409 */
+export function applyRecommendationPlan(roomId: number, planId: string, plantIds?: number[]) {
+  return apiRequest<ApiAppliedPlan>(`/rooms/${roomId}/recommendation-plans/${encodeURIComponent(planId)}/apply`, {
+    method: 'POST',
+    body: plantIds ? { plantIds } : {},
+  });
+}
+
+/* ---------------- 배치 불가 칸 (서버 저장) ---------------- */
+
+export function fetchBlockedCells(roomId: number, cellSizeM = GRID_CELL_SIZE_M) {
+  return apiRequest<ApiBlockedCells>(`/rooms/${roomId}/blocked-cells`, { query: { cell_size_m: cellSizeM } });
+}
+
+/** 방 구조 버전이 다르면 409 — 방을 다시 받은 뒤 저장한다 */
+export function saveBlockedCells(roomId: number, geometryVersion: number, blockedCells: [number, number][], cellSizeM = GRID_CELL_SIZE_M) {
+  return apiRequest<ApiBlockedCells>(`/rooms/${roomId}/blocked-cells`, {
+    method: 'PUT',
+    body: { geometryVersion, cellSizeM, blockedCells },
+  });
+}
+
+/* ---------------- 저장된 결과 ---------------- */
+
+/** 방의 최근 유효한 기간 평균 지도 (실제 하늘 결과만). 없으면 404 */
+export function fetchLatestDliMap(roomId: number, options: { cellSizeM: number; mockSky?: boolean }) {
+  return apiRequest<ApiJob<ApiDliJobResult>>(`/rooms/${roomId}/dli-map/latest`, {
+    query: { cell_size_m: options.cellSizeM, sample_height_m: 0, mock_sky: options.mockSky ? 'true' : undefined },
+  });
+}
+
+/** 지금 방의 빈 칸(식물·배치 불가 칸 제외)에 맞는 종 순위 */
+export function fetchSuitableSpecies(roomId: number, dliJobId?: string, limit = 20) {
+  return apiRequest<ApiSuitableSpecies>(`/rooms/${roomId}/suitable-species`, { query: { dli_job_id: dliJobId, limit } });
+}
+
+/** 저장된 날짜별 결과로 2~4개 기간 평균 비교 (없는 날은 0으로 채우지 않고 missingDates) */
+export function compareDliPeriods(roomId: number, periods: ApiComparisonPeriodInput[], options: DliSeriesOptions) {
+  return apiRequest<ApiDliComparison>(`/rooms/${roomId}/dli-comparison`, {
+    method: 'POST',
+    body: {
+      periods,
+      cellSizeM: options.cellSizeM,
+      sampleHeightM: 0,
+      mockSky: !!options.mockSky,
+      temporaryXAxisAzimuthDeg: options.temporaryXAxisAzimuthDeg ?? null,
+    },
+  });
+}
+
+export function fetchSpeciesEvidence(speciesId: number) {
+  return apiRequest<ApiSpeciesEvidence & { speciesId: number; minDli: number; maxDli: number }>(
+    `/plant-species/${speciesId}/evidence`,
+  );
+}
+
+/* ---------------- 관리 캘린더 · 물주기 기록 ---------------- */
+
+/** 기간(양끝 포함, 최대 366일)의 날짜별 개수와 일정 목록 */
+export function fetchCalendar(startDate: string, endDate: string, filter: { plantId?: number } = {}) {
+  return apiRequest<ApiCalendar>('/calendar', { query: { start_date: startDate, end_date: endDate, plant_id: filter.plantId } });
+}
+
+export function fetchWaterings(plantId: number) {
+  return apiRequest<ApiWateringRecord[]>(`/plants/${plantId}/waterings`, { query: { limit: 100 } });
+}
+
+/** 잘못 기록한 날짜 정정 — 남은 기록의 최신 날짜로 마지막 물주기를 다시 계산한다 */
+export function correctWatering(plantId: number, recordId: number, wateredAt: string) {
+  return apiRequest<ApiPlant>(`/plants/${plantId}/waterings/${recordId}`, { method: 'PATCH', body: { wateredAt } });
+}
+
+export function undoWatering(plantId: number, recordId: number) {
+  return apiRequest<ApiPlant>(`/plants/${plantId}/waterings/${recordId}`, { method: 'DELETE' });
+}
+
+/** 물주기 간격만 바꾼다 (이름·위치·마지막 물준 날 유지) */
+export function updateWateringInterval(plantId: number, wateringIntervalDays: number) {
+  return apiRequest<ApiPlant>(`/plants/${plantId}/watering-schedule`, { method: 'PUT', body: { wateringIntervalDays } });
+}
+
+export function fetchCareSchedules(plantId: number) {
+  return apiRequest<ApiCareSchedule[]>(`/plants/${plantId}/care-schedules`, { query: { limit: 100 } });
+}
+
+export function createCareSchedule(plantId: number, input: ApiCareScheduleInput) {
+  return apiRequest<ApiCareSchedule>(`/plants/${plantId}/care-schedules`, { method: 'POST', body: input });
+}
+
+export function deleteCareSchedule(scheduleId: number) {
+  return apiRequest<void>(`/care-schedules/${scheduleId}`, { method: 'DELETE' });
+}
+
+/** 회차 완료·건너뛰기 — scheduledDate는 원래 예정일, completedOn은 실제 한 날 */
+export function recordCareOccurrence(
+  scheduleId: number,
+  scheduledDate: string,
+  input: { status: 'COMPLETED' | 'SKIPPED'; completedOn?: string },
+) {
+  return apiRequest<unknown>(`/care-schedules/${scheduleId}/occurrences/${scheduledDate}`, { method: 'PUT', body: input });
+}
+
+export function undoCareOccurrence(scheduleId: number, scheduledDate: string) {
+  return apiRequest<void>(`/care-schedules/${scheduleId}/occurrences/${scheduledDate}`, { method: 'DELETE' });
+}
+
+/* ---------------- 생장 사진 ---------------- */
+
+export function fetchGrowthPhotos(plantId: number, order: 'asc' | 'desc' = 'desc', offset = 0) {
+  return apiRequest<ApiGrowthPhotoList>(`/plants/${plantId}/growth-photos`, { query: { order, limit: 50, offset } });
+}
+
+/** 사진 한 장 업로드 (FormData: file, taken_at, note). 재시도할 때는 같은 key를 쓴다 */
+export function uploadGrowthPhoto(plantId: number, form: FormData, idempotencyKey: string) {
+  return apiRequest<ApiGrowthPhoto>(`/plants/${plantId}/growth-photos`, {
+    method: 'POST',
+    form,
+    idempotencyKey,
+    timeoutMs: 120000,
+  });
+}
+
+export function updateGrowthPhoto(photoId: number, input: { note?: string | null; takenAt?: string }) {
+  return apiRequest<ApiGrowthPhoto>(`/growth-photos/${photoId}`, { method: 'PATCH', body: input });
+}
+
+export function deleteGrowthPhoto(photoId: number) {
+  return apiRequest<void>(`/growth-photos/${photoId}`, { method: 'DELETE' });
+}
+
+/* ---------------- 요약 · 기기 알림 ---------------- */
+
+export function fetchDashboard() {
+  return apiRequest<ApiDashboard>('/dashboard');
+}
+
+/** 미완료 일정의 알림 시각 (한국 시간 hour:minute) — 휴대폰에서 직접 예약한다 */
+export function fetchNotificationSchedule(startDate: string, endDate: string, hour = 9) {
+  return apiRequest<ApiNotificationSchedule>('/notifications/schedule', {
+    query: { start_date: startDate, end_date: endDate, hour, minute: 0 },
+  });
 }
 
 /* ---------------- 창밖 스캔 업로드 ---------------- */
 
 /** 사진 13장 + metadata(JSON 문자열) multipart 업로드 → 202 + job_id (SKY 분석은 백그라운드) */
 export function uploadWindowScan(windowId: number, form: FormData) {
-  return apiRequest<ApiJobCreated>(`/windows/${windowId}/scans`, { method: 'POST', form, timeoutMs: 120000 });
+  return apiRequest<ApiJobCreated>(`/windows/${windowId}/scans`, {
+    method: 'POST',
+    form,
+    timeoutMs: 120000,
+    idempotencyKey: newRequestKey('scan'),
+  });
 }
 
 /* ---------------- 방 위치 ---------------- */
 
-/** 지역 이름 검색 (Open-Meteo 지오코딩, 서버 경유) — q는 2글자 이상 */
+/**
+ * 지역 이름 검색 — 서버가 한국 도시 85곳(서울·부산·마포 X, 시 단위)을 먼저 찾고,
+ * 없으면 Open-Meteo 지오코딩(한국만)으로 찾는다. q는 2글자 이상
+ */
 export function searchLocations(q: string) {
-  return apiRequest<{ results: ApiLocationResult[] }>('/locations/search', { query: { q } });
+  return apiRequest<{ results: ApiCityResult[] }>('/locations/search', { query: { q } });
 }
 
-/** 위치 저장 — 서버는 방 구조 버전을 올리지 않아 창밖 스캔이 유지된다 (v0.4.0) */
-export function updateRoomLocation(roomId: number, location: { latitude: number; longitude: number; locationName: string | null }) {
+/**
+ * 위치 저장 — 서버는 방 구조 버전을 올리지 않아 창밖 스캔이 유지된다.
+ * 도시 목록 항목이면 cityId로 저장하고(서버가 대표 좌표·이름을 넣음), 아니면 위경도로 저장한다.
+ */
+export function updateRoomLocation(
+  roomId: number,
+  location: { latitude: number; longitude: number; locationName: string | null } | { cityId: number },
+) {
   return apiRequest<ApiRoom>(`/rooms/${roomId}/location`, { method: 'PUT', body: location });
 }
 
@@ -197,6 +380,7 @@ export function fetchDliSeries(roomId: number, startDate: string, endDate: strin
 export function requestDliSeries(roomId: number, startDate: string, endDate: string, options: DliSeriesOptions) {
   return apiRequest<ApiJobCreated>(`/rooms/${roomId}/dli-series`, {
     method: 'POST',
+    idempotencyKey: newRequestKey('dli-series'),
     body: {
       startDate,
       endDate,

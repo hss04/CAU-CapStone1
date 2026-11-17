@@ -13,6 +13,7 @@ import { useToast } from '@/components/common/Toast';
 import { CharacterCard } from '@/components/home/CharacterCard';
 import { PlacementSummaryCard } from '@/components/home/PlacementSummaryCard';
 import { PlantStatusCard } from '@/components/home/PlantStatusCard';
+import { TodayTasksCard } from '@/components/home/TodayTasksCard';
 import { WateringAlert } from '@/components/home/WateringAlert';
 import { WeatherCard, type TodayLightSummary } from '@/components/home/WeatherCard';
 import { WeeklyLightPreview } from '@/components/home/WeeklyLightPreview';
@@ -22,6 +23,7 @@ import { DLI_STATUS_COPY } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { usePlantsDli } from '@/hooks/usePlantDli';
 import { recentStatusOf, todayPointOf } from '@/services/lightForecast';
+import { useAuth } from '@/store/AuthProvider';
 import { useGarden, useRecentFlag } from '@/store/GardenProvider';
 import { useLightForecast, type LightForecastValue } from '@/store/LightForecastProvider';
 import {
@@ -63,6 +65,7 @@ function summarizeToday(plants: Plant[], forecast: LightForecastValue): TodayLig
 
 export default function HomeScreen() {
   const { state, today, actions } = useGarden();
+  const signedIn = useAuth().status === 'signedIn';
   const weather = useWeather();
   const forecast = useLightForecast();
   const toast = useToast();
@@ -147,6 +150,16 @@ export default function HomeScreen() {
             lastWateredDaysAgo={due[0] ? getWateringInfo(due[0], today).daysSinceWatered : undefined}
             onWater={handleWater}
             completed={next && due.length === 0 ? { nextLabel: `${next.plant.name} · ${next.info.labelKo}` } : null}
+          />
+        </View>
+      ) : null}
+
+      {/* 로그인: 서버 관리 일정(물주기·비료 등) 오늘 할 일 */}
+      {signedIn ? (
+        <View style={styles.sectionSm}>
+          <TodayTasksCard
+            refreshKey={plants.map((p) => `${p.id}:${p.lastWateredAt}`).join(',')}
+            onPress={() => router.push('/calendar')}
           />
         </View>
       ) : null}

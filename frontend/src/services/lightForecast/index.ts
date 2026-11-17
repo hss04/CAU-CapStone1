@@ -14,8 +14,11 @@ export { buildMockLightDays } from './mockSource';
 export { buildPlantSeries, dliRangeFor, recentStatusOf, todayPointOf } from './series';
 export {
   describeServerError,
+  dliOptionsFor,
+  ensureDliSeries,
   loadServerLightDays,
   runPeriodDliJob,
+  type JobProgress,
   type PeriodDliResult,
   type ServerLightResult,
 } from './serverSource';
