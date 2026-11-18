@@ -2,6 +2,7 @@ from app.recommendation_schema import RecommendationResponse
 from app.config import get_algorithm_settings
 from datetime import date, datetime, timedelta
 import io
+import json
 import math
 import os
 from pathlib import Path
@@ -19,6 +20,8 @@ from PIL import Image, ImageOps
 from app import models as m
 from app.schemas import Input, DliMap, GridSpec, Position, RoomOut, KST, DliValue
 from app import dli_cache
+from app import ppfd
+from app.ppfd import PpfdSeries
 from app.security import CurrentUser, Db
 from app.api import owned_room, owned_window, commit
 from app.geometry import grid
@@ -105,6 +108,18 @@ class DliSeriesRequest(DliRequest):
     # Keep /dli-map's existing explicit opt-in behavior for backwards compatibility.
     accept_provisional_algorithm: bool = Field(default=True,
         description='Bundled algorithm is provisional (08:00-18:00). Set false to reject it; custom DLI_CALLABLE is unaffected.')
+    timeseries: bool = Field(default=False, strict=True,
+        description='Include calculated 10-minute sun-up PPFD in each day; this is not periodic delivery.')
+    cells: list[ppfd.Cell] | None = Field(default=None, min_length=1, max_length=40000,
+        description='Optional [row, col] cells for PPFD. Omit for every cell; requires timeseries=true.')
+
+    @model_validator(mode='after')
+    def ppfd_options(self):
+        if self.cells is not None:
+            if not self.timeseries:
+                raise ValueError('cells requires timeseries=true')
+            self.cells = sorted(set(self.cells))
+        return self
 
 
 class DliDay(Input):
@@ -113,6 +128,7 @@ class DliDay(Input):
     total_dli: list[list[DliValue]]
     direct_dli: list[list[DliValue]]
     diffuse_dli: list[list[DliValue]]
+    ppfd: PpfdSeries | None = None
 
 
 class PlantDaily(Input):
@@ -194,6 +210,10 @@ def prepare_dli(room, body, db, for_lookup=False):
     supported = len(c)==4 and c[1].x>0 and c[2].z>0 and all(abs(a-b)<1e-6 for a,b in
         [(c[0].x,0),(c[0].z,0),(c[1].z,0),(c[2].x,c[1].x),(c[3].x,0),(c[3].z,c[2].z)])
     custom = get_algorithm_settings().dli_callable
+    # The legacy single-window entry point has no PPFD output. Opt-in PPFD uses
+    # the bundled multi-window entry point even when no custom callable is set.
+    if getattr(body, 'timeseries', False) and not custom:
+        custom = 'grid_dli_service:compute_room_dli'
     if not for_lookup and not custom and (not supported or len(room.windows)!=1 or body.sample_height_m!=0):
         raise HTTPException(501, 'Current algorithm supports only axis-aligned rectangular rooms, one window and height 0; set DLI_CALLABLE for the polygon/multi-window implementation')
     if not for_lookup and not custom and not body.accept_provisional_algorithm:
@@ -218,6 +238,7 @@ def prepare_dli(room, body, db, for_lookup=False):
 
 def make_payload(room, body, db, for_lookup=False):
     spec,angle,windows,custom=prepare_dli(room,body,db,for_lookup)
+    ppfd.validate_request(body, spec)
     return {'request':body.model_dump(mode='json'),'grid':spec,'room_id':room.id,
         'geometry_version':room.geometry_version,'algorithm_revision':get_algorithm_settings().dli_cache_version,
         'room':{'corners':[{'order_index':p.order_index,'x':p.x,'z':p.z} for p in room.corners],
@@ -257,18 +278,22 @@ def calculate_series(room_id:int, body:DliSeriesRequest, tasks:BackgroundTasks, 
     return enqueue(room_id,body,tasks,db,user,'DLI_SERIES',idempotency_key)
 
 
-@router.get('/rooms/{room_id}/dli-series', response_model=DliSeries)
+@router.get('/rooms/{room_id}/dli-series', response_model=DliSeries, response_model_exclude_unset=True)
 def get_series(room_id:int, start_date:date, end_date:date, db:Db, user:CurrentUser,
                cell_size_m:float=Query(default=.2,ge=.05,le=5,allow_inf_nan=False),
                sample_height_m:float=Query(default=0,ge=0,le=10,allow_inf_nan=False),
                mock_sky:bool=False,
-               temporary_x_axis_azimuth_deg:float|None=Query(default=None,ge=0,lt=360,allow_inf_nan=False)):
+               temporary_x_axis_azimuth_deg:float|None=Query(default=None,ge=0,lt=360,allow_inf_nan=False),
+               timeseries:bool=False,
+               cells:str|None=Query(default=None,max_length=20000,
+                   description='JSON array of [row,col] pairs, e.g. [[0,0],[1,2]]. Requires timeseries=true.')):
     room=owned_room(db,user,room_id)
     try:
-        body=DliRequest(start_date=start_date,end_date=end_date,cell_size_m=cell_size_m,
+        body=DliSeriesRequest(start_date=start_date,end_date=end_date,cell_size_m=cell_size_m,
             sample_height_m=sample_height_m,mock_sky=mock_sky,
-            temporary_x_axis_azimuth_deg=temporary_x_axis_azimuth_deg)
-    except ValidationError as exc:
+            temporary_x_axis_azimuth_deg=temporary_x_axis_azimuth_deg,timeseries=timeseries,
+            cells=json.loads(cells) if cells is not None else None)
+    except (ValidationError, ValueError) as exc:
         raise HTTPException(422,str(exc)) from exc
     p=make_payload(room,body,db,for_lookup=True)
     days=[]; missing=[]; day=start_date
@@ -281,7 +306,8 @@ def get_series(room_id:int, start_date:date, end_date:date, db:Db, user:CurrentU
 
 
 def compute_job(p,db):
-    body=DliRequest(**p['request']); results=[]
+    request_type=DliSeriesRequest if p.get('result_kind')=='DLI_SERIES' else DliRequest
+    body=request_type(**p['request']); results=[]
     day=body.start_date
     while day<=body.end_date:
         cached=dli_cache.lookup(db,p,day)
@@ -294,6 +320,10 @@ def compute_job(p,db):
         payload={'room_id':p['room_id'],'room':p['room'],'date':day.isoformat(),'grid':p['grid'],
             'windows':p['windows'],'dni_dhi':weather['values'],'time_basis':weather['time_basis'],
             'mock_sky':body.mock_sky}
+        if getattr(body, 'timeseries', False):
+            payload['timeseries'] = True
+            if body.cells is not None:
+                payload['cells'] = body.model_dump(mode='json')['cells']
         if p['callable']:
             payload['_callable']=p['callable']; result=invoke('custom',payload)
         else:
@@ -521,7 +551,8 @@ def recommendation_data(room_id,body,db,user):
 def light_inputs_changed(job, room, db):
     if job.payload.get('algorithm_revision') != get_algorithm_settings().dli_cache_version:
         return True
-    request=DliRequest(**job.payload['request'])
+    request_type=DliSeriesRequest if job.kind=='DLI_SERIES' else DliRequest
+    request=request_type(**job.payload['request'])
     current=make_payload(room,request,db,for_lookup=True)
     # Older jobs did not store a scan id; changing them to stale is intentional.
     return dli_cache.fingerprint(current)!=dli_cache.fingerprint(job.payload)

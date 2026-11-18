@@ -56,6 +56,7 @@ try:  # 패키지/평면 import 둘 다 지원 - __init__.py 참고
         average_light_results,
         build_vwindow_cache,
         compute_light_multi,
+        compute_light_multi_with_series,
         compute_light_result,
     )
     from .models import Room, RoomCorner, Window
@@ -74,6 +75,7 @@ except ImportError:
         average_light_results,
         build_vwindow_cache,
         compute_light_multi,
+        compute_light_multi_with_series,
         compute_light_result,
     )
     from models import Room, RoomCorner, Window
@@ -209,9 +211,19 @@ def compute_room_dli(payload: dict) -> dict:
       dni_dhi: [{time, dni, dhi}] 시간별 (없으면 맑은 하늘 모델)
       time_basis: "PRECEDING_HOUR_MEAN"(기본) | "INSTANTANEOUS"
       mock_sky: true면 sky가 None인 창문에 창문 방향 기준 가짜 SKY(장애물 없음)를 만들어 씀
+      timeseries: (선택) true면 10분 구간별 PPFD도 같이 반환
+      cells: (선택, timeseries일 때) [[row, col], ...] 이 칸들만 시점별 값을 만듦. 없으면 방 안 전체.
+             DLI(하루 합계)는 cells와 상관없이 항상 방 안 전체를 계산함(백엔드가 전체 칸을 검사하므로).
     출력:
       {date, direct_dli, diffuse_dli, total_dli: [row_z][col_x] (방 밖 None, 소수 2자리), warnings: [...]}
       (백엔드는 direct/diffuse만 검사하고 total은 다시 계산함)
+      timeseries일 때 추가:
+      {times: ["2026-10-20T06:35:00+09:00", ...]  해 떠 있는 10분 구간의 가운데 시각 (밤 구간은 없음),
+       interval_minutes: 10, ppfd_unit: "umol/m2/s",
+       cells 없음 -> direct_ppfd: [t][row][col], diffuse_ppfd: [t][row][col]  (소수 1자리, 방 밖 칸 None)
+       cells 있음 -> cell_series: [{row, col, direct_ppfd: [t], diffuse_ppfd: [t]}]  (지정 칸만, 크기 작게)}
+      direct_ppfd = DNI x sin(고도) x K_PPFD x fdirect,  diffuse_ppfd = DHI x K_PPFD x Vwindow
+      Σ(ppfd x 600초) / 1e6 = 그 칸의 DLI
     """
     room_payload = payload["room"]
     corners = [RoomCorner(int(c["order_index"]), float(c["x"]), float(c["z"])) for c in room_payload["corners"]]
@@ -256,7 +268,16 @@ def compute_room_dli(payload: dict) -> dict:
     if payload.get("dni_dhi") is None:
         warnings.append("CLEAR_SKY_MODEL: no irradiance given, used pvlib clear-sky DNI/DHI")
 
-    direct_dli, diffuse_dli = compute_light_multi(cells, room.x_axis_azimuth_deg, sources, walls, solar_df)
+    series = None
+    if payload.get("timeseries"):
+        series_cells = _parse_series_cells(payload.get("cells"), cells, warnings)
+        direct_dli, diffuse_dli, series = compute_light_multi_with_series(
+            cells, room.x_axis_azimuth_deg, sources, walls, solar_df, series_cells
+        )
+    else:
+        if payload.get("cells"):
+            warnings.append("cells ignored: set timeseries=true to get per-interval PPFD")
+        direct_dli, diffuse_dli = compute_light_multi(cells, room.x_axis_azimuth_deg, sources, walls, solar_df)
     total_dli = [
         [None if d is None else round(d + f, 2) for d, f in zip(d_row, f_row)]
         for d_row, f_row in zip(direct_dli, diffuse_dli)
@@ -266,13 +287,43 @@ def compute_room_dli(payload: dict) -> dict:
             if any(v is not None and not math.isfinite(v) for v in row):
                 raise ValueError("Non-finite DLI value produced")
 
-    return {
+    result = {
         "date": payload["date"],
         "direct_dli": direct_dli,
         "diffuse_dli": diffuse_dli,
         "total_dli": total_dli,
         "warnings": warnings,
     }
+    if series is not None:
+        result.update(times=[t.isoformat() for t in solar_df.index], interval_minutes=10, ppfd_unit="umol/m2/s")
+        if series_cells == "all":
+            result.update(direct_ppfd=series["direct_ppfd"], diffuse_ppfd=series["diffuse_ppfd"])
+        else:
+            # 지정 칸만: [t][row][col] 전체 모양으로 주면 나머지 칸이 전부 null이라 오히려 더 커짐 -> 칸별 목록
+            result["cell_series"] = [
+                {
+                    "row": r,
+                    "col": c,
+                    "direct_ppfd": [series["direct_ppfd"][k][r][c] for k in range(len(solar_df))],
+                    "diffuse_ppfd": [series["diffuse_ppfd"][k][r][c] for k in range(len(solar_df))],
+                }
+                for r, c in sorted(series_cells)
+            ]
+    return result
+
+
+def _parse_series_cells(raw, cells, warnings) -> str | set[tuple[int, int]]:
+    """payload["cells"] -> 시점별 값을 만들 칸 집합. 없으면 "all". 격자 밖·방 밖 칸은 빼고 경고."""
+    if not raw:
+        return "all"
+    picked = set()
+    for item in raw:
+        r, c = int(item[0]), int(item[1])
+        if 0 <= r < len(cells) and 0 <= c < len(cells[0]) and cells[r][c] is not None:
+            picked.add((r, c))
+        else:
+            warnings.append(f"cell [{r}, {c}] is outside the room grid; skipped in timeseries")
+    return picked
 
 
 if __name__ == "__main__":

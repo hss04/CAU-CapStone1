@@ -69,6 +69,21 @@
           },
           "title": "Diffuse Dli",
           "type": "array"
+        },
+        "ppfd": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PpfdGridSeries"
+            },
+            {
+              "$ref": "#/$defs/PpfdCellSeries"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ppfd"
         }
       },
       "required": [
@@ -257,6 +272,159 @@
         "z"
       ],
       "title": "Position",
+      "type": "object"
+    },
+    "PpfdCell": {
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "minimum": 0,
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "minimum": 0,
+          "title": "Col",
+          "type": "integer"
+        },
+        "direct_ppfd": {
+          "items": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Direct Ppfd",
+          "type": "array"
+        },
+        "diffuse_ppfd": {
+          "items": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "title": "Diffuse Ppfd",
+          "type": "array"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "direct_ppfd",
+        "diffuse_ppfd"
+      ],
+      "title": "PpfdCell",
+      "type": "object"
+    },
+    "PpfdCellSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "times": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 144,
+          "title": "Times",
+          "type": "array"
+        },
+        "interval_minutes": {
+          "const": 10,
+          "title": "Interval Minutes",
+          "type": "integer"
+        },
+        "ppfd_unit": {
+          "const": "umol/m2/s",
+          "title": "Ppfd Unit",
+          "type": "string"
+        },
+        "cell_series": {
+          "items": {
+            "$ref": "#/$defs/PpfdCell"
+          },
+          "title": "Cell Series",
+          "type": "array"
+        }
+      },
+      "required": [
+        "times",
+        "interval_minutes",
+        "ppfd_unit",
+        "cell_series"
+      ],
+      "title": "PpfdCellSeries",
+      "type": "object"
+    },
+    "PpfdGridSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "times": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 144,
+          "title": "Times",
+          "type": "array"
+        },
+        "interval_minutes": {
+          "const": 10,
+          "title": "Interval Minutes",
+          "type": "integer"
+        },
+        "ppfd_unit": {
+          "const": "umol/m2/s",
+          "title": "Ppfd Unit",
+          "type": "string"
+        },
+        "direct_ppfd": {
+          "items": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "title": "Direct Ppfd",
+          "type": "array"
+        },
+        "diffuse_ppfd": {
+          "items": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "title": "Diffuse Ppfd",
+          "type": "array"
+        }
+      },
+      "required": [
+        "times",
+        "interval_minutes",
+        "ppfd_unit",
+        "direct_ppfd",
+        "diffuse_ppfd"
+      ],
+      "title": "PpfdGridSeries",
       "type": "object"
     }
   },

@@ -1,3 +1,5 @@
+> **2026-11-18 PPFD 연결:** 날짜별 DLI API에 `timeseries: true`를 보내면 10분 단위 PPFD를 함께 계산·저장·조회합니다. 전체 격자와 선택 칸을 지원합니다. 요청·응답과 서버 적용은 [PPFD_API.md](docs/PPFD_API.md)를 확인하세요.
+
 > **2026-10-28 한국 도시 선택:** 서울·부산·광주 등 85개 도시의 대표 위경도 조회와 도시 ID로 방 위치 저장을 지원합니다. API 예시와 동명 지역 구분은 [KOREAN_CITIES.md](docs/KOREAN_CITIES.md)를 확인하세요.
 
 > **v0.5.0 알고리즘 연동:** 변경/실행 방법과 검증 범위는 [CHANGES_V5.md](docs/CHANGES_V5.md), 프론트 연결은 [frontend-integration/README.md](frontend-integration/README.md)를 먼저 확인하세요.

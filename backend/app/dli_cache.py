@@ -9,6 +9,7 @@ from app.integration_models import DliDailyCache
 from app.models import Plant
 from app.schemas import DliMap, KST
 from app.weather import utc
+from app.ppfd import validated_result
 
 
 def fingerprint(payload):
@@ -16,6 +17,9 @@ def fingerprint(payload):
     inputs = {k: payload[k] for k in ('room_id', 'geometry_version', 'room', 'grid', 'windows', 'callable')}
     inputs.update(mock_sky=request['mock_sky'], temporary_direction=request['temporary_x_axis_azimuth_deg'] is not None,
                   algorithm_revision=payload.get('algorithm_revision', get_algorithm_settings().dli_cache_version))
+    if request.get('timeseries'):
+        # Ordinary DLI keys remain stable. PPFD needs its own output/selection key.
+        inputs.update(ppfd_schema_version=1, cells=request.get('cells'))
     return hashlib.sha256(json.dumps(inputs, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
@@ -67,8 +71,11 @@ def daily_result(p, day, raw, dataset):
                        timezone='Asia/Seoul', grid=p['grid'], **arrays)
     if dataset not in ('ERA5', 'BEST_MATCH_FORECAST'):
         raise ValueError('Unsupported weather dataset')
-    return {'date': day.isoformat(), 'dataset': dataset,
-            **{key: getattr(validated, key) for key in arrays}}
+    result = {'date': day.isoformat(), 'dataset': dataset,
+              **{key: getattr(validated, key) for key in arrays}}
+    if p['request'].get('timeseries'):
+        result['ppfd'] = validated_result(p, day, raw)
+    return result
 
 
 def series_result(p, days, missing, db):

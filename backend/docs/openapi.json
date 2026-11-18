@@ -3216,6 +3216,35 @@
               ],
               "title": "Temporary X Axis Azimuth Deg"
             }
+          },
+          {
+            "name": "timeseries",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Timeseries"
+            }
+          },
+          {
+            "name": "cells",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 20000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "JSON array of [row,col] pairs, e.g. [[0,0],[1,2]]. Requires timeseries=true.",
+              "title": "Cells"
+            },
+            "description": "JSON array of [row,col] pairs, e.g. [[0,0],[1,2]]. Requires timeseries=true."
           }
         ],
         "responses": {
@@ -5228,6 +5257,20 @@
             },
             "type": "array",
             "title": "Diffuse Dli"
+          },
+          "ppfd": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PpfdGridSeries"
+              },
+              {
+                "$ref": "#/components/schemas/PpfdCellSeries"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppfd"
           }
         },
         "additionalProperties": false,
@@ -5560,6 +5603,41 @@
             "title": "Accept Provisional Algorithm",
             "description": "Bundled algorithm is provisional (08:00-18:00). Set false to reject it; custom DLI_CALLABLE is unaffected.",
             "default": true
+          },
+          "timeseries": {
+            "type": "boolean",
+            "title": "Timeseries",
+            "description": "Include calculated 10-minute sun-up PPFD in each day; this is not periodic delivery.",
+            "default": false
+          },
+          "cells": {
+            "anyOf": [
+              {
+                "items": {
+                  "prefixItems": [
+                    {
+                      "type": "integer",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "type": "array",
+                  "maxItems": 2,
+                  "minItems": 2
+                },
+                "type": "array",
+                "maxItems": 40000,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cells",
+            "description": "Optional [row, col] cells for PPFD. Omit for every cell; requires timeseries=true."
           }
         },
         "additionalProperties": false,
@@ -6566,6 +6644,159 @@
           "z"
         ],
         "title": "Position"
+      },
+      "PpfdCell": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Row"
+          },
+          "col": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Col"
+          },
+          "direct_ppfd": {
+            "items": {
+              "type": "number",
+              "minimum": 0.0
+            },
+            "type": "array",
+            "title": "Direct Ppfd"
+          },
+          "diffuse_ppfd": {
+            "items": {
+              "type": "number",
+              "minimum": 0.0
+            },
+            "type": "array",
+            "title": "Diffuse Ppfd"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "row",
+          "col",
+          "direct_ppfd",
+          "diffuse_ppfd"
+        ],
+        "title": "PpfdCell"
+      },
+      "PpfdCellSeries": {
+        "properties": {
+          "times": {
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "type": "array",
+            "maxItems": 144,
+            "title": "Times"
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "const": 10,
+            "title": "Interval Minutes"
+          },
+          "ppfd_unit": {
+            "type": "string",
+            "const": "umol/m2/s",
+            "title": "Ppfd Unit"
+          },
+          "cell_series": {
+            "items": {
+              "$ref": "#/components/schemas/PpfdCell"
+            },
+            "type": "array",
+            "title": "Cell Series"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "times",
+          "interval_minutes",
+          "ppfd_unit",
+          "cell_series"
+        ],
+        "title": "PpfdCellSeries"
+      },
+      "PpfdGridSeries": {
+        "properties": {
+          "times": {
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "type": "array",
+            "maxItems": 144,
+            "title": "Times"
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "const": 10,
+            "title": "Interval Minutes"
+          },
+          "ppfd_unit": {
+            "type": "string",
+            "const": "umol/m2/s",
+            "title": "Ppfd Unit"
+          },
+          "direct_ppfd": {
+            "items": {
+              "items": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Direct Ppfd"
+          },
+          "diffuse_ppfd": {
+            "items": {
+              "items": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Diffuse Ppfd"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "times",
+          "interval_minutes",
+          "ppfd_unit",
+          "direct_ppfd",
+          "diffuse_ppfd"
+        ],
+        "title": "PpfdGridSeries"
       },
       "RecommendationRequest": {
         "properties": {

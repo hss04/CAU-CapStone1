@@ -1,3 +1,5 @@
+> **2026-11-18 PPFD 통합:** `python -m pytest -q` **262 passed**. 실제 알고리즘 subprocess로 전체/선택 칸의 10분 PPFD, 일일 DLI 합산 일치, 작업 조회·DB 재조회·캐시 구분·소유권·변경 감지·입력/출력 오류를 검증했습니다. 외부 기상은 고정 응답으로 대체했습니다. API 사용법은 [PPFD_API.md](PPFD_API.md)를 확인하세요.
+
 > **2026-11-03 v0.9.0:** 전체 **227 passed** (기존 198 + 신규 29). 13장 합성 JPEG를 실제 SegFormer로 분석하고 외부 기상 → DLI → 추천 계획까지 Uvicorn HTTP 검증을 통과했습니다. 실제 휴대폰 사진 및 Expo 전체 빌드는 별도 검증이 필요합니다. 범위와 실행법은 [DEMO_IMPROVEMENTS.md](DEMO_IMPROVEMENTS.md)를 확인하세요.
 
 > 최종 backend 통합 테스트: **78 passed** (v5 75 + 기존 브랜치 회귀 3).

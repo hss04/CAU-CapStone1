@@ -69,3 +69,13 @@ API와 화면 연결 방법은 [CALENDAR_API.md](../docs/CALENDAR_API.md)를 확
 기본 50·최대 100개이므로 전체 목록은 `limit=100&offset=0` 이후 `offset=100`도 조회합니다.
 운영자가 기존에 추가한 종류가 있으면 반환 건수는 107개보다 많을 수 있습니다. UI에는 응답의 실제 ID를 사용하세요.
 `source_note`의 `ESTIMATED`/`PROVISIONAL`은 종별 실험으로 확정된 최적값이 아니라는 근거 구분입니다.
+
+## 10분 PPFD
+
+기존 `/rooms/{room_id}/dli-series` 요청에 `timeseries: true`와 선택 옵션
+`cells: [[row,col], ...]`를 넣습니다. 작업 완료 후 `result.days[].ppfd`를 읽으세요.
+전체 격자는 `direct_ppfd[t][row][col]`, `diffuse_ppfd[t][row][col]`이며,
+선택 칸은 `cell_series[]`의 `row`, `col`, `direct_ppfd[t]`, `diffuse_ppfd[t]`입니다.
+기존 camelize를 거치면 `ppfdUnit`, `cellSeries`, `directPpfd`, `diffusePpfd`로 접근합니다.
+저장된 결과의 GET 요청에도 `timeseries=true`를 넣고, 선택 칸은 `cells` 쿼리에 JSON 문자열로 전달합니다.
+단위·시간·서버 업데이트 및 전체 예시는 [PPFD_API.md](../docs/PPFD_API.md)를 확인하세요.
