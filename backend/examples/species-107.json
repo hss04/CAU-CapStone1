@@ -744,8 +744,8 @@
   {
     "name": "적상추",
     "scientific_name": "Lactuca sativa",
-    "min_dli": 12.0,
-    "max_dli": 17.0,
-    "source_note": "PROVISIONAL REFERENCE_GROUP: Lettuce 12-17 starting reference; cultivar/airflow dependent; not red-cultivar optimum or damage limit. https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf; botany: https://plants.ces.ncsu.edu/plants/lactuca-sativa/; checked 2026-11-03. Starting range; species optimum unverified."
+    "min_dli": 8.0,
+    "max_dli": 12.0,
+    "source_note": "ESTIMATED: Project-configured red leaf lettuce range 8-12 mol/m2/day; Cornell handbook is background, not validation of this range. https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf; botany: https://plants.ces.ncsu.edu/plants/lactuca-sativa/; checked 2026-11-18. Starting range; species optimum unverified."
   }
 ]

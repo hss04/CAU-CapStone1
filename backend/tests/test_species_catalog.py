@@ -19,6 +19,7 @@ def test_catalog_has_101_additions_and_preserves_legacy_six():
     legacy = json.loads(Path('examples/species-six.json').read_text(encoding='utf-8'))
     assert len(entries) == 107 and raw['legacy_count'] == 6 and raw['added_count'] == 101
     assert entries[:6] == legacy
+    assert entries == json.loads(Path('examples/species-107.json').read_text(encoding='utf-8'))
     assert len({row['name'] for row in entries}) == 107
     assert len({scientific_key(row['scientific_name']) for row in entries}) == 107
     for plant, entry in zip(catalog_plants(), entries):
@@ -140,11 +141,50 @@ def test_pagination_existing_response_and_new_plant_registration(context, header
     assert client.get('/api/v1/plant-species').status_code == 401
     lettuce = client.get('/api/v1/plant-species', headers=headers, params={'q': '적상추'}).json()[0]
     assert lettuce['name'] == '적상추' and lettuce['scientific_name'] == 'Lactuca sativa'
-    assert (lettuce['min_dli'], lettuce['max_dli']) == (12, 17)
-    assert 'PROVISIONAL' in lettuce['source_note'] and '2026-11-03' in lettuce['source_note']
+    assert (lettuce['min_dli'], lettuce['max_dli']) == (8, 12)
+    assert 'ESTIMATED' in lettuce['source_note'] and '2026-11-18' in lettuce['source_note']
     response = client.post('/api/v1/plants', headers=headers, json={'species_id': lettuce['id'], 'nickname': '내 적상추'})
     assert response.status_code == 201, response.text
     assert response.json()['species_id'] == lettuce['id']
+
+
+@pytest.mark.parametrize(('scientific', 'minimum', 'maximum', 'custom_note', 'upgrade'), [
+    (' Lactuca SATIVA ', 12, 17, None, True),
+    ('Lactuca sativa', 6, 10, None, False),
+    ('Lactuca sativa', 12, 17, 'Operator measurement; keep this value', False),
+    ('Lactuca serriola', 12, 17, None, False),
+])
+def test_lettuce_default_upgrade_preserves_ids_edits_and_other_species(
+        context, headers, scientific, minimum, maximum, custom_note, upgrade):
+    client, factory = context
+    previous_note = (
+        'PROVISIONAL REFERENCE_GROUP: Lettuce 12-17 starting reference; cultivar/airflow dependent; '
+        'not red-cultivar optimum or damage limit. '
+        'https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf; '
+        'botany: https://plants.ces.ncsu.edu/plants/lactuca-sativa/; '
+        'checked 2026-11-03. Starting range; species optimum unverified.')
+    note = custom_note or previous_note
+    with factory() as db:
+        row = PlantSpecies(name='Existing lettuce', scientific_name=scientific,
+                           min_dli=minimum, max_dli=maximum, source_note=note)
+        db.add(row)
+        db.commit()
+        species_id = row.id
+    response = client.post('/api/v1/plants', headers=headers, json={
+        'nickname': 'Existing plant', 'species_id': species_id})
+    assert response.status_code == 201, response.text
+    with factory() as db:
+        seed_species(db)
+        db.commit()
+        saved = db.get(PlantSpecies, species_id)
+        assert saved.name == 'Existing lettuce' and saved.scientific_name == scientific
+        expected = (8, 12) if upgrade else (minimum, maximum)
+        assert (saved.min_dli, saved.max_dli) == expected
+        assert saved.source_note == (catalog_entries()[-1]['source_note'] if upgrade else note)
+        assert db.get(Plant, response.json()['id']).species_id == species_id
+        assert seed_species(db) == 0
+        db.commit()
+        assert (saved.min_dli, saved.max_dli) == expected
 
 
 def test_startup_seeds_new_catalog_and_is_repeatable(tmp_path, monkeypatch):

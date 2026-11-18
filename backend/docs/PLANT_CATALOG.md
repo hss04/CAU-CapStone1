@@ -14,6 +14,7 @@
 현재 DB가 v4 이상이면 업데이트 후 서버 재시작만으로도 새 카탈로그를 등록합니다. 별도 외부 API 키는 필요하지 않습니다. 실행 중 외부 사이트를 조회하지 않습니다.
 
 - 기존 학명 또는 알려진 동의어가 있으면 해당 행을 재사용합니다. 기존 ID·표시 이름·운영자가 수정한 광량·출처는 덮어쓰지 않습니다.
+- 적상추의 이전 기본값(12~17)과 출처 메모가 그대로인 행은 서버 시작 시 8~12로 갱신합니다. 별도로 수정한 범위나 출처 메모는 보존합니다.
 - 기존 사용자 식물의 `species_id`, 물주기 설정, 사진과 일정은 유지합니다.
 - 여러 번 실행해도 같은 종류를 다시 추가하지 않습니다. 옛 학명의 홍콩야자·아레카야자 등도 중복 등록하지 않습니다.
 - 이름만 같은 별도 기존 행은 바꾸지 않고, 새 항목의 표시 이름에 학명을 사용합니다.
@@ -55,7 +56,7 @@ GET /api/v1/plant-species?limit=100&offset=100
 | `REFERENCE_SPECIES` | 참고 자료의 해당 종 항목 적용. 종별 실험 검증을 의미하지 않음 |
 | `REFERENCE_GENUS` | 참고 자료의 속 단위 값을 해당 종에 적용 |
 | `REFERENCE_GROUP` | 일반명·과·재배 그룹 범위를 해당 종에 적용 |
-| `ESTIMATED` | 광 환경 분류를 바탕으로 카탈로그에서 배정한 추정값 |
+| `ESTIMATED` | 광 환경 분류 또는 프로젝트 설정을 바탕으로 카탈로그에서 배정한 추정값 |
 
 `source_note`에는 `PROVISIONAL` 또는 `ESTIMATED` 표시와 적용 항목·출처·확인일을 저장합니다. 기존 운영자 수정값은 보존하므로 서버 응답이 아래 기본값과 다를 수 있습니다.
 
@@ -66,13 +67,13 @@ GET /api/v1/plant-species?limit=100&offset=100
 
 Lux나 직사광 시간만으로 DLI를 임의 환산하지 않았습니다. 속·그룹 범위는 품종·계절·성장 단계·환경에 따라 달라질 수 있으므로 실측과 생장 기록으로 보정하는 기준 데이터입니다.
 
-## 적상추 추가 (2026-11-03)
+## 적상추 추가 (2026-11-03), DLI 변경 (2026-11-18)
 
 - 표시 이름: **적상추**, 학명: `Lactuca sativa`, 분류: 채소(`VEGETABLE`).
-- 기본 DLI 참고 범위: **12~17 mol/m²/day**, 근거: `PROVISIONAL REFERENCE_GROUP`.
-- [Cornell Hydroponic Lettuce Handbook](https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf)의 상추 재배 사례(공기 흐름 조건에 따른 12와 17)를 바탕으로 앱의 시작용 범위를 정했습니다. 이 간격을 적상추 전 품종의 최적값이나 손상 한계로 실험 검증한 것은 아닙니다.
+- 기본 DLI 참고 범위: **8~12 mol/m²/day**, 근거: `ESTIMATED`(프로젝트 설정값, 2026-11-18).
+- [Cornell Hydroponic Lettuce Handbook](https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf)은 이전 12~17 범위의 배경 자료로 남깁니다. 현재 8~12는 프로젝트에서 정한 시작 범위이며, 이 자료가 해당 수치를 실험 검증했다는 뜻은 아닙니다.
 - 실내 수확을 연구한 [Paz 외(2019)](https://doi.org/10.2134/urbanag2019.03.0001)는 `Red Salad Bowl` 적상추에 최소 6.5, 더 나은 생장·품질을 위해 9.7 mol/m²/day를 제시했습니다. 따라서 12 미만을 생존 불가로 해석하지 않습니다. 품종·재배 목적·환기와 생장 기록에 따라 운영자가 범위를 보정할 수 있습니다.
-- 기존 106종의 ID·광량·출처와 사용자가 등록한 식물·사진·일정은 기존 추가 등록 처리로 보존합니다. 업데이트 후 서버를 재시작하면 빠진 적상추만 추가됩니다. 이미 `Lactuca sativa`로 등록한 행이 있으면 그 행과 수정값을 재사용합니다.
+- 기존 106종의 ID·광량·출처와 사용자가 등록한 식물·사진·일정은 기존 추가 등록 처리로 보존합니다. 업데이트 후 서버를 재시작하면 빠진 적상추를 추가하고, 이전 기본값과 출처 메모가 그대로인 `Lactuca sativa` 행은 같은 ID로 8~12로 갱신합니다. 운영자가 범위나 출처를 수정한 행은 보존합니다.
 - 개별 식물 등록 시 조회 API가 반환한 실제 `id`를 사용합니다. 카탈로그 표의 107은 순번이며 고정 `species_id`가 아닙니다. 물주기 간격은 다른 식물과 같이 개별 설정을 사용합니다.
 
 ## 파일과 검증
@@ -200,4 +201,4 @@ Lux나 직사광 시간만으로 DLI를 임의 환산하지 않았습니다. 속
 | 104 | 타임 | Thymus vulgaris | 허브 | 20~28 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/thymus-vulgaris/) |
 | 105 | 오레가노 | Origanum vulgare | 허브 | 20~28 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/origanum-vulgare/) |
 | 106 | 파슬리 | Petroselinum crispum | 허브 | 10~20 | 종 항목 적용 | [확인](https://plants.ces.ncsu.edu/plants/petroselinum-crispum/) |
-| 107 | 적상추 | Lactuca sativa | 채소 | 12~17 | 상추 그룹 참고 범위 | [확인](https://plants.ces.ncsu.edu/plants/lactuca-sativa/) |
+| 107 | 적상추 | Lactuca sativa | 채소 | 8~12 | 프로젝트 설정·추정 범위 | [확인](https://plants.ces.ncsu.edu/plants/lactuca-sativa/) |

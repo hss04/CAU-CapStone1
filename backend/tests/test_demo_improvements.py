@@ -262,7 +262,7 @@ def test_evidence_preserves_legacy_species_contract(client, headers, context):
     species = client.get('/api/v1/plant-species?q=적상추', headers=headers).json()[0]
     assert set(species) == {'id', 'name', 'scientific_name', 'min_dli', 'max_dli', 'source_note'}
     evidence = client.get(f"/api/v1/plant-species/{species['id']}/evidence", headers=headers).json()
-    assert evidence['provisional'] and evidence['basis'].startswith('REFERENCE_')
+    assert evidence['provisional'] and evidence['basis'] == 'ESTIMATED'
     assert evidence['source_url'].startswith('https://')
     with factory() as db:
         db.get(m.PlantSpecies, species['id']).min_dli += 1

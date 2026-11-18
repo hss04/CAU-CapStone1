@@ -314,12 +314,12 @@
       "source_url": "https://plants.ces.ncsu.edu/plants/pilea-peperomioides/"
     },
     "red_leaf_lettuce": {
-      "min_dli": 12,
-      "max_dli": 17,
-      "basis": "REFERENCE_GROUP",
-      "source_entry": "Lettuce 12-17 starting reference; cultivar/airflow dependent; not red-cultivar optimum or damage limit",
+      "min_dli": 8,
+      "max_dli": 12,
+      "basis": "ESTIMATED",
+      "source_entry": "Project-configured red leaf lettuce range 8-12 mol/m2/day; Cornell handbook is background, not validation of this range",
       "source_url": "https://cea.cals.cornell.edu/files/2019/06/Cornell-CEA-Lettuce-Handbook-.pdf",
-      "checked_at": "2026-11-03"
+      "checked_at": "2026-11-18"
     }
   },
   "plants": [
