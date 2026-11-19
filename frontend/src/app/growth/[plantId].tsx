@@ -187,7 +187,7 @@ export default function GrowthPhotosScreen() {
         </View>
       </ScreenContainer>
 
-      <BottomSheet visible={!!picked} onClose={() => setPicked(null)}>
+      <BottomSheet visible={!!picked} onClose={() => setPicked(null)} title="성장 사진 올리기" keyboardAware>
         {picked ? (
           <UploadForm
             photo={picked}
@@ -203,7 +203,7 @@ export default function GrowthPhotosScreen() {
         ) : null}
       </BottomSheet>
 
-      <BottomSheet visible={!!viewing} onClose={() => setViewing(null)}>
+      <BottomSheet visible={!!viewing} onClose={() => setViewing(null)} title="사진 기록" keyboardAware>
         {viewing ? (
           <PhotoDetail
             photo={viewing}
@@ -262,13 +262,12 @@ function UploadForm({
 
   return (
     <View style={styles.sheet}>
-      <AppText variant="h3">성장 사진 올리기</AppText>
       <RNImage source={{ uri: photo.uri }} style={styles.preview} resizeMode="cover" />
       <FormField label="촬영일" hint="YYYY-MM-DD · 지난 사진이면 찍은 날로 바꿔 주세요">
         <TextField value={date} onChangeText={setDate} autoCorrect={false} />
       </FormField>
       <FormField label="메모 (선택)">
-        <TextField value={note} onChangeText={setNote} placeholder="예: 새 잎이 나왔어요" maxLength={2000} multiline />
+        <TextField value={note} onChangeText={setNote} placeholder="예: 새 잎이 나왔어요" maxLength={2000} multiline style={styles.memo} />
       </FormField>
       {error ? (
         <AppText variant="caption" color={Colors.clayDeep} style={styles.sectionSm}>
@@ -336,7 +335,7 @@ function PhotoDetail({
         <TextField value={date} onChangeText={setDate} autoCorrect={false} />
       </FormField>
       <FormField label="메모">
-        <TextField value={note} onChangeText={setNote} placeholder="메모 없음" maxLength={2000} multiline />
+        <TextField value={note} onChangeText={setNote} placeholder="메모 없음" maxLength={2000} multiline style={styles.memo} />
       </FormField>
       {error ? (
         <AppText variant="caption" color={Colors.clayDeep} style={styles.sectionSm}>
@@ -394,6 +393,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   sheet: { paddingHorizontal: Spacing.screen },
+  memo: {
+    height: 96,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+    textAlignVertical: 'top',
+  },
   preview: {
     width: '100%',
     height: 260,

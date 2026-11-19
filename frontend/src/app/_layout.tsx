@@ -65,7 +65,8 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
         <Stack.Screen name="plant/[id]" />
         <Stack.Screen name="recommendation/[id]" />
-        <Stack.Screen name="light/[plantId]" />
+        {/* iOS 26부터 화면 어디서나 옆으로 밀면 뒤로 가서, 10분 PPFD 그래프를 끌면 이전 화면으로 넘어간다 → 가장자리 스와이프만 */}
+        <Stack.Screen name="light/[plantId]" options={{ fullScreenGestureEnabled: false }} />
         <Stack.Screen name="room-location" />
         <Stack.Screen name="calendar" />
         <Stack.Screen name="growth/[plantId]" />

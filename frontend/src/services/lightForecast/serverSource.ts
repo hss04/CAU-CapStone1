@@ -242,6 +242,68 @@ export function dliOptionsFor(room: Room): DliSeriesOptions {
   return seriesOptions(room);
 }
 
+/** 식물 자리 한 칸의 하루 10분 PPFD (μmol/m²/s) — 서버 계산값, 측정값 아님 */
+export interface CellPpfd {
+  date: string;
+  /** 구간 가운데 시각, 자정부터 분 (12:05 → 725) */
+  minutes: number[];
+  direct: number[];
+  diffuse: number[];
+  provisional: boolean;
+}
+
+export type CellPpfdResult = { ok: true; data: CellPpfd } | { ok: false; error: string };
+
+/** "2026-11-18T12:05:00+09:00" → 725. 서버가 한국시간(+09:00)으로 주므로 기기 시간대와 상관없이 문자열에서 읽는다 */
+function minutesOfDay(iso: string): number {
+  const m = /T(\d{2}):(\d{2})/.exec(iso);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+}
+
+function pickCellPpfd(series: ApiDliSeries, date: string, row: number, col: number): CellPpfd | null {
+  const ppfd = series.days.find((d) => d.date === date)?.ppfd;
+  const cell = ppfd?.cellSeries?.find((c) => c.row === row && c.col === col);
+  if (!ppfd || !cell) return null;
+  return {
+    date,
+    minutes: ppfd.times.map(minutesOfDay),
+    direct: cell.directPpfd,
+    diffuse: cell.diffusePpfd,
+    provisional: isProvisional(series),
+  };
+}
+
+/**
+ * 한 칸(row=z, col=x)의 하루 10분 PPFD (POST·GET /rooms/{id}/dli-series + timeseries, cells).
+ * 저장된 결과가 있으면 그대로 쓰고, 없으면 그 날짜 하루만 계산한다. 취소되면 null.
+ */
+export async function loadCellPpfd(
+  room: Room,
+  date: string,
+  row: number,
+  col: number,
+  isCancelled: () => boolean,
+  onProgress?: (p: JobProgress) => void,
+): Promise<CellPpfdResult | null> {
+  if (!room.server) return { ok: false, error: '서버에 측정한 방이 없어요' };
+  const roomId = room.server.roomId;
+  const opts: DliSeriesOptions = { ...seriesOptions(room), timeseries: true, cells: [[row, col]] };
+  try {
+    const saved = await fetchDliSeries(roomId, date, date, opts);
+    const hit = pickCellPpfd(saved, date, row, col);
+    if (hit) return { ok: true, data: hit };
+    if (isCancelled()) return null;
+    const { jobId } = await requestDliSeries(roomId, date, date, opts);
+    const outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled, onProgress);
+    if (outcome === null) return null;
+    if (!outcome.ok) return outcome;
+    const data = pickCellPpfd(outcome.result, date, row, col);
+    return data ? { ok: true, data } : { ok: false, error: '서버 결과에 시간대별 값이 없어요 (서버 업데이트 필요)' };
+  } catch (e) {
+    return { ok: false, error: describeServerError(e) };
+  }
+}
+
 /**
  * 기간(start~end, 최대 93일)의 날짜별 결과를 서버에 저장해 둔다 — 이미 있는 날짜는 서버가 건너뛴다.
  * 기간 비교(POST /dli-comparison)는 저장된 결과만 쓰므로 그 전에 부른다. 취소되면 null.

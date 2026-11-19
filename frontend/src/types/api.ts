@@ -185,6 +185,28 @@ export interface ApiDliDay {
   totalDli: DliGrid;
   directDli: DliGrid;
   diffuseDli: DliGrid;
+  /** timeseries=true로 요청했을 때만 있음 */
+  ppfd?: ApiPpfdDay;
+}
+
+/** 선택 칸 하나의 10분 PPFD (μmol/m²/s). 같은 인덱스의 직사 + 산란 = 전체 */
+export interface ApiPpfdCell {
+  row: number;
+  col: number;
+  directPpfd: number[];
+  diffusePpfd: number[];
+}
+
+/** 하루치 10분 PPFD — 해가 떠 있는 구간만, times는 구간 가운데 시각(…:05, +09:00) */
+export interface ApiPpfdDay {
+  times: string[];
+  intervalMinutes: 10;
+  ppfdUnit: 'umol/m2/s';
+  /** cells를 지정했을 때 */
+  cellSeries?: ApiPpfdCell[];
+  /** 전체 칸 요청 때 [시각][row][col] (방 밖 칸 null) */
+  directPpfd?: (number | null)[][][];
+  diffusePpfd?: (number | null)[][][];
 }
 
 export interface ApiDliSeries {

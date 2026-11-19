@@ -360,6 +360,10 @@ export interface DliSeriesOptions {
   cellSizeM: number;
   mockSky?: boolean;
   temporaryXAxisAzimuthDeg?: number;
+  /** true면 날짜별 결과에 10분 PPFD(days[].ppfd)도 같이 계산·저장 */
+  timeseries?: boolean;
+  /** PPFD를 만들 칸 [row, col] 목록 (timeseries일 때만). 없으면 방 안 전체 칸 */
+  cells?: [number, number][];
 }
 
 /** 저장된 날짜별 결과 조회 (계산 안 함). 없는 날짜는 missingDates */
@@ -372,6 +376,9 @@ export function fetchDliSeries(roomId: number, startDate: string, endDate: strin
       sample_height_m: 0,
       mock_sky: options.mockSky ? 'true' : undefined,
       temporary_x_axis_azimuth_deg: options.temporaryXAxisAzimuthDeg,
+      timeseries: options.timeseries ? 'true' : undefined,
+      // GET은 선택 칸을 JSON 문자열로 받는다 (POST 때와 같은 칸이어야 저장된 결과를 찾는다)
+      cells: options.timeseries && options.cells ? JSON.stringify(options.cells) : undefined,
     },
   });
 }
@@ -388,6 +395,8 @@ export function requestDliSeries(roomId: number, startDate: string, endDate: str
       sampleHeightM: 0,
       ...(options.mockSky ? { mockSky: true } : {}),
       ...(options.temporaryXAxisAzimuthDeg !== undefined ? { temporaryXAxisAzimuthDeg: options.temporaryXAxisAzimuthDeg } : {}),
+      ...(options.timeseries ? { timeseries: true } : {}),
+      ...(options.timeseries && options.cells ? { cells: options.cells } : {}),
     },
   });
 }

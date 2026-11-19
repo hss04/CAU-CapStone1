@@ -12,6 +12,7 @@ import { ScreenContainer } from '@/components/common/ScreenContainer';
 import { SegmentedControl } from '@/components/common/SegmentedControl';
 import { StatusChip } from '@/components/common/StatusChip';
 import { TopBar, goBackOrHome } from '@/components/common/TopBar';
+import { DayPpfdCard } from '@/components/light/DayPpfdCard';
 import { lightAnalysisSteps, lightSourceLabel } from '@/components/light/lightUi';
 import { DliLegend, WeeklyDliChart } from '@/components/light/WeeklyDliChart';
 import { PlantIllustration } from '@/components/plants/PlantIllustration';
@@ -176,6 +177,11 @@ export default function LightForecastScreen() {
           ) : null}
 
           {selectedPoint ? <DayDetail point={selectedPoint} range={series.range} today={forecast.today} /> : null}
+
+          {/* 서버 계산일 때만: 고른 날짜의 식물 자리 10분 PPFD */}
+          {selectedPoint && selectedPoint.dli !== null && forecast.source === 'calculated' && state.room.server ? (
+            <DayPpfdCard room={state.room} plant={plant} date={selectedPoint.date} style={styles.sectionSm} />
+          ) : null}
         </>
       ) : null}
 
