@@ -1,3 +1,5 @@
+> **2026-11-20 Google Cloud HTTPS:** 기존 Nginx 서버에 도메인 없이 공인 IP 인증서와 자동 갱신을 추가할 수 있습니다. VM에서 실행하는 설치 명령과 앱 주소 변경은 [HTTPS_GCP.md](docs/HTTPS_GCP.md)를 확인하세요.
+
 > **2026-11-18 PPFD 연결:** 날짜별 DLI API에 `timeseries: true`를 보내면 10분 단위 PPFD를 함께 계산·저장·조회합니다. 전체 격자와 선택 칸을 지원합니다. 요청·응답과 서버 적용은 [PPFD_API.md](docs/PPFD_API.md)를 확인하세요.
 
 > **2026-10-28 한국 도시 선택:** 서울·부산·광주 등 85개 도시의 대표 위경도 조회와 도시 ID로 방 위치 저장을 지원합니다. API 예시와 동명 지역 구분은 [KOREAN_CITIES.md](docs/KOREAN_CITIES.md)를 확인하세요.
