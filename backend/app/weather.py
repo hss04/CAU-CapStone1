@@ -74,7 +74,7 @@ def fetch_raw(url, params):
     raise HTTPException(503, "Open-Meteo unavailable; retry later")
 
 
-def normalize(raw, day):
+def _index_hourly(raw):
     try:
         hourly = raw["hourly"]
         units = raw["hourly_units"]
@@ -90,6 +90,13 @@ def normalize(raw, day):
             if stamp in indexed:
                 raise ValueError("Duplicate timestamp")
             indexed[stamp] = (n, h)
+        return indexed
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        raise HTTPException(502, "Open-Meteo returned incomplete or invalid hourly data") from exc
+
+
+def _day_values(indexed, day):
+    try:
         start = datetime.combine(day, datetime.min.time(), KST)
         values = []
         # Include next midnight so C can cover the final hour of the target day.
@@ -104,38 +111,75 @@ def normalize(raw, day):
         raise HTTPException(502, "Open-Meteo returned incomplete or invalid hourly data") from exc
 
 
-def get_irradiance(db, latitude, longitude, day):
+def normalize(raw, day):
+    return _day_values(_index_hourly(raw), day)
+
+
+def get_irradiance_many(db, latitude, longitude, days):
+    """Fetch missing contiguous dates per provider, retaining the daily cache contract.
+
+    The final requested day includes the following midnight (hourly means).
+    Validate an entire response before writing any of its days to the cache.
+    """
     if not math.isfinite(latitude) or not math.isfinite(longitude) or not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
         raise HTTPException(422, "Invalid geographic coordinates")
     now = datetime.now(timezone.utc)
-    url, dataset, extra, ttl = request_spec(day, now.astimezone(KST).date())
-    # Exact coordinates: do not silently merge different room locations.
-    key = f"v1|{latitude!r}|{longitude!r}|{day}|{dataset}|Asia/Seoul"
-    cached = db.get(WeatherCache, key)
-    if cached and utc(cached.expires_at) > now:
-        return {**cached.payload, "cache_hit": True}
-    raw = fetch_raw(url, {"latitude": latitude, "longitude": longitude,
-        "start_date": day.isoformat(), "end_date": (day + timedelta(days=1)).isoformat(),
-        "timezone": "Asia/Seoul", "hourly": VARIABLES, **extra})
-    payload = {"latitude": latitude, "longitude": longitude, "date": day.isoformat(),
-        "timezone": "Asia/Seoul", "source": "OPEN_METEO", "dataset": dataset,
-        "unit": "W/m²", "interval_minutes": 60, "time_basis": "PRECEDING_HOUR_MEAN",
-        "fetched_at": now.isoformat(), "expires_at": (now + ttl).isoformat(),
-        "cache_hit": False, "values": normalize(raw, day)}
-    if cached is None:
-        cached = WeatherCache(cache_key=key)
-        db.add(cached)
-    cached.raw_response, cached.payload = raw, payload
-    cached.fetched_at, cached.expires_at = now, now + ttl
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        winner = db.get(WeatherCache, key)
-        if winner and utc(winner.expires_at) > now:
-            return {**winner.payload, "cache_hit": True}
-        raise HTTPException(409, "Concurrent cache update; retry")
-    return payload
+    # Validate every date before an HTTP request or cache write.
+    specifications = [(day, request_spec(day, now.astimezone(KST).date())) for day in sorted(set(days))]
+    result, groups = {}, []
+    for day, spec in specifications:
+        key = f"v1|{latitude!r}|{longitude!r}|{day}|{spec[1]}|Asia/Seoul"
+        cached = db.get(WeatherCache, key)
+        if cached and utc(cached.expires_at) > now:
+            result[day] = {**cached.payload, 'cache_hit': True}
+            continue
+        if not groups or groups[-1][-1][0] + timedelta(days=1) != day or groups[-1][-1][2][1] != spec[1]:
+            groups.append([])
+        groups[-1].append((day, key, spec))
+    for group in groups:
+        url, dataset, extra, ttl = group[0][2]
+        raw = fetch_raw(url, {'latitude': latitude, 'longitude': longitude,
+            'start_date': group[0][0].isoformat(),
+            'end_date': (group[-1][0] + timedelta(days=1)).isoformat(),
+            'timezone': 'Asia/Seoul', 'hourly': VARIABLES, **extra})
+        indexed = _index_hourly(raw)
+        payloads = {}
+        for day, key, _ in group:
+            payloads[day] = {'latitude': latitude, 'longitude': longitude, 'date': day.isoformat(),
+                'timezone': 'Asia/Seoul', 'source': 'OPEN_METEO', 'dataset': dataset,
+                'unit': 'W/m²', 'interval_minutes': 60, 'time_basis': 'PRECEDING_HOUR_MEAN',
+                'fetched_at': now.isoformat(), 'expires_at': (now + ttl).isoformat(),
+                'cache_hit': False, 'values': _day_values(indexed, day)}
+        for day, key, _ in group:
+            payload = payloads[day]
+            # Do not duplicate a 90-day raw response in each of 90 cache rows.
+            values = payload['values']
+            daily_raw = raw if len(group) == 1 else {
+                'hourly_units': raw['hourly_units'], 'hourly': {
+                    'time': [v['time'] for v in values],
+                    'direct_normal_irradiance': [v['dni'] for v in values],
+                    'diffuse_radiation': [v['dhi'] for v in values]}}
+            cached = db.get(WeatherCache, key)
+            if cached is None:
+                cached = WeatherCache(cache_key=key)
+                db.add(cached)
+            cached.raw_response, cached.payload = daily_raw, payload
+            cached.fetched_at, cached.expires_at = now, now + ttl
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            for day, key, _ in group:
+                winner = db.get(WeatherCache, key)
+                if winner is None or utc(winner.expires_at) <= now:
+                    raise HTTPException(409, 'Concurrent cache update; retry')
+                payloads[day] = {**winner.payload, 'cache_hit': True}
+        result.update(payloads)
+    return result
+
+
+def get_irradiance(db, latitude, longitude, day):
+    return get_irradiance_many(db, latitude, longitude, [day])[day]
 
 
 @router.get("/weather/irradiance", response_model=IrradianceOut)

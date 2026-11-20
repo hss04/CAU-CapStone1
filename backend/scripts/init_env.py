@@ -10,7 +10,8 @@ def main():
         from dotenv import dotenv_values
         values = dotenv_values(destination)
         defaults = dotenv_values(project / '.env.example')
-        keys = ('DLI_CALLABLE', 'DIRECTION_CALLABLE', 'RECOMMENDATION_CALLABLE', 'DLI_CACHE_VERSION')
+        keys = ('DLI_CALLABLE', 'DIRECTION_CALLABLE', 'RECOMMENDATION_CALLABLE', 'DLI_CACHE_VERSION',
+                'ALGORITHM_PERSISTENT', 'ALGORITHM_TIMEOUT_SECONDS', 'ALGORITHM_NUM_THREADS', 'SKY_MODEL_PRELOAD')
         missing = [key for key in keys if key not in values]
         if missing:
             with destination.open('a', encoding='utf-8') as output:

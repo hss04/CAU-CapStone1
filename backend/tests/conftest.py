@@ -55,3 +55,5 @@ def isolated_algorithm_configuration(monkeypatch):
     # Keep legacy tests deterministic even after init_env.py is run.
     for key in ('DLI_CALLABLE', 'DIRECTION_CALLABLE', 'RECOMMENDATION_CALLABLE', 'ALGORITHM_DIR'):
         monkeypatch.setenv(key, '')
+    monkeypatch.setenv('SKY_MODEL_PRELOAD', 'false')
+    monkeypatch.setenv('ALGORITHM_PERSISTENT', 'true')

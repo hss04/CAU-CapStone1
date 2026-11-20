@@ -11,13 +11,13 @@ from app import integration as i
 from app.algorithm_bridge import invoke as real_invoke
 from app.integration_models import DliDailyCache, IntegrationJob
 from test_algorithm_v5 import weather
-from test_integration import make_room
+from test_integration import make_room, stub_weather
 
 
 @pytest.fixture
 def prepared(client, headers, monkeypatch):
     rid = make_room(client, headers)
-    monkeypatch.setattr(i, 'get_irradiance', weather)
+    stub_weather(monkeypatch, weather)
     body = {'start_date': '2026-10-01', 'end_date': '2026-10-01', 'cell_size_m': 1,
             'sample_height_m': .5, 'mock_sky': True, 'temporary_x_axis_azimuth_deg': 0,
             'timeseries': True}
@@ -190,7 +190,7 @@ def test_multi_day_ppfd_keeps_each_day_and_selection_separate(client, headers, p
 
 def test_polygon_ppfd_masks_outside_cells(client, headers, monkeypatch):
     monkeypatch.setenv('DLI_CALLABLE', 'grid_dli_service:compute_room_dli')
-    monkeypatch.setattr(i, 'get_irradiance', weather)
+    stub_weather(monkeypatch, weather)
     room = json.loads(Path('examples/room.json').read_text())
     room['corners'] = [{'x': x, 'y': 0, 'z': z, 'order_index': n} for n, (x, z) in enumerate(
         [(0, 0), (4, 0), (4, 2), (2, 2), (2, 4), (0, 4)])]

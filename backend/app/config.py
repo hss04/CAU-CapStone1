@@ -33,6 +33,10 @@ class AlgorithmSettings(BaseSettings):
     recommendation_callable: str = ''
     algorithm_dir: str = ''
     dli_cache_version: str = '3206220-v5'
+    algorithm_persistent: bool = True
+    algorithm_timeout_seconds: float = Field(default=900, ge=0.05, le=3600)
+    algorithm_num_threads: int = Field(default=1, ge=1, le=32)
+    sky_model_preload: bool = True
 
 
 def get_algorithm_settings() -> AlgorithmSettings:

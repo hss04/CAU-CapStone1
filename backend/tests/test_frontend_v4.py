@@ -11,7 +11,7 @@ from app.models import Plant, PlantSpecies, Room
 from app.schemas import KST
 from app.species_seed import seed_species
 from scripts.migrate_v4 import migrate
-from test_integration import make_room
+from test_integration import make_room, stub_weather
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def calculation(client,headers,monkeypatch):
         return {'values':[],'time_basis':'PRECEDING_HOUR_MEAN',
                 'dataset':'ERA5' if day<now.astimezone(KST).date()-timedelta(days=7) else 'BEST_MATCH_FORECAST',
                 'fetched_at':now.isoformat(),'expires_at':(now+timedelta(hours=1)).isoformat()}
-    monkeypatch.setattr(i,'get_irradiance',irradiation)
+    stub_weather(monkeypatch, irradiation)
     def compute(op,p):
         calls.append(p['date'])
         n=date.fromisoformat(p['date']).day
@@ -239,7 +239,7 @@ def test_simple_series_payload_and_default_algorithm(context,headers,monkeypatch
             result={'sky':[[1]*360 for _ in range(91)],'max_captured_elevation_deg':[90]*360}))
         db.commit()
     now=datetime.now(timezone.utc)
-    monkeypatch.setattr(i,'get_irradiance',lambda *a:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN',
+    stub_weather(monkeypatch, lambda *a:{'values':[],'time_basis':'PRECEDING_HOUR_MEAN',
         'dataset':'ERA5','fetched_at':now.isoformat(),'expires_at':(now+timedelta(hours=1)).isoformat()})
     monkeypatch.setattr(i,'invoke',lambda op,p:{'direct_dli':[[1]*p['grid']['cols'] for _ in range(p['grid']['rows'])],
         'diffuse_dli':[[2]*p['grid']['cols'] for _ in range(p['grid']['rows'])]})

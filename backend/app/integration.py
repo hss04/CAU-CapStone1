@@ -25,7 +25,7 @@ from app.ppfd import PpfdSeries
 from app.security import CurrentUser, Db
 from app.api import owned_room, owned_window, commit
 from app.geometry import grid
-from app.weather import get_irradiance, fetch_raw
+from app.weather import get_irradiance_many, fetch_raw
 from app.integration_models import IntegrationJob
 from app.algorithm_bridge import invoke
 from app.korean_cities import KoreanCitiesOut, city_by_id, search_cities
@@ -306,17 +306,25 @@ def get_series(room_id:int, start_date:date, end_date:date, db:Db, user:CurrentU
 
 
 def compute_job(p,db):
+    # All dates reuse the same imported worker. Keep daily RPCs so validation,
+    # partial cache saves and real date-level progress remain available.
     request_type=DliSeriesRequest if p.get('result_kind')=='DLI_SERIES' else DliRequest
     body=request_type(**p['request']); results=[]
+    days=[body.start_date+timedelta(days=n) for n in range((body.end_date-body.start_date).days+1)]
+    cached_days={day:dli_cache.lookup(db,p,day) for day in days}
+    missing=[day for day in days if cached_days[day] is None]
+    if missing and p.get('_job_id'):
+        job_control.progress(db,p['_job_id'],'FETCHING_WEATHER'); db.commit()
+    weather_days=get_irradiance_many(db,p['room']['latitude'],p['room']['longitude'],missing) if missing else {}
     day=body.start_date
     while day<=body.end_date:
-        cached=dli_cache.lookup(db,p,day)
+        cached=cached_days[day]
         if cached is not None:
             results.append(cached); day+=timedelta(days=1)
             if p.get('_job_id'):
                 job_control.progress(db,p['_job_id'],'CALCULATING_DLI',len(results)); db.commit()
             continue
-        weather=get_irradiance(db,p['room']['latitude'],p['room']['longitude'],day)
+        weather=weather_days[day]
         payload={'room_id':p['room_id'],'room':p['room'],'date':day.isoformat(),'grid':p['grid'],
             'windows':p['windows'],'dni_dhi':weather['values'],'time_basis':weather['time_basis'],
             'mock_sky':body.mock_sky}

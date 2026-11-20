@@ -1,3 +1,5 @@
+> **2026-11-20 계산 속도 개선:** 날짜별 Python 재실행을 없애고 계산 프로세스/SegFormer를 재사용합니다. 기상 자료도 기간별로 조회합니다. 적용·예열 준비 상태·직접 측정 방법은 [PERFORMANCE.md](docs/PERFORMANCE.md)를 확인하세요.
+
 > **2026-11-20 Google Cloud HTTPS:** 기존 Nginx 서버에 도메인 없이 공인 IP 인증서와 자동 갱신을 추가할 수 있습니다. VM에서 실행하는 설치 명령과 앱 주소 변경은 [HTTPS_GCP.md](docs/HTTPS_GCP.md)를 확인하세요.
 
 > **2026-11-18 PPFD 연결:** 날짜별 DLI API에 `timeseries: true`를 보내면 10분 단위 PPFD를 함께 계산·저장·조회합니다. 전체 격자와 선택 칸을 지원합니다. 요청·응답과 서버 적용은 [PPFD_API.md](docs/PPFD_API.md)를 확인하세요.
@@ -173,4 +175,3 @@ tests/                API 통합 테스트
 ## 0.3.0 일사량 조회 추가
 
 Open-Meteo 시간별 DNI/DHI 조회와 DB 캐시를 추가했습니다. 설치·기존 DB 유지·Swagger 시험·C 입력 계약은 [docs/WEATHER_API.md](docs/WEATHER_API.md)를 확인하세요.
-

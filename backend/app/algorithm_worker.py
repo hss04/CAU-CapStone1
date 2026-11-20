@@ -1,12 +1,22 @@
+"""Line-delimited request/reply server, also supporting the original CLI mode."""
 import contextlib
 import importlib
 import json
 import sys
+import traceback
 
-sys.path.insert(0, sys.argv[1])
-op = sys.argv[2]
-payload = json.load(sys.stdin)
-with contextlib.redirect_stdout(sys.stderr):
+_model_ready = False
+
+
+def execute(op, payload):
+    global _model_ready
+    if op == 'warmup':
+        import numpy as np
+        from c_sky import classify_sky_mask_segformer
+        # Includes lazy imports, model loading and first-inference initialization.
+        classify_sky_mask_segformer(np.zeros((64, 64, 3), dtype=np.uint8))
+        _model_ready = True
+        return {'model': 'loaded', 'inference': 'ok'}
     if op == 'preflight':
         result = {'callables': {}, 'model': 'not_requested'}
         for key, configured in payload['callables'].items():
@@ -27,15 +37,17 @@ with contextlib.redirect_stdout(sys.stderr):
                 if image is None:
                     raise ValueError('Cannot read the supplied test image')
                 mask = classify_sky_mask_segformer(image)
+                _model_ready = True
                 result['inference'] = {'height': int(mask.shape[0]), 'width': int(mask.shape[1]),
                                        'sky_fraction': float(mask.mean())}
-    elif op == 'dli':
+        return result
+    if op == 'dli':
         from grid_dli_service import compute_grid_dli
         from c_sky import generate_mock_scan
         if payload.get('mock_sky'):
             payload['sky'] = generate_mock_scan(payload.pop('window_outward_azimuth_deg'))
-        result = compute_grid_dli(payload)
-    elif op == 'scan':
+        return compute_grid_dli(payload)
+    if op == 'scan':
         import cv2
         from c_sky import build_scan_from_frames, CameraParams, ScanFrame
         camera = CameraParams(**payload['camera'])
@@ -46,13 +58,39 @@ with contextlib.redirect_stdout(sys.stderr):
                 raise ValueError('Invalid frame dimensions')
             frames.append(ScanFrame(f['index'], im, f['azimuth_deg'], f['pitch_deg'], f['roll_deg']))
         result = build_scan_from_frames(frames, camera)
-    else:
-        # Future upstream functions: explicitly configured module:function, dict -> dict.
-        module, name = payload.pop('_callable').split(':')
-        allow_swaps = payload.pop('_allow_relocation_swaps', False)
-        function = getattr(importlib.import_module(module), name)
-        result = function(payload)
-        if allow_swaps and (module, name) == ('recommend_service', 'recommend_for_room'):
-            from recommendation_worker import with_relocations
-            result = with_relocations(function, payload, result)
-json.dump(result, sys.stdout, allow_nan=False)
+        _model_ready = True
+        return result
+    module, name = payload.pop('_callable').split(':')
+    allow_swaps = payload.pop('_allow_relocation_swaps', False)
+    function = getattr(importlib.import_module(module), name)
+    result = function(payload)
+    if allow_swaps and (module, name) == ('recommend_service', 'recommend_for_room'):
+        from recommendation_worker import with_relocations
+        result = with_relocations(function, payload, result)
+    return result
+
+
+def main():
+    sys.path.insert(0, sys.argv[1])
+    if sys.argv[2] != '--serve':
+        payload = json.load(sys.stdin)
+        with contextlib.redirect_stdout(sys.stderr):
+            result = execute(sys.argv[2], payload)
+        json.dump(result, sys.stdout, allow_nan=False)
+        return
+    for line in sys.stdin:
+        request = {}
+        try:
+            request = json.loads(line)
+            with contextlib.redirect_stdout(sys.stderr):
+                result = execute(request['operation'], request['payload'])
+            reply = json.dumps({'id': request['id'], 'ok': True, 'result': result,
+                                'model_ready': _model_ready}, allow_nan=False)
+        except Exception:
+            traceback.print_exc(file=sys.stderr)
+            reply = json.dumps({'id': request.get('id'), 'ok': False})
+        print(reply, flush=True)
+
+
+if __name__ == '__main__':
+    main()

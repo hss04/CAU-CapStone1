@@ -14,9 +14,9 @@ from app.weather import router as weather_router
 from app.integration import router as integration_router
 from app.placement_api import router as placement_router
 from app.insights_api import router as insights_router
-from app.config import get_settings
+from app.config import get_settings, get_algorithm_settings
 from app.database import Base, engine
-from app.algorithm_bridge import algorithm_directory
+from app.algorithm_bridge import algorithm_directory, start_worker_warmup, shutdown_worker, worker_status
 from fastapi.responses import JSONResponse
 
 
@@ -40,7 +40,11 @@ async def lifespan(app:FastAPI):
                 IntegrationJob.error=='Server restarted during processing; submit again')))
             .values(stage='FAILED',error_code='SERVER_RESTARTED'))
         db.commit()
-    yield
+    start_worker_warmup()
+    try:
+        yield
+    finally:
+        shutdown_worker()
 
 
 app=FastAPI(title='PlantLight API',version='0.9.0',lifespan=lifespan,
@@ -63,7 +67,7 @@ def health():
     return {'status':'ok'}
 
 
-@app.get('/ready',tags=['Health'],summary='Check database and algorithm directory readiness')
+@app.get('/ready',tags=['Health'],summary='Check database, algorithm directory and model warmup readiness')
 def ready():
     try:
         with engine.connect() as connection:
@@ -73,9 +77,14 @@ def ready():
         database_status='error'
 
     algorithm_status='available' if algorithm_directory().is_dir() else 'missing'
-    if database_status!='ok' or algorithm_status!='available':
+    runtime=worker_status()
+    settings=get_algorithm_settings()
+    model_required=settings.algorithm_persistent and settings.sky_model_preload
+    checks={'database':database_status,'algorithm_directory':algorithm_status,
+            'algorithm_worker':runtime['worker'],'sky_model':runtime['sky_model']}
+    if database_status!='ok' or algorithm_status!='available' or (model_required and runtime['sky_model']!='ready'):
         return JSONResponse(status_code=503,content={
             'status':'not_ready',
-            'checks':{'database':database_status,'algorithm_directory':algorithm_status}
+            'checks':checks
         })
-    return {'status':'ready','checks':{'database':'ok','algorithm_directory':'available'}}
+    return {'status':'ready','checks':checks}

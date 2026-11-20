@@ -12,7 +12,7 @@ from app import integration as i, models as m
 from app.algorithm_bridge import invoke as real_invoke
 from app.integration_models import IntegrationJob, JobRuntime, PlacementPlan
 from app.schemas import KST
-from test_integration import make_room
+from test_integration import make_room, stub_weather
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def saved(context, headers, monkeypatch):
     def weather(*args):
         return {'values': [], 'time_basis': 'PRECEDING_HOUR_MEAN', 'dataset': 'ERA5',
                 'fetched_at': '2026-10-27T10:00:00+09:00', 'expires_at': '2026-10-27T11:00:00+09:00'}
-    monkeypatch.setattr(i, 'get_irradiance', weather)
+    stub_weather(monkeypatch, weather)
     def calculate(op, payload):
         if payload.get('_callable') == 'grid_dli_service:compute_room_dli':
             spec = payload['grid']
@@ -331,7 +331,7 @@ def test_failed_weather_has_machine_readable_job_error(saved, headers, monkeypat
     client, _, rid, _, request = saved
     def fail(*args):
         raise HTTPException(503, 'Open-Meteo unavailable; retry later')
-    monkeypatch.setattr(i, 'get_irradiance', fail)
+    stub_weather(monkeypatch, fail)
     response = client.post(f'/api/v1/rooms/{rid}/dli-map', headers=headers,
         json={**request, 'start_date': '2026-10-02', 'end_date': '2026-10-02'})
     job = client.get(response.json()['status_url'], headers=headers).json()
@@ -344,7 +344,7 @@ def test_forecast_expiry_makes_completed_job_stale(saved, headers, monkeypatch):
     client, factory, rid, _, request = saved
     now = datetime.now(timezone.utc)
     today = now.astimezone(KST).date().isoformat()
-    monkeypatch.setattr(i, 'get_irradiance', lambda *args: {
+    stub_weather(monkeypatch, lambda *args: {
         'values': [], 'time_basis': 'PRECEDING_HOUR_MEAN', 'dataset': 'BEST_MATCH_FORECAST',
         'fetched_at': now.isoformat(), 'expires_at': (now+timedelta(hours=1)).isoformat()})
     response = client.post(f'/api/v1/rooms/{rid}/dli-map', headers=headers,

@@ -10,7 +10,7 @@ from app import integration as i
 from app.algorithm_bridge import invoke
 from app.config import AlgorithmSettings
 from app.integration_models import IntegrationJob
-from test_integration import make_room
+from test_integration import make_room, stub_weather
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def test_real_direction_dli_recommendation(context, headers, other_headers, monk
         species = db.get(PlantSpecies, 1)
         species.min_dli, species.max_dli = 100, 200
         db.commit()
-    monkeypatch.setattr(i, 'get_irradiance', weather)
+    stub_weather(monkeypatch, weather)
     accepted = client.post(f'/api/v1/rooms/{rid}/dli-map', headers=headers, json={
         'start_date':'2026-10-01', 'end_date':'2026-10-01', 'cell_size_m':1,
         'sample_height_m':0.5, 'mock_sky':True, 'accept_provisional_algorithm':False})
@@ -130,7 +130,7 @@ def test_polygon_multi_window_api(client, headers, monkeypatch, connected):
         [(4,0.8,0.3),(4,0.8,1.7),(4,2,1.7),(4,2,0.3)])]
     response = client.post(f'/api/v1/rooms/{rid}/windows', headers=headers, json=window)
     assert response.status_code == 201, response.text
-    monkeypatch.setattr(i, 'get_irradiance', weather)
+    stub_weather(monkeypatch, weather)
     accepted = client.post(f'/api/v1/rooms/{rid}/dli-map', headers=headers, json={
         'start_date':'2026-10-01','end_date':'2026-10-01','mock_sky':True,
         'cell_size_m':1,'sample_height_m':0.5,'accept_provisional_algorithm':False})

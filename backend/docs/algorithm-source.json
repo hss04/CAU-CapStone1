@@ -24,7 +24,9 @@
     },
     {
       "path": "algorithm/c_sky.py",
-      "git_blob_sha": "c943a2b33fcd0abc11d8596386146a6bb901a651"
+      "git_blob_sha": "f6c568111a40d81534a207e351e688321fa951cf",
+      "upstream_git_blob_sha": "c943a2b33fcd0abc11d8596386146a6bb901a651",
+      "local_modification": "Chunk full-resolution class comparisons; preserves finite-logit bilinear argmax SKY decisions, including ties."
     },
     {
       "path": "algorithm/d_light.py",

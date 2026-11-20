@@ -4346,7 +4346,7 @@
         "tags": [
           "Health"
         ],
-        "summary": "Check database and algorithm directory readiness",
+        "summary": "Check database, algorithm directory and model warmup readiness",
         "operationId": "ready_ready_get",
         "responses": {
           "200": {

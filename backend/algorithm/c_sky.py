@@ -135,14 +135,35 @@ def classify_sky_mask_segformer(image_bgr: np.ndarray) -> np.ndarray:
 
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     inputs = processor(images=image_rgb, return_tensors="pt")
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = model(**inputs).logits  # (1, num_labels, H/4, W/4) 저해상도 출력
+        return _sky_from_logits(logits, sky_label_id, image_bgr.shape[:2])
 
-    upsampled = torch.nn.functional.interpolate(
-        logits, size=image_bgr.shape[:2], mode="bilinear", align_corners=False
-    )
-    pred = upsampled.argmax(dim=1)[0].numpy()
-    return pred == sky_label_id
+
+def _sky_from_logits(logits, sky_label_id: int, out_size: tuple[int, int], channel_chunk: int = 4) -> np.ndarray:
+    """Same SKY decision as full-resolution argmax, with bounded memory.
+
+    Bilinear-upsample the SKY channel and compare with small blocks of the other
+    channels. Earlier labels win exact ties, matching torch.argmax. Unlike taking
+    the low-resolution max before interpolation, this preserves class boundaries.
+    960x1280x150 float scores would occupy about 703 MiB at once; four channels
+    occupy about 19 MiB. No pixel downsampling or classification approximation.
+    """
+    import torch
+
+    if not bool(torch.isfinite(logits).all()):
+        raise ValueError('Non-finite SegFormer logits')
+    interpolate = torch.nn.functional.interpolate
+    sky = interpolate(logits[:, sky_label_id:sky_label_id + 1], size=out_size,
+                      mode='bilinear', align_corners=False)[0, 0]
+    mask = torch.ones_like(sky, dtype=torch.bool)
+    for begin, end, strict in ((0, sky_label_id, True), (sky_label_id + 1, logits.shape[1], False)):
+        for first in range(begin, end, channel_chunk):
+            scores = interpolate(logits[:, first:min(first + channel_chunk, end)], size=out_size,
+                                 mode='bilinear', align_corners=False)
+            maximum = scores.amax(dim=1)[0]
+            mask.logical_and_(sky > maximum if strict else sky >= maximum)
+    return mask.cpu().numpy()
 
 
 def pixel_to_azimuth_elevation(
