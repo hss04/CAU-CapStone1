@@ -40,12 +40,14 @@ import { DLI_PERIOD, DLI_STATUS_COPY, LIGHT_LEVEL_LABEL, TIME_OF_DAY_LABEL } fro
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { usePeriodDliMap, type PeriodDliMap } from '@/hooks/usePeriodDliMap';
 import { useRecommendationPlan } from '@/hooks/useRecommendationPlan';
+import { describeJobProgress } from '@/services/lightForecast';
 import { REASON_COPY } from '@/services/placement/serverRecommendation';
 import { dliValueText, type PlantDli, rangeText, usePlantsDli } from '@/hooks/usePlantDli';
 import { dliAt, MOCK_DLI_NOTE } from '@/services/space/dliMap';
 import { describePosition, isPlaceable, roomSizeLabel, samePosition } from '@/services/space/geometry';
 import { expectedSunHours, lightLevelOf, lightValueAt, summarizeLight } from '@/services/space/lightAnalysis';
 import { findWindow, windowFacingLabel, windowName, windowWidthM } from '@/services/space/windows';
+import { DEFAULT_SCAN_CONFIG } from '@/services/windowScan/scanTracker';
 import type { ScanUploadState } from '@/services/windowScan/uploadService';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden, type BlockedSync, type DliCheck } from '@/store/GardenProvider';
@@ -343,7 +345,7 @@ export default function SpaceScreen() {
                 <ActivityIndicator size="small" color={Colors.primary} />
                 <AppText variant="small" color={Colors.textSecondary}>
                   {serverRoom
-                    ? `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중${period.progress ? (period.progress.queued ? ' · 다른 계산이 끝나길 기다리는 중' : ` · ${period.progress.done}/${period.progress.total}일`) : ''}`
+                    ? `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중${period.progress ? ` · ${describeJobProgress(period.progress)}` : ''}`
                     : `${DLI_PERIOD[state.dliPeriod].label} 일조 환경 계산 중 · 지금은 예시 지도를 보여드려요`}
                 </AppText>
               </View>
@@ -418,7 +420,7 @@ export default function SpaceScreen() {
         </Card>
 
         <View style={styles.section}>
-          <SectionHeader eyebrow="Outside view" title="창밖 환경" subtitle="창문을 선택해 바깥을 180° 스캔해보세요" />
+          <SectionHeader eyebrow="Outside view" title="창밖 환경" subtitle={`창문을 선택해 바깥을 ${DEFAULT_SCAN_CONFIG.targetAngle}° 스캔해보세요`} />
           <Card padding={0} radius={Radius.xl}>
             {room.windows.map((w, i) => {
               const chip = windowScanChip(room, state.windowScans[w.id], state.scanUploads[w.id]);

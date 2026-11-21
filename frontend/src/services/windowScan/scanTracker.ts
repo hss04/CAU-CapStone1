@@ -1,7 +1,7 @@
 import { signedDelta } from '../orientation/headingMath';
 
 /**
- * 180° 창밖 스캔 진행 추적기 (React / 센서 / 카메라와 무관한 순수 로직).
+ * 창밖 스캔 진행 추적기 (React / 센서 / 카메라와 무관한 순수 로직). 스캔 범위는 DEFAULT_SCAN_CONFIG.targetAngle.
  *
  * - 시작 순간의 방위각을 기준(0°)으로 잡는다.
  * - 매 샘플마다 직전 방위각과의 부호 있는 차이를 누적해 0°/360° 경계를 넘어도 연속적으로 추적한다.
@@ -24,8 +24,13 @@ export interface ScanTrackerConfig {
   pitchTolerance: number;
 }
 
+/**
+ * 스캔 범위 = 창문 정면 기준 ±targetAngle/2.
+ * 120°면 정면 −60°~+60°를 15° 간격으로 9장. 세로 사진 가로 화각(약 38°)의 절반씩 양옆이 더 찍혀
+ * 실제로는 정면 ±79° 정도까지 담긴다. 180°로 되돌리려면 이 값만 바꾸면 된다(서버 장수 규칙도 같이).
+ */
 export const DEFAULT_SCAN_CONFIG: ScanTrackerConfig = {
-  targetAngle: 180,
+  targetAngle: 120,
   captureStep: 15,
   reverseThreshold: 6,
   maxSpeed: 32,

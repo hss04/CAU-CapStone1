@@ -70,4 +70,8 @@ export interface LightProgress {
   /** dli 단계: 계산 요청 전에 서버에 이미 저장돼 있던 날짜 수 / 전체 날짜 수 */
   done?: number;
   total?: number;
+  /** dli 단계: 서버가 다른 계산을 마치길 기다리는 중 */
+  queued?: boolean;
+  /** dli 단계: 빠진 날짜의 날씨 자료를 받는 중 */
+  weather?: boolean;
 }

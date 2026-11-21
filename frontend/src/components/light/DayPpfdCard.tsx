@@ -69,6 +69,7 @@ export function DayPpfdCard({ room, plant, date, style }: { room: Room; plant: P
     });
 
   const queued = progress?.key === key && progress.p.queued;
+  const fetchingWeather = progress?.key === key && progress.p.weather;
 
   return (
     <Card padding={Spacing.xl} radius={Radius.xl} style={style}>
@@ -88,7 +89,11 @@ export function DayPpfdCard({ room, plant, date, style }: { room: Room; plant: P
         <View style={[styles.section, styles.loading]}>
           <ActivityIndicator size="small" color={Colors.primary} />
           <AppText variant="caption" color={Colors.textSecondary} style={styles.flex}>
-            {queued ? '서버가 다른 계산을 마치는 중이에요. 곧 시작해요.' : '이 날짜의 시간대별 빛을 계산하고 있어요.'}
+            {queued
+              ? '서버가 다른 계산을 마치는 중이에요. 곧 시작해요.'
+              : fetchingWeather
+                ? '이 날짜의 날씨 자료를 받는 중이에요.'
+                : '이 날짜의 시간대별 빛을 계산하고 있어요.'}
           </AppText>
         </View>
       ) : !result.ok ? (

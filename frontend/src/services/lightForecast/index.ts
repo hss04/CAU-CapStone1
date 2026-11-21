@@ -13,6 +13,7 @@ export { weekInsight } from './insights';
 export { buildMockLightDays } from './mockSource';
 export { buildPlantSeries, dliRangeFor, recentStatusOf, todayPointOf } from './series';
 export {
+  describeJobProgress,
   describeServerError,
   dliOptionsFor,
   ensureDliSeries,

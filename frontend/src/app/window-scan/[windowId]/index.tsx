@@ -43,16 +43,18 @@ const FACING_FAIL_TEXT: Record<Exclude<FacingResult, 'ok'>, string> = {
   unsteady: '휴대폰이 흔들렸어요. 잠시 멈춘 뒤 다시 눌러 주세요',
 };
 
-/** 스캔은 창문 정면에서 왼쪽으로 이만큼 돌린 방향에서 시작한다 (180° 스캔의 절반) */
+/** 스캔은 창문 정면에서 왼쪽으로 이만큼 돌린 방향에서 시작한다 (스캔 범위의 절반, 120°면 60°) */
 const START_OFFSET_DEG = -DEFAULT_SCAN_CONFIG.targetAngle / 2;
+/** 화면 문구용 스캔 범위 (°) */
+const SCAN_RANGE_DEG = DEFAULT_SCAN_CONFIG.targetAngle;
 /**
- * 시작 위치 허용 오차 (°). 서버는 사진마다 '정면 −90° + 15°·n'에서 5° 이내를 요구하는데,
+ * 시작 위치 허용 오차 (°). 서버는 사진마다 '정면 − 범위/2 + 15°·n'에서 5° 이내를 요구하는데,
  * 촬영 시점이 15° 지점을 조금 지나서 잡히므로 시작은 더 좁게 맞춘다.
  */
 const START_TOLERANCE_DEG = 3;
 
 /**
- * 창밖 180° 스캔 (카메라)
+ * 창밖 스캔 (카메라, 범위는 DEFAULT_SCAN_CONFIG.targetAngle)
  * - 카메라: hooks/useScanCamera
  * - 방향 센서(Magnetometer + Accelerometer): services/orientation
  * - 진행/촬영 판단: services/windowScan
@@ -146,7 +148,7 @@ export default function WindowScanScreen() {
       <ScanNotice
         icon={Camera}
         title="카메라 권한이 필요해요"
-        description={'창밖을 180° 촬영해 방향별 사진을 저장해요.\n사진은 기기에 저장되고, \'서버로 보내기\'를 누를 때만 전송돼요.'}
+        description={`창밖을 ${SCAN_RANGE_DEG}° 촬영해 방향별 사진을 저장해요.\n사진은 기기에 저장되고, '서버로 보내기'를 누를 때만 전송돼요.`}
         onClose={goBackOrHome}>
         {permission.canAskAgain ? (
           <PrimaryButton title="카메라 권한 허용하기" icon={Camera} onPress={requestPermission} />
@@ -369,7 +371,7 @@ export default function WindowScanScreen() {
             <CircleCheck size={40} color={Colors.white} strokeWidth={1.8} />
           </View>
           <AppText variant="h1" color={Colors.white}>
-            {scan.phase === 'done' ? '180° 스캔 완료' : '사진을 저장하고 있어요…'}
+            {scan.phase === 'done' ? `${SCAN_RANGE_DEG}° 스캔 완료` : '사진을 저장하고 있어요…'}
           </AppText>
           <AppText variant="body" color="rgba(255,255,255,0.75)">
             사진 {scan.captureCount}장

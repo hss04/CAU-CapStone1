@@ -5,12 +5,13 @@ import { ApiError } from '@/services/api/client';
 import { fetchJob, uploadWindowScan } from '@/services/api/endpoints';
 import type { WindowScan } from '@/types';
 
-import { checkScanForUpload, frameFileName, toScanUpload, UPLOAD_HEIGHT_PX } from './uploadPayload';
+import { DEFAULT_SCAN_CONFIG } from './scanTracker';
+import { checkScanForUpload, frameFileName, SCAN_FRAME_COUNT, toScanUpload, UPLOAD_HEIGHT_PX } from './uploadPayload';
 
 /**
  * 창밖 스캔 업로드 → SKY 분석 대기.
  *   ① 사진을 업로드 규격(세로, 높이 1280px, 새로 인코딩한 JPEG)으로 변환
- *   ② POST /windows/{id}/scans (metadata + 사진 13장) → job_id
+ *   ② POST /windows/{id}/scans (metadata + 사진 SCAN_FRAME_COUNT장) → job_id
  *   ③ GET /jobs/{id}로 SKY 분석(백엔드 SegFormer) 완료까지 대기
  */
 
@@ -64,10 +65,16 @@ export function describeUploadError(e: unknown): string {
     if (e.isNetwork) return e.message;
     if (e.status === 413) return '사진 용량이 너무 커요 (장당 5MB 이하)';
     const m = e.message;
-    if (/Frame angles/i.test(m)) return '사진 방향이 기준(정면 −90°부터 15° 간격)에서 5° 넘게 벗어났어요. 다시 스캔해 주세요.';
+    // 서버가 아직 13장(180°) 규칙이면 앱의 다른 장수 스캔을 거절한다 → 다시 찍어도 안 되므로 따로 안내
+    if (SCAN_FRAME_COUNT !== 13 && /at least 13|13 matching|0\.\.12|span -90/i.test(m)) {
+      return `서버가 아직 ${SCAN_FRAME_COUNT}장(${DEFAULT_SCAN_CONFIG.targetAngle}°) 스캔을 받지 않아요. 서버 업데이트가 필요해요.`;
+    }
+    if (/Frame angles/i.test(m)) {
+      return `사진 방향이 기준(정면 −${DEFAULT_SCAN_CONFIG.targetAngle / 2}°부터 ${DEFAULT_SCAN_CONFIG.captureStep}° 간격)에서 5° 넘게 벗어났어요. 다시 스캔해 주세요.`;
+    }
     if (/azimuth mismatch/i.test(m)) return '방위각 보정 값이 맞지 않아요. 다시 스캔해 주세요.';
     if (/upright JPEG|camera dimensions/i.test(m)) return '사진 크기·방향이 업로드 규격과 달라요.';
-    if (/13 matching/i.test(m)) return '사진 13장이 모두 필요해요.';
+    if (/matching JPEG/i.test(m)) return `사진 ${SCAN_FRAME_COUNT}장이 모두 필요해요.`;
     return `업로드에 실패했어요 (${e.status}) · ${m}`;
   }
   return e instanceof Error ? e.message : '업로드에 실패했어요';

@@ -64,7 +64,7 @@ export function AzimuthTimeline({ stats, startAzimuth, endAzimuth, scannedAngle,
                 ) : null}
               </G>
             ))}
-            {/* 목표 180° */}
+            {/* 목표 각도 */}
             <Line x1={x(target)} x2={x(target)} y1={30} y2={baseY + 14} stroke={Colors.sunlight} strokeWidth={1.5} strokeDasharray="4 3" />
             <SvgText x={x(target)} y={baseY + 40} fontSize={9.5} fontWeight="700" fill={Colors.sunlightDeep} textAnchor="middle">
               {`target ${target}°`}

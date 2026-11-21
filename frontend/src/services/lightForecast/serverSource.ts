@@ -62,6 +62,15 @@ export interface JobProgress {
   total: number;
   /** 서버가 다른 계산을 먼저 하느라 아직 시작 전 (작업은 한 번에 하나씩) */
   queued?: boolean;
+  /** 계산 전에 빠진 날짜의 날씨 자료(일사량)를 받는 중 (서버 단계 FETCHING_WEATHER) */
+  weather?: boolean;
+}
+
+/** 진행 상태 → 짧은 안내 (예: '날씨 자료 받는 중', '3/7일') */
+export function describeJobProgress(p: JobProgress): string {
+  if (p.queued) return '다른 계산이 끝나길 기다리는 중';
+  if (p.weather) return '날씨 자료 받는 중';
+  return `${p.done}/${p.total}일`;
 }
 
 async function waitForJob<T>(
@@ -74,8 +83,15 @@ async function waitForJob<T>(
     await sleep(POLL_INTERVAL_MS);
     if (isCancelled()) return null;
     const job = await fetchJob<T>(jobId);
-    if (job.progress && job.progress.totalSteps > 1) {
-      onProgress?.({ done: job.progress.completedSteps, total: job.progress.totalSteps, queued: job.progress.stage === 'QUEUED' });
+    const stage = job.progress?.stage;
+    // 날짜 진행은 여러 날일 때만 의미가 있고, 대기·날씨 받기는 하루짜리 계산에서도 알려준다
+    if (job.progress && (job.progress.totalSteps > 1 || stage === 'QUEUED' || stage === 'FETCHING_WEATHER')) {
+      onProgress?.({
+        done: job.progress.completedSteps,
+        total: job.progress.totalSteps,
+        queued: stage === 'QUEUED',
+        weather: stage === 'FETCHING_WEATHER',
+      });
     }
     if (job.status === 'FAILED' && job.errorCode === 'SERVER_RESTARTED') {
       return { ok: false, error: '서버가 다시 시작돼 계산이 멈췄어요 · 다시 계산해 주세요' };
@@ -162,7 +178,9 @@ export async function loadServerLightDays(options: ServerLightOptions): Promise<
   let outcome: JobOutcome<ApiDliSeries> | null;
   try {
     const { jobId } = await requestDliSeries(roomId, startDate, endDate, seriesOpts);
-    outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled, (p) => onProgress({ stage: 'dli', done: p.done, total: p.total }));
+    outcome = await waitForJob<ApiDliSeries>(jobId, isCancelled, (p) =>
+      onProgress({ stage: 'dli', done: p.done, total: p.total, queued: p.queued, weather: p.weather }),
+    );
   } catch (e) {
     outcome = { ok: false, error: describeServerError(e) };
   }

@@ -18,7 +18,7 @@ export interface PanoramaStripProps {
 
 /**
  * 파노라마 촬영 가이드 스트립.
- * 0° ~ 180° 트랙 위에 진행 구간, 촬영된 지점(●), 현재 위치(▶)를 표시한다.
+ * 0° ~ target 트랙 위에 진행 구간, 촬영된 지점(●), 현재 위치(▶)를 표시한다.
  */
 export function PanoramaStrip({ progress, target, step, marks, warning = false }: PanoramaStripProps) {
   const [width, setWidth] = useState(0);
@@ -43,13 +43,14 @@ export function PanoramaStrip({ progress, target, step, marks, warning = false }
               key={t}
               x1={xOf(t)}
               x2={xOf(t)}
-              y1={trackY - (t % 45 === 0 ? 13 : 5)}
-              y2={trackY + (t % 45 === 0 ? 13 : 5)}
+              y1={trackY - (t % (target / 2) === 0 ? 13 : 5)}
+              y2={trackY + (t % (target / 2) === 0 ? 13 : 5)}
               stroke="rgba(255,255,255,0.35)"
               strokeWidth={1}
             />
           ))}
-          {[0, 90, 180].filter((t) => t <= target).map((t) => (
+          {/* 시작 · 창문 정면(가운데) · 끝 */}
+          {[0, target / 2, target].map((t) => (
             <SvgText key={`l${t}`} x={xOf(t)} y={height - 1} fontSize={9.5} fill="rgba(255,255,255,0.6)" textAnchor="middle">
               {`${t}°`}
             </SvgText>

@@ -292,7 +292,7 @@ export function fetchNotificationSchedule(startDate: string, endDate: string, ho
 
 /* ---------------- 창밖 스캔 업로드 ---------------- */
 
-/** 사진 13장 + metadata(JSON 문자열) multipart 업로드 → 202 + job_id (SKY 분석은 백그라운드) */
+/** 사진 SCAN_FRAME_COUNT장(120° = 9장) + metadata(JSON 문자열) multipart 업로드 → 202 + job_id (SKY 분석은 백그라운드) */
 export function uploadWindowScan(windowId: number, form: FormData) {
   return apiRequest<ApiJobCreated>(`/windows/${windowId}/scans`, {
     method: 'POST',

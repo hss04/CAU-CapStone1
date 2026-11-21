@@ -9,13 +9,14 @@ import { DEFAULT_SCAN_CONFIG } from './scanTracker';
  * 사진은 multipart `files`로 같이 보내고, frames[].file 이름으로 서로 연결한다.
  *
  * 백엔드는 정해진 필드 외에는 거절한다(extra='forbid'). 규칙(backend app/integration.py Scan 모델):
- *   - 사진 13장, index 0~12, 파일 이름 중복 없음
+ *   - 사진 SCAN_FRAME_COUNT장 (120° 스캔 = 9장), index 0~N−1, 파일 이름 중복 없음
  *   - 진북 = 자북 + 편각 (오차 1° 이내) — 창문 정면과 각 사진 모두
- *   - 사진 i의 방위각 = 창문 정면 − 90° + 15°·i (오차 5° 이내)
+ *   - 사진 i의 방위각 = 창문 정면 − targetAngle/2 + 15°·i (120° 스캔이면 −60° + 15°·i, 오차 5° 이내)
  *   - 세로 JPEG, 높이 1280px, camera.width/height와 같은 크기, EXIF 회전 없음, 장당 5 MiB 이하
+ * 주의: 2026-11-21 기준 서버는 아직 13장(−90°~+90°)만 받는다. 서버 규칙이 바뀌기 전엔 422로 거절된다.
  */
 
-/** 0°~180°를 15° 간격으로 = 13장 */
+/** 0°~targetAngle을 15° 간격으로 (120° → 9장, 180° → 13장) */
 export const SCAN_FRAME_COUNT = DEFAULT_SCAN_CONFIG.targetAngle / DEFAULT_SCAN_CONFIG.captureStep + 1;
 /** 백엔드가 허용하는 사진 방향 오차 (°) */
 export const FRAME_TOLERANCE_DEG = 5;

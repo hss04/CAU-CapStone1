@@ -12,7 +12,7 @@ import { StatusChip, type ChipTone } from '@/components/common/StatusChip';
 import { TopBar, goBackOrHome } from '@/components/common/TopBar';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { compareDliPeriods } from '@/services/api/endpoints';
-import { describeServerError, dliOptionsFor, ensureDliSeries, formatDli } from '@/services/lightForecast';
+import { describeJobProgress, describeServerError, dliOptionsFor, ensureDliSeries, formatDli } from '@/services/lightForecast';
 import { useAuth } from '@/store/AuthProvider';
 import { useGarden } from '@/store/GardenProvider';
 import type { ApiComparisonPeriodInput, ApiDliComparison } from '@/types/api';
@@ -127,7 +127,7 @@ export default function LightCompareScreen() {
       for (const [i, p] of periods.entries()) {
         setStage(`${i + 1}/${periods.length} ${p.label} 계산 중`);
         const r = await ensureDliSeries(room, p.startDate, p.endDate, cancelled, (pr) =>
-          setStage(`${i + 1}/${periods.length} ${p.label} 계산 중 · ${pr.done}/${pr.total}일`),
+          setStage(`${i + 1}/${periods.length} ${p.label} 계산 중 · ${describeJobProgress(pr)}`),
         );
         if (r === null || cancelled()) return;
         if (!r.ok) throw new Error(`${p.label}: ${r.error}`);

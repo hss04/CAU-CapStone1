@@ -1,6 +1,7 @@
 import type { ScanCapture, WindowScan } from '@/types';
 
 import { relativeAngle, signedDelta } from '../orientation/headingMath';
+import { DEFAULT_SCAN_CONFIG } from './scanTracker';
 
 /**
  * 개발 확인용 — 스캔 결과가 정상인지 검증하는 통계/체크.
@@ -33,7 +34,11 @@ export interface ScanAnalysis {
   checks: ScanCheck[];
 }
 
-export function analyzeWindowScan(scan: WindowScan, captureStep = 15, targetAngle = 180): ScanAnalysis {
+export function analyzeWindowScan(
+  scan: WindowScan,
+  captureStep = DEFAULT_SCAN_CONFIG.captureStep,
+  targetAngle = DEFAULT_SCAN_CONFIG.targetAngle,
+): ScanAnalysis {
   const t0 = scan.captures[0]?.timestamp ?? 0;
   const stats: CaptureStat[] = scan.captures.map((capture, index) => ({
     index,

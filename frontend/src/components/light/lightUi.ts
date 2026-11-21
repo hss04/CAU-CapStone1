@@ -19,7 +19,16 @@ export function lightAnalysisSteps(forecast: Pick<LightForecastValue, 'source' |
     const status: AnalysisStep['status'] = i < current ? 'done' : i === current ? 'active' : 'pending';
     const p = forecast.progress;
     // 서버가 한 번에 계산해서, 계산 전에 이미 저장돼 있던 날짜 수만 정확히 알 수 있다
-    const detail = stage === 'dli' && p?.stage === 'dli' && p.total ? `저장된 결과 ${p.done ?? 0}/${p.total}일` : undefined;
+    const detail =
+      stage !== 'dli' || p?.stage !== 'dli'
+        ? undefined
+        : p.queued
+          ? '다른 계산이 끝나길 기다리는 중'
+          : p.weather
+            ? '날씨 자료 받는 중'
+            : p.total
+              ? `저장된 결과 ${p.done ?? 0}/${p.total}일`
+              : undefined;
     return { key: stage, label: ANALYSIS_STEP_LABEL[stage], status, detail };
   });
 }

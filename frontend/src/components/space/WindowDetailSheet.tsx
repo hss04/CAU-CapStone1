@@ -10,7 +10,8 @@ import { DEV_TOOLS_ENABLED } from '@/constants/app';
 import { ANALYSIS_STEP_LABEL } from '@/constants/labels';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { windowFacingAzimuth, windowFacingLabel, windowName, windowWallLabel, windowWidthM } from '@/services/space/windows';
-import { checkScanForUpload } from '@/services/windowScan/uploadPayload';
+import { DEFAULT_SCAN_CONFIG } from '@/services/windowScan/scanTracker';
+import { checkScanForUpload, SCAN_FRAME_COUNT } from '@/services/windowScan/uploadPayload';
 import type { ScanUploadState } from '@/services/windowScan/uploadService';
 import type { Room, RoomWindow, WindowScan } from '@/types';
 
@@ -106,7 +107,7 @@ export function WindowDetailSheet({
           <View style={styles.flex}>
             <AppText variant="bodyStrong">아직 외부 환경을 스캔하지 않았어요</AppText>
             <AppText variant="caption" color={Colors.textSecondary}>
-              창문 앞에서 바깥을 180° 스캔하면, 하늘이 보이는 방향과 건물·나무에 가려지는 방향을 분석할 수 있어요.
+              {`창문 앞에서 바깥을 ${DEFAULT_SCAN_CONFIG.targetAngle}° 스캔하면, 하늘이 보이는 방향과 건물·나무에 가려지는 방향을 분석할 수 있어요.`}
             </AppText>
           </View>
         </View>
@@ -144,7 +145,7 @@ export function WindowDetailSheet({
                   ? '방 정보(위치 등)가 바뀌어 서버가 이전 스캔을 쓰지 않아요. 다시 보내 주세요.'
                   : upload?.phase === 'failed'
                     ? `보내지 못했어요 · ${upload.error ?? '알 수 없는 오류'}`
-                    : '서버로 보내면 하늘이 보이는 방향을 분석해 광환경 계산에 써요. 사진 13장과 촬영 방향이 전송돼요.')
+                    : `서버로 보내면 하늘이 보이는 방향을 분석해 광환경 계산에 써요. 사진 ${SCAN_FRAME_COUNT}장과 촬영 방향이 전송돼요.`)
               }
             />
           )}

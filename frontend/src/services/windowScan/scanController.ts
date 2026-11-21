@@ -263,7 +263,7 @@ export class WindowScanController {
     this.completion = { endAzimuth: snap.currentAzimuth, scannedAngle: this.tracker.scannedAngle };
     this.set({ phase: 'finishing', hint: null });
 
-    // 진행 중인 촬영이 끝나길 기다린 뒤, 끝 지점(≈180°)이 비어 있으면 한 장 더
+    // 진행 중인 촬영이 끝나길 기다린 뒤, 끝 지점(≈targetAngle)이 비어 있으면 한 장 더
     if (this.inFlight) await this.inFlight;
     if (this.tracker.needsFinalCapture()) await this.capture();
     this.opts.source.stop();
