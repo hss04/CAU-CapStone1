@@ -1,6 +1,7 @@
 import io
 import json
 from pathlib import Path
+import pytest
 from PIL import Image
 from app import integration as i
 
@@ -48,7 +49,8 @@ def test_invalid_period(client,headers):
     assert res.status_code==422
 
 
-def test_scan_upload(client,headers,monkeypatch,tmp_path):
+@pytest.mark.parametrize('frame_count', [7, 9, 13])
+def test_scan_upload(client,headers,monkeypatch,tmp_path,frame_count):
     rid=make_room(client,headers)
     wid=client.get(f'/api/v1/rooms/{rid}/windows',headers=headers).json()[0]['id']
     monkeypatch.setattr(i,'UPLOAD_ROOT',tmp_path)
@@ -56,14 +58,16 @@ def test_scan_upload(client,headers,monkeypatch,tmp_path):
     im=io.BytesIO(); Image.new('RGB',(960,1280)).save(im,format='JPEG')
     meta={'window_id':wid,'captured_at':'2026-10-25T12:00:00+09:00','declination_deg':0,
         'window_azimuth_deg':180,'window_azimuth_mag_deg':180,'camera':{'width':960,'height':1280,'hfov_deg':55,'vfov_deg':70},
-        'frames':[{'index':n,'file':f'{n}.jpg','azimuth_deg':90+15*n,'azimuth_mag_deg':90+15*n,'pitch_deg':30,'roll_deg':0} for n in range(13)]}
-    files=[('files',(f'{n}.jpg',im.getvalue(),'image/jpeg')) for n in range(13)]
+        'frames':[{'index':n,'file':f'{n}.jpg','azimuth_deg':180-(frame_count-1)*7.5+15*n,
+                   'azimuth_mag_deg':180-(frame_count-1)*7.5+15*n,'pitch_deg':30,'roll_deg':0}
+                  for n in range(frame_count)]}
+    files=[('files',(f'{n}.jpg',im.getvalue(),'image/jpeg')) for n in range(frame_count)]
     res=client.post(f'/api/v1/windows/{wid}/scans',headers=headers,data={'metadata':json.dumps(meta)},files=files)
     assert res.status_code==202,res.text
     result=client.get(res.json()['status_url'],headers=headers)
     assert result.json()['status']=='COMPLETED',result.text
-    assert len(list(tmp_path.rglob('*.jpg')))==13
-    bad=client.post(f'/api/v1/windows/{wid}/scans',headers=headers,data={'metadata':json.dumps(meta)},files=files[:12])
+    assert len(list(tmp_path.rglob('*.jpg')))==frame_count
+    bad=client.post(f'/api/v1/windows/{wid}/scans',headers=headers,data={'metadata':json.dumps(meta)},files=files[:-1])
     assert bad.status_code==422
 
 

@@ -12,7 +12,7 @@
 - GET /api/v1/locations/search?q=서울: 한국 도시 우선 검색, 사용자가 후보 선택 후 location 호출
 
 한국 도시 목록, 광주 동명 지역 구분, 좌표 기준과 요청 예시는 [docs/KOREAN_CITIES.md](docs/KOREAN_CITIES.md)를 참고하세요.
-- POST /api/v1/windows/{id}/scans: metadata JSON 문자열과 files 13장 multipart
+- POST /api/v1/windows/{id}/scans: metadata JSON 문자열과 files N장 multipart (120°=9장, 기존 180°=13장)
 - POST /api/v1/rooms/{id}/direction: 외부 방향 계산 함수 연결점
 - POST /api/v1/rooms/{id}/recommendations: 외부 추천 함수 연결점
 - 기본 격자 0.2m, 기간별 일평균 DLI, 사진 파일·메타데이터·작업 상태 저장
@@ -67,7 +67,16 @@ algorithm 폴더는 저장소 algorithm 브랜치 320622063cc465f669b2548ad33f9f
 추천 함수 RECOMMENDATION_CALLABLE=module:function은 room_id,dli_map,plants[{plant_id,species_id,position,min_dli,max_dli}],blocked_cells[{row,col}]를 받습니다. 서버 요청의 blocked_cells는 [[row,col],...] 형식입니다. v5에서는 recommend_service:recommend_for_room을 연결하고 plants 구조를 그대로 반환합니다. OpenAPI 응답 모델도 추가했습니다.
 
 ## 창밖 스캔
-metadata: 아래 JSON을 문자열로 전달. files: JPEG 13장(파일명과 frames.file 일치).
+metadata: 아래 JSON을 문자열로 전달. files: JPEG N장(파일명과 frames.file 일치).
+사진 수로 스캔 범위를 계산하므로 별도의 범위 필드는 필요 없습니다. 15° 간격으로 2~13장을 받으며, 촬영 중심 방향은 창문 정면입니다.
+
+| 범위 | 장수 N | index | 창문 정면 기준 방향 |
+| --- | --- | --- | --- |
+| 90° | 7 | 0~6 | −45°~+45° |
+| 120° (현재 앱) | 9 | 0~8 | −60°~+60° |
+| 180° (기존 앱) | 13 | 0~12 | −90°~+90° |
+
+아래 예시는 120° 스캔의 첫 프레임만 표시한 것으로, 실제 요청에는 나머지 8개 프레임도 포함합니다.
 
 ```json
 {
@@ -78,14 +87,34 @@ metadata: 아래 JSON을 문자열로 전달. files: JPEG 13장(파일명과 fra
   "window_azimuth_mag_deg": 188.7,
   "camera": {"hfov_deg":55,"vfov_deg":70,"width":960,"height":1280},
   "frames": [
-    {"index":0,"file":"frame_00.jpg","azimuth_deg":90,"azimuth_mag_deg":98.7,"pitch_deg":30,"roll_deg":0}
+    {"index":0,"file":"frame_00.jpg","azimuth_deg":120,"azimuth_mag_deg":128.7,"pitch_deg":30,"roll_deg":0}
   ]
 }
 ```
 
-실제 frames에는 0..12의 13개를 넣어야 합니다. 정면-90도부터 +90도까지 15도 간격(허용 오차 5도). 진북=(자북+편각)%360, 오차 1도 이내. EXIF 회전을 적용한 세로 JPEG, 높이1280, camera 크기와 일치, 각 파일 최대5MiB입니다. 파일명은 저장 경로로 사용하지 않고 서버가 UUID/인덱스로 생성합니다. 파일은 data/scans, DB에는 경로·메타데이터 저장. UPLOAD_ROOT로 변경 가능.
+실제 frames에는 0..N−1의 고유한 index와 중복 없는 파일명을 넣습니다. 사진 i의 예상 방위각은 `(window_azimuth_deg − (N−1)×7.5 + 15×i) % 360`이며 허용 오차는 5°입니다. 배열 순서는 자유지만 index·방위각·파일의 대응은 유지해야 합니다. files도 정확히 N개여야 하며 파일명 집합이 frames.file과 일치해야 합니다. 시작·끝 촬영 방향 사이의 범위는 최대 180°이며, 사진 자체 화각은 이 범위에 더해집니다.
 
-실제 SegFormer는 최초 실행 시 Hugging Face에서 모델을 내려받습니다. 서버의 네트워크와 torch/transformers 설치가 필요합니다. 다운로드·분석 실패는 FAILED로 기록됩니다. 프론트의 13장 촬영 UI는 이 변경 범위에 포함하지 않았습니다. 업로드 API는 준비되어 있습니다.
+진북=(자북+편각)%360, 오차 1도 이내. EXIF 회전을 적용한 세로 JPEG, 높이1280, camera 크기와 일치, 각 파일 최대5MiB입니다. 파일명은 저장 경로로 사용하지 않고 서버가 UUID/인덱스로 생성합니다. 파일은 data/scans, DB에는 경로·메타데이터 저장. UPLOAD_ROOT로 변경 가능. API 경로·작업 응답·DB 구조는 동일하며 기존 13장 요청과 호환됩니다.
+
+실제 SegFormer는 최초 실행 시 Hugging Face에서 모델을 내려받습니다. 서버의 네트워크와 torch/transformers 설치가 필요합니다. 다운로드·분석 실패는 FAILED로 기록됩니다. 실제 사진 분석은 전달받은 N개 프레임을 처리합니다. 촬영되지 않은 방향의 기존 차폐 처리 규칙은 유지되므로, 좁아진 범위의 DLI 결과는 실제 공간에서 확인하세요.
+
+### 로컬·배포 서버 적용
+
+로컬과 VM의 `backend` 브랜치 checkout에 같은 수정본을 받습니다. 이번 스캔 변경에는 DB 마이그레이션이나 새 의존성이 필요하지 않습니다. VM에서는 진행 중인 계산이 끝난 뒤 기존 `plantlight` 서비스를 재시작합니다.
+
+```bash
+# backend 브랜치를 사용 중인 저장소 폴더에서 실행
+git pull --ff-only origin backend
+# VM에서 실행. 로컬 개발 서버는 기존 실행 방식으로 재시작
+sudo systemctl restart plantlight
+curl --fail http://127.0.0.1:8000/ready
+```
+
+모델 준비 중이면 `/ready`가 일시적으로 503을 반환합니다. `ready`가 된 후 현재 앱의 9장 업로드와 작업 완료를 확인합니다. 위 저장소 변경만으로 외부 IP 유형이나 VM의 `.env` 설정이 변경되지는 않습니다.
+
+알고리즘 설정 확인은 backend 폴더에서 기존 `python scripts/check_demo.py`를 실행합니다. `DLI_CALLABLE=grid_dli_service:compute_room_dli`, `DIRECTION_CALLABLE=room_geometry:compute_room_direction`, `RECOMMENDATION_CALLABLE=recommend_service:recommend_for_room` 연결을 검사하며, 비밀 설정값을 출력하지 않습니다.
+
+웹 개발 화면도 배포 서버에 연결할 경우 VM의 `.env`에 `CORS_ORIGINS=["http://localhost:8082","http://127.0.0.1:8082"]`를 설정하고 서비스를 재시작합니다. 네이티브 앱만 사용하는 경우에는 필요하지 않습니다. HTTPS 및 IP 인증서 확인은 [HTTPS_GCP.md](docs/HTTPS_GCP.md)를 참고하세요.
 
 ## AR 앱
 홈 화면에 '저장한 방 서버 전송' 버튼 추가. 서버 주소, 이미 등록된 이메일/비밀번호, 방 이름을 입력하면 로그인 후 저장된 JSON을 import-ar에 보냅니다. 비밀번호·토큰은 저장하지 않습니다. 기본 자동 AR 진입을 해제하여 홈에서 업로드에 접근할 수 있습니다. 측정 후 뒤로 가기로 홈에 돌아오면 됩니다.

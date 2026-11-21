@@ -13,7 +13,7 @@ def arguments():
     parser.add_argument('--days', type=int, choices=range(1, 94), default=7, metavar='1..93')
     parser.add_argument('--cell-size', type=float, default=.2)
     parser.add_argument('--one-shot', action='store_true', help='Measure the old new-process-per-day path')
-    parser.add_argument('--scan-metadata', type=Path, help='Optional actual 13-frame scan metadata JSON')
+    parser.add_argument('--scan-metadata', type=Path, help='Optional actual scan metadata JSON (for example, 9 or 13 frames)')
     parser.add_argument('--scan-dir', type=Path, help='Directory containing the actual frame JPEGs')
     parser.add_argument('--warm-model', action='store_true', help='Time SegFormer loading and first inference')
     args = parser.parse_args()

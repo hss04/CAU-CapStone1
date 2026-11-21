@@ -415,6 +415,10 @@ def status(job_id:str,db:Db,user:CurrentUser):
             'stale':job.status=='STALE' or room.geometry_version!=job.payload['geometry_version'] or (job.kind in ('DLI','DLI_SERIES') and (light_inputs_changed(job,room,db) or
                 (job.status=='COMPLETED' and not dli_cache.period_is_fresh(db,job.payload)))),'result':job.result}
 
+SCAN_FRAME_STEP_DEG = 15
+MAX_SCAN_FRAME_COUNT = 13  # At most 180 degrees between the first and last frame.
+
+
 class Camera(Input):
     hfov_deg:float=Field(gt=0,lt=180,allow_inf_nan=False)
     vfov_deg:float=Field(gt=0,lt=180,allow_inf_nan=False)
@@ -422,7 +426,7 @@ class Camera(Input):
     height:int=Field(default=1280,ge=1280,le=1280)
 
 class Frame(Input):
-    index:int=Field(ge=0,le=12)
+    index:int=Field(ge=0)
     file:str=Field(min_length=1,max_length=100)
     azimuth_deg:float=Field(ge=0,lt=360,allow_inf_nan=False)
     azimuth_mag_deg:float=Field(ge=0,lt=360,allow_inf_nan=False)
@@ -436,17 +440,22 @@ class Scan(Input):
     window_azimuth_deg:float=Field(ge=0,lt=360,allow_inf_nan=False)
     window_azimuth_mag_deg:float=Field(ge=0,lt=360,allow_inf_nan=False)
     camera:Camera
-    frames:list[Frame]=Field(min_length=13,max_length=13)
+    frames:list[Frame]=Field(min_length=2,max_length=MAX_SCAN_FRAME_COUNT)
 
     @model_validator(mode='after')
     def valid_scan(self):
         if self.captured_at.utcoffset()!=timedelta(hours=9):raise ValueError('captured_at requires +09:00')
-        if sorted(f.index for f in self.frames)!=list(range(13)) or len({f.file for f in self.frames})!=13:raise ValueError('Unique indices 0..12 and filenames required')
+        frame_count = len(self.frames)
+        if sorted(f.index for f in self.frames)!=list(range(frame_count)) or len({f.file for f in self.frames})!=frame_count:
+            raise ValueError(f'Unique indices 0..{frame_count-1} and filenames required')
+        half_range = (frame_count - 1) * SCAN_FRAME_STEP_DEG / 2
         def delta(a,b):return abs((a-b+180)%360-180)
         for a,b in [(self.window_azimuth_deg,self.window_azimuth_mag_deg)]+[(f.azimuth_deg,f.azimuth_mag_deg) for f in self.frames]:
             if delta(a,b+self.declination_deg)>1:raise ValueError('True/magnetic azimuth mismatch')
         for f in self.frames:
-            if delta(f.azimuth_deg,self.window_azimuth_deg-90+15*f.index)>5:raise ValueError('Frame angles must span -90..90 at 15 degree intervals (5 degree tolerance)')
+            expected = (self.window_azimuth_deg - half_range + SCAN_FRAME_STEP_DEG * f.index) % 360
+            if delta(f.azimuth_deg,expected)>5:
+                raise ValueError(f'Frame angles must span {-half_range:g}..{half_range:g} at {SCAN_FRAME_STEP_DEG} degree intervals (5 degree tolerance)')
         return self
 
 @router.post('/windows/{window_id}/scans',status_code=202)
@@ -457,7 +466,9 @@ async def upload_scan(window_id:int,tasks:BackgroundTasks,db:Db,user:CurrentUser
     try:body=Scan.model_validate_json(metadata)
     except ValidationError as exc:raise HTTPException(422,str(exc)) from exc
     if body.window_id!=window_id:raise HTTPException(422,'window_id mismatch')
-    if len(files)!=13 or len({f.filename for f in files})!=13 or {f.filename for f in files}!={f.file for f in body.frames}:raise HTTPException(422,'Exactly 13 matching JPEG files required')
+    frame_count = len(body.frames)
+    if len(files)!=frame_count or len({f.filename for f in files})!=frame_count or {f.filename for f in files}!={f.file for f in body.frames}:
+        raise HTTPException(422,f'Exactly {frame_count} matching JPEG files required')
     job_id=str(uuid4()); folder=UPLOAD_ROOT/job_id; folder.mkdir(parents=True)
     payload=body.model_dump(mode='json'); payload['geometry_version']=room.geometry_version
     by_name={f.filename:f for f in files}

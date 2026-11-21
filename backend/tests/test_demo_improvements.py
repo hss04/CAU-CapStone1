@@ -359,7 +359,8 @@ def test_forecast_expiry_makes_completed_job_stale(saved, headers, monkeypatch):
         json={'dli_job_id': response.json()['job_id']}).status_code == 409
 
 
-def test_scan_idempotency_does_not_duplicate_files(context, headers, monkeypatch, tmp_path):
+@pytest.mark.parametrize('frame_count', [9, 13])
+def test_scan_idempotency_does_not_duplicate_files(context, headers, monkeypatch, tmp_path, frame_count):
     import io, json
     from PIL import Image
     client, factory = context
@@ -370,20 +371,21 @@ def test_scan_idempotency_does_not_duplicate_files(context, headers, monkeypatch
     metadata = {'window_id': wid, 'captured_at': '2026-10-25T12:00:00+09:00', 'declination_deg': 0,
         'window_azimuth_deg': 180, 'window_azimuth_mag_deg': 180,
         'camera': {'width': 64, 'height': 1280, 'hfov_deg': 55, 'vfov_deg': 70},
-        'frames': [{'index': n, 'file': f'{n}.jpg', 'azimuth_deg': 90+15*n, 'azimuth_mag_deg': 90+15*n,
-                    'pitch_deg': 30, 'roll_deg': 0} for n in range(13)]}
+        'frames': [{'index': n, 'file': f'{n}.jpg', 'azimuth_deg': 180-(frame_count-1)*7.5+15*n,
+                    'azimuth_mag_deg': 180-(frame_count-1)*7.5+15*n,
+                    'pitch_deg': 30, 'roll_deg': 0} for n in range(frame_count)]}
     def files(color):
         image = io.BytesIO()
         Image.new('RGB', (64, 1280), color).save(image, 'JPEG')
-        return [('files', (f'{n}.jpg', image.getvalue(), 'image/jpeg')) for n in range(13)]
+        return [('files', (f'{n}.jpg', image.getvalue(), 'image/jpeg')) for n in range(frame_count)]
     args = {'headers': {**headers, 'Idempotency-Key': 'same-scan'}, 'data': {'metadata': json.dumps(metadata)}}
     first = client.post(f'/api/v1/windows/{wid}/scans', files=files('blue'), **args)
     retry = client.post(f'/api/v1/windows/{wid}/scans', files=files('blue'), **args)
     assert first.status_code == retry.status_code == 202
     assert first.json()['job_id'] == retry.json()['job_id'] and retry.json()['reused']
-    assert len(list(tmp_path.rglob('*.jpg'))) == 13
+    assert len(list(tmp_path.rglob('*.jpg'))) == frame_count
     assert client.post(f'/api/v1/windows/{wid}/scans', files=files('red'), **args).status_code == 409
-    assert len(list(tmp_path.rglob('*.jpg'))) == 13
+    assert len(list(tmp_path.rglob('*.jpg'))) == frame_count
 
 
 def test_jobs_run_serially_while_second_job_remains_pending(saved, headers, monkeypatch):
