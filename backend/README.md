@@ -143,6 +143,7 @@ Room/Plant는 JWT 사용자 ID로 제한합니다. Window는 Room 소유권을 �
 - 실제 계산 요청은 `POST /api/v1/rooms/{room_id}/dli-map`이며 BackgroundTasks 작업으로 처리합니다. 알고리즘 입력 제한과 임시 계산 조건은 [INTEGRATION.md](INTEGRATION.md)의 제한 항목을 확인하세요.
 - 스캔 업로드 API는 현재 앱의 120°/9장과 기존 180°/13장을 모두 받습니다. 15° 간격의 2~13장에서 사진 수로 검사 범위를 계산하며, 상세 payload는 [INTEGRATION.md](INTEGRATION.md)의 창밖 스캔 항목을 확인하세요.
 - 추천·방향 API는 연결점만 있고 함수가 설정되지 않으면 501을 반환합니다.
+- 알고리즘 함수 연결 확인과 웹 CORS 등록·실서버 검사는 [DEPLOYMENT_SETTINGS.md](docs/DEPLOYMENT_SETTINGS.md)를 참고하세요. 기존 비밀키·DB 주소를 보존하며 `localhost:8082` 같은 웹 출처를 등록할 수 있습니다.
 - `GET /health`는 프로세스 생존 확인입니다. `GET /ready`는 DB 접속과 알고리즘 폴더 확인을 함께 합니다.
 
 새 integration/idempotency 테이블은 서버 시작 시 `create_all`로 추가됩니다. 기존 SQLite 방·창문 컬럼 변경은 기존 절차대로 서버를 정지하고 `scripts/migrate_v3.py`를 실행해야 합니다.

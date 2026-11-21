@@ -114,7 +114,7 @@ curl --fail http://127.0.0.1:8000/ready
 
 알고리즘 설정 확인은 backend 폴더에서 기존 `python scripts/check_demo.py`를 실행합니다. `DLI_CALLABLE=grid_dli_service:compute_room_dli`, `DIRECTION_CALLABLE=room_geometry:compute_room_direction`, `RECOMMENDATION_CALLABLE=recommend_service:recommend_for_room` 연결을 검사하며, 비밀 설정값을 출력하지 않습니다.
 
-웹 개발 화면도 배포 서버에 연결할 경우 VM의 `.env`에 `CORS_ORIGINS=["http://localhost:8082","http://127.0.0.1:8082"]`를 설정하고 서비스를 재시작합니다. 네이티브 앱만 사용하는 경우에는 필요하지 않습니다. HTTPS 및 IP 인증서 확인은 [HTTPS_GCP.md](docs/HTTPS_GCP.md)를 참고하세요.
+웹 개발 화면도 배포 서버에 연결할 경우 `python scripts/init_env.py --web-origin http://localhost:8082 --web-origin http://127.0.0.1:8082`로 기존 비밀키와 허용 목록을 보존하면서 웹 주소를 추가합니다. 서비스 재시작 후 `python scripts/check_demo.py --check-cors`로 실행 중인 서버의 OPTIONS 응답을 검사합니다. 네이티브 앱만 사용하는 경우에는 필요하지 않습니다. 상세 설정은 [DEPLOYMENT_SETTINGS.md](docs/DEPLOYMENT_SETTINGS.md), HTTPS 및 IP 인증서 확인은 [HTTPS_GCP.md](docs/HTTPS_GCP.md)를 참고하세요.
 
 ## AR 앱
 홈 화면에 '저장한 방 서버 전송' 버튼 추가. 서버 주소, 이미 등록된 이메일/비밀번호, 방 이름을 입력하면 로그인 후 저장된 JSON을 import-ar에 보냅니다. 비밀번호·토큰은 저장하지 않습니다. 기본 자동 AR 진입을 해제하여 홈에서 업로드에 접근할 수 있습니다. 측정 후 뒤로 가기로 홈에 돌아오면 됩니다.
